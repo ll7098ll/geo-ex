@@ -1,0 +1,8 @@
+{
+  "name": "지형 탐험가 (Geography Explorer)",
+  "description": "대한민국 및 전 세계의 다양한 지형을 3D 시뮬레이션 및 구글 지도와 함께 입체적으로 학습하는 지리 교육 탐험 애플리케이션",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
