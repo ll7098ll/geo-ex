@@ -15,8 +15,8 @@ export const Navigation: React.FC<NavigationProps> = ({ region, setRegion, onRes
         <div className="w-10 h-14 border-[3px] border-[#FFCC00] flex items-center justify-center bg-black/20 backdrop-blur-sm">
           <Globe className="w-6 h-6 text-white" />
         </div>
-        <span className="text-2xl font-bold tracking-widest text-white uppercase font-serif drop-shadow-md">
-          GeoDiscover
+        <span className="text-xl sm:text-2xl font-bold tracking-wider text-white uppercase font-serif drop-shadow-md">
+          Geography Explorer
         </span>
       </div>
       
