@@ -144,7 +144,14 @@ export const SearchResult = forwardRef<HTMLDivElement, SearchResultProps>(
 
                 {/* 3D Canvas Box */}
                 <div className="w-full h-[400px] sm:h-[460px] rounded-md overflow-hidden bg-slate-950 border border-slate-800">
-                  <Terrain3D category={result.categoryId} subTerrain={selectedTerrain || ''} />
+                  <Terrain3D
+                    category={result.categoryId}
+                    subTerrain={
+                      selectedTerrain && selectedTerrain !== '모든 지형'
+                        ? selectedTerrain
+                        : (placeInfo?.terrain || '')
+                    }
+                  />
                 </div>
               </div>
 

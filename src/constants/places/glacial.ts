@@ -295,5 +295,212 @@ export const GLACIAL_PLACES: PlaceInfo[] = [
       satelliteCheckPoints: ['스칸디나비아 해안에서 내륙으로 수십 km 깊숙이 뱀처럼 파고든 짙푸른 바다 물길선', '피오르드 양안의 깎아지른 절벽 그림자와 산정 만년설', '게이랑에르 항구 끝자락의 에스자 만곡부'],
       cautionAndConservation: '피오르드 암벽 산사태 쓰나미 경보 시스템 운영 구역'
     }
+  },
+  {
+    id: 'fjord-wd-2',
+    terrain: '피오르드',
+    region: 'world',
+    placeName: '뉴질랜드 밀포드 사운드 (Milford Sound / Piopiotahi)',
+    countryOrArea: '뉴질랜드 남섬 피오르드랜드 국립공원',
+    tagline: '해발 1,692m 마이터 피크가 바다에서 곧장 솟구치는 남반구 최고의 빙식 피오르드',
+    description: `### 장소 소개 및 선정 이유
+러디어드 키플링이 '세계 8대 불가사의'라 칭송한 밀포드 사운드는 태즈먼해에서 내륙으로 15km 들어간 좁은 만으로, 수직 1,200m에 달하는 빙식 암벽과 바다로 곧장 떨어지는 폭포수가 장관을 이룹니다.
+
+### 과학적 형성 과정
+수백만 년 동안 빙하가 산지를 깎아 해수면 아래 수심 400m까지 과심도 U자곡을 판 후, 후빙기 해수면 상승으로 바닷물이 들어차 피오르드가 되었습니다.`,
+    formationProcess: '남알프스 대륙 빙하의 과심도 침식 및 태즈먼해 해수 침수',
+    observationPoints: ['바다 위로 치솟은 피라미드 암봉 마이터 피크(Mitre Peak)', '낙차 151m 스털링 폭포(Stirling Falls)', '피오르드 물개와 돌고래 서식지'],
+    mapQuery: 'Milford Sound New Zealand',
+    geology: {
+      geologicalAge: '고생대~중생대 화강암질 편마암 위 플라이스토세 빙식',
+      rockType: '결정질 편마암 및 각섬암',
+      tectonicSetting: '인도-호주판과 태평양판 경계 알프스 단층대',
+      geomorphicAgent: '산악 곡빙하의 고압 굴식 및 후빙기 침수',
+      scale: { depthMeters: 400, lengthKm: 16, elevationMeters: 1692 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '판 충돌과 고산 융기', timeframe: '신생대', process: '남알프스 산맥이 수천 미터 솟아오름', visualKeyFeature: '험준한 원시 산악' },
+      { stageNumber: 2, title: '초대형 빙하의 굴착', timeframe: '빙하기', process: '두께 1,000m 빙하가 바다 밑까지 바위를 파냄', visualKeyFeature: '바닥이 깊숙이 파인 거대한 U자 얼음길' },
+      { stageNumber: 3, title: '피오르드 완성', timeframe: '약 1만 년 전~현재', process: '빙하가 녹자 짙푸른 바닷물이 들어와 웅장한 피오르드 안착', visualKeyFeature: '구름 속에 솟은 수직 바위산과 검푸른 바다' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '11월~4월 남반구 여름 (비가 자주 오나 폭포가 더욱 웅장해짐)',
+      satelliteCheckPoints: ['태즈먼해로 열린 가늘고 깊은 짙푸른 협만 라인'],
+      cautionAndConservation: '연간 강우량 6,800mm로 고성능 우의 및 방수팩 필수'
+    }
+  },
+
+  // ==========================================
+  // 5. 모레인 (Moraine / 빙퇴석)
+  // ==========================================
+  {
+    id: 'moraine-kr-1',
+    terrain: '모레인',
+    region: 'korea',
+    placeName: '설악산 공룡능선 및 천불동 주빙하 쇄설암괴 (모레인 유사 지형)',
+    countryOrArea: '대한민국 강원특별자치도 속초시·양양군 설악산 국립공원',
+    tagline: '마지막 빙하기 혹한의 동결·파쇄가 빚어낸 톱날 능선과 계곡 사면의 빙하성 암괴원',
+    description: `### 장소 소개 및 선정 이유
+설악산 최고봉 대청봉과 공룡능선, 천불동 계곡 사면에는 플라이스토세 빙하기 주빙하(Periglacial) 기후하에서 동결 쐐기 작용으로 부서져 흘러내린 거대한 화강암 암괴류(Block field)와 암괴원 지형이 뚜렷하게 남아 있어 한반도 빙하기 환경을 생생하게 증명합니다.
+
+### 과학적 형성 과정
+당시 설악산 고산대는 만년설선에 인접하여 바위 틈의 수분이 얼고 녹는 서릿발 쐐기(Frost Wedging) 작용이 극대화되었고, 산정의 단단한 화강암이 부서져 사면을 따라 사태를 이루며 흘러내려 모레인과 유사한 암괴 퇴적체를 형성했습니다.`,
+    formationProcess: '빙하기 주빙하 기후 동결 파쇄 및 사면 붕적 이동에 의한 거력 암괴원 집적',
+    observationPoints: ['공룡능선 1275봉 주변의 칼날 능선', '마등령 사면의 거대한 바위 너덜지대', '모서리가 각진 거대한 화강암 블록들'],
+    mapQuery: '설악산 공룡능선',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 빙기 (약 7만~2만 년 전)',
+      rockType: '중생대 백악기 설악산 화강암',
+      tectonicSetting: '태백산맥 북부 최고봉 분기 척량 산맥',
+      geomorphicAgent: '동결 융해 쐐기작용(Frost Shattering) 및 주빙하 사면 유동',
+      scale: { elevationMeters: 1708, lengthKm: 4.9 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '화강암 관입과 융기', timeframe: '중생대 백악기', process: '지하 마그마가 굳어 거대한 화강암 바위산 형성', visualKeyFeature: '거대한 화강암 암괴' },
+      { stageNumber: 2, title: '제4기 빙기 혹한의 서릿발 파쇄', timeframe: '약 2만 년 전', process: '얼음 쐐기가 바위를 부숴 톱날 같은 능선과 바위 파편 양산', visualKeyFeature: '깨진 바위들이 뒤덮인 산비탈' },
+      { stageNumber: 3, title: '공룡능선과 천불동 비경 안착', timeframe: '현재', process: '한국 최고의 암릉 산악미를 자랑하는 국립공원 핵심 명소 안착', visualKeyFeature: '구름을 찌르는 뾰족한 암봉들의 행렬' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '9월 말~10월 중순 가을 단풍철',
+      satelliteCheckPoints: ['외설악과 내설악을 가르는 백색의 날카로운 톱날 능선 암릉선'],
+      cautionAndConservation: '난이도 최상 등산로로 전문 등산 장비 및 체력 필수'
+    }
+  },
+  {
+    id: 'moraine-wd-1',
+    terrain: '모레인',
+    region: 'world',
+    placeName: '캐나다 밴프 모레인 호수 (Moraine Lake)',
+    countryOrArea: '캐나다 앨버타주 밴프 국립공원 10개 봉우리 계곡',
+    tagline: '빙하가 밀고 내려온 거대한 암석 둑(종퇴석)이 물길을 막아 탄생한 세계에서 가장 아름다운 터키석빛 호수',
+    description: `### 장소 소개 및 선정 이유
+캐나다 20달러 지폐에 등장했던 모레인 호수(Moraine Lake)는 해발 1,884m 10개의 설산(Ten Peaks) 아래, 빙하가 운반한 암석과 자갈 둔덕인 '퇴석(Moraine)'이 천연 댐 역할을 하여 계곡물을 가두어 탄생한 세계 지형학의 모레인 대표 명소입니다.
+
+### 과학적 형성 과정
+빙하기 동안 계곡을 가득 채웠던 빙하가 산지를 깎아 운반하던 자갈과 암석 부스러기를 빙하 혓바닥 끝부분에 제방 모양으로 쌓아 올렸습니다(종퇴석, Terminal Moraine). 이후 빙하가 후퇴하며 녹은 물이 이 퇴석 제방 뒤에 갇혀 호수가 되었습니다. 미세한 '빙하 암분(Rock Flour)'이 물속에 떠다니며 햇빛의 청록색 파장만을 반사하여 눈부신 터키석색을 띱니다.`,
+    formationProcess: '빙하 후퇴 시 전면에 집적된 종퇴석(Terminal Moraine) 제방에 의한 빙하 융설수 언색 호수화',
+    observationPoints: ['호수 입구의 거대한 퇴석 자갈 언덕(Rockpile)', '물에 떠 있는 미세 암분이 빚어낸 찬란한 에메랄드빛 수면', '호수를 병풍처럼 둘러싼 텐 피크(Ten Peaks)'],
+    mapQuery: 'Moraine Lake Banff Alberta Canada',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 빙기~홀로세',
+      rockType: '선캄브리아기~고생대 규암 및 석회암질 빙퇴석(Till)',
+      tectonicSetting: '북미 로키산맥 트러스트 단층 산악대',
+      geomorphicAgent: '곡빙하 퇴적(Glacial Till Deposition) 및 빙하 융설수 암분 산란',
+      scale: { elevationMeters: 1884, areaKm2: 0.5, depthMeters: 14 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '로키산맥 빙하 전진', timeframe: '약 2만 년 전', process: '텐 피크스 계곡을 따라 곡빙하가 수백 미터 두께로 전진하며 암반 분쇄', visualKeyFeature: '계곡을 가득 채운 거대한 얼음 강' },
+      { stageNumber: 2, title: '종퇴석 둔덕 축조', timeframe: '약 1만 년 전', process: '빙하 말단부에서 녹아내린 얼음이 싣고 온 암석 쇄설물을 거대한 둑으로 퇴적', visualKeyFeature: '계곡 입구를 가로막은 수십 미터 바위 언덕' },
+      { stageNumber: 3, title: '빙하 융설수 저류와 암분 호수화', timeframe: '홀로세~현재', process: '얼음이 녹아 호수를 채우고, 빙하가 바위를 갈아 만든 미세 가루가 영롱한 청록색 빛 발산', visualKeyFeature: '보석처럼 빛나는 신비로운 터키석빛 호수' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '6월 중순~9월 (호수 결빙이 완전히 풀리고 셔틀버스 운행 시기)',
+      satelliteCheckPoints: ['텐 피크스 만년설산 아래 청록색으로 영롱하게 빛나는 콤팩트한 호수 수면', '호수 북동단 출구부에 바위들이 둔덕을 이룬 락파일(Rockpile) 지형'],
+      cautionAndConservation: '환경 보호를 위해 셔틀버스 또는 대중교통 사전 예약 필수'
+    }
+  },
+  {
+    id: 'moraine-wd-2',
+    terrain: '모레인',
+    region: 'world',
+    placeName: '스위스 알레치 빙하 측퇴석 (Aletsch Glacier Lateral Moraine)',
+    countryOrArea: '스위스 발레주 알프스 산맥',
+    tagline: '길이 23km 알프스 최대 빙하 양옆에 성벽처럼 높이 100m로 쌓아 올려진 거대한 측퇴석 둑',
+    description: `### 장소 소개 및 선정 이유
+유네스코 세계자연유산인 알레치 빙하는 총연장 23km, 얼음 두께 900m에 달하는 알프스에서 가장 거대한 빙하로, 빙하 가장자리를 따라 흙과 바위가 자로 잰 듯 성벽처럼 솟아오른 측퇴석(Lateral Moraine)의 절대적인 표본입니다.
+
+### 과학적 형성 과정
+빙하가 흐르면서 계곡 양쪽 산비탈을 깎아낸 암석 부스러기와 낙석들이 빙하 양 측면에 길게 띠를 이루며 쌓였습니다. 과거 소빙하기 당시 빙하 높이에 맞춰 쌓였던 거대한 측퇴석 제방이 현재 빙하 수축과 함께 드러나 선명한 계곡 단차를 보여줍니다.`,
+    formationProcess: '곡빙하 측면 마찰 침식 및 사면 낙석의 가장자리 퇴적으로 형성된 측퇴석 제방',
+    observationPoints: ['빙하 양안을 따라 수 킬로미터 이어진 측퇴석 능선', '중앙에서 두 빙하가 합류하며 생긴 중앙퇴석(Medial Moraine) 검은 띠', '에기스호른 전망대 파노라마'],
+    mapQuery: 'Great Aletsch Glacier Switzerland',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세~소빙기(1850년) 이후',
+      rockType: '알프스 아르(Aar) 화강암 및 편마암 미분급 쇄설물(Till)',
+      tectonicSetting: '스위스 중부 융프라우-알레치 조산대',
+      geomorphicAgent: '곡빙하의 측방 퇴적 및 소빙기 이후 빙하 수축',
+      scale: { lengthKm: 23, depthMeters: 900, elevationMeters: 2800 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '알프스 거대 곡빙하 발달', timeframe: '빙하기~소빙기', process: '알레치 계곡을 얼음이 가득 메우며 산비탈 암반 삭박', visualKeyFeature: '계곡을 가득 메운 웅장한 빙원' },
+      { stageNumber: 2, title: '측퇴석 제방 집적', timeframe: '1850년 소빙기 절정', process: '가장자리로 밀려난 수백만 톤의 자갈과 바위가 100m 높이 둑 축조', visualKeyFeature: '얼음 가장자리에 높게 쌓인 흙돌 성벽' },
+      { stageNumber: 3, title: '빙하 수축과 퇴석 노출', timeframe: '현재', process: '기후 온난화로 얼음 높이가 낮아지며 거대한 측퇴석 제방이 허공에 노출', visualKeyFeature: '선명한 과거 빙하 수위선과 퇴석 제방' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '7월~9월 (베트머알프 또는 피셔알프 케이블카 운행)',
+      satelliteCheckPoints: ['빙하 한가운데를 가로지르는 고속도로 차선 같은 검은 중앙퇴석 줄무늬', '빙하 양옆에 뚜렷한 칼날 모양의 흙돌 둑선'],
+      cautionAndConservation: '퇴석 제방 사면은 불안정하므로 안전 데크 산책로 준수'
+    }
+  },
+
+  // ==========================================
+  // 추가 6: 호른 (Horn / 혼)
+  // ==========================================
+  {
+    id: 'horn-kr-1',
+    terrain: '혼 (호른)',
+    region: 'korea',
+    placeName: '도봉산 선인봉·자운봉·만장봉 삼각 피라미드 암봉',
+    countryOrArea: '대한민국 서울특별시 도봉구 및 경기도 의정부시',
+    tagline: '빙하기 혹한의 동결 쐐기작용이 4면을 깎아내어 솟아오른 뾰족한 화강암 피라미드 호른형 첨봉',
+    description: `### 장소 소개 및 선정 이유
+수도권 북부의 대표 명산 도봉산의 정상부 삼총사인 자운봉(740m), 만장봉, 선인봉은 빙하기 당시 주빙하 기후의 격렬한 동결·파쇄(Frost Wedging)에 의해 사방의 절벽이 뜯겨 나가며 남은 피라미드 모양의 호른(Horn) 유사 첨봉입니다.
+
+### 과학적 형성 과정
+지하 1억 7천만 년 전 관입한 중생대 서울화강암이 지표에 융기 노출된 후, 제4기 빙하기의 영구동토 환경에서 바위 틈의 수분이 팽창하며 수직 절리들을 따라 바위를 쪼개어 떨어뜨렸습니다. 사방에서 균형 있게 삭박이 진행되어 뾰족한 암탑(Tor 및 Horn) 형태로 남았습니다.`,
+    formationProcess: '화강암 수직 절리면을 따른 주빙하 동결 파쇄 및 사방 차별 붕락',
+    observationPoints: ['자운봉 정상의 거대한 수직 암괴', '선인봉 200m 화강암 암벽', 'Y계곡의 가파른 V자 안부'],
+    mapQuery: '도봉산 자운봉',
+    geology: {
+      geologicalAge: '중생대 쥐라기 대보화강암 (약 1억 7,000만 년 전)',
+      rockType: '흑운모 화강암 및 복운모 화강암',
+      tectonicSetting: '경기육괴 북서부 화강암 관입체',
+      geomorphicAgent: '빙기 주빙하 동결 쐐기 및 풍화 침식',
+      scale: { elevationMeters: 740 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '쥐라기 마그마 관입', timeframe: '약 1억 7,000만 년 전', process: '지하 깊은 곳에서 거대한 화강암 덩어리 냉각', visualKeyFeature: '단단한 화강암 지하 암반' },
+      { stageNumber: 2, title: '융기 및 빙기 서릿발 쪼갬', timeframe: '플라이스토세', process: '얼음 쐐기가 바위 사방을 깎아 뾰족한 피라미드 암봉 완성', visualKeyFeature: '하늘로 솟구친 뾰족한 바위기둥들' },
+      { stageNumber: 3, title: '국립공원 천연 암벽 명소', timeframe: '현재', process: '클라이머들의 메카 선인봉과 명품 탐방로 안착', visualKeyFeature: '도심 뒤편에 병풍처럼 솟은 웅장한 바위산' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '봄 4~5월 및 가을 9~10월',
+      satelliteCheckPoints: ['도봉산 정상부의 하얀 화강암 바위 돔과 뾰족한 첨봉 그림자'],
+      cautionAndConservation: '암릉 구간 쇠줄 난간 및 등산화 접지력 주의'
+    }
+  },
+  {
+    id: 'horn-wd-3',
+    terrain: '혼 (호른)',
+    region: 'world',
+    placeName: '네팔 히말라야 아마다블람 (Ama Dablam)',
+    countryOrArea: '네팔 사가르마타 국립공원 쿰부 히말라야',
+    tagline: '\'어머니의 목걸이\', 4개 방향의 거대한 권곡 빙하가 깎아 만든 6,812m 높이의 완벽한 피라미드 호른',
+    description: `### 장소 소개 및 선정 이유
+히말라야 산맥의 보석이라 불리는 아마다블람(6,812m)은 에베레스트 길목에 서 있는 가장 아름다운 봉우리로, 사방 4개 방향의 곡빙하들이 깎아낸 수직 빙벽이 만나 완벽한 피라미드형 호른(Horn)의 위용을 뽐냅니다.
+
+### 과학적 형성 과정
+산정부를 둘러싼 4개의 권곡(Cirque) 빙하가 각각 배후 사면을 깎아 들어가는 두부 침식을 벌이면서 능선들이 칼날 같은 아레트(Arête)가 되었고, 이들이 정점에서 모여 극도로 가파르고 날카로운 피라미드 첨봉을 완성했습니다.`,
+    formationProcess: '다방향 권곡 빙하의 상호 역방향 두부 굴식(Headward Plucking)에 의한 빙식 첨봉화',
+    observationPoints: ['완벽한 기하학적 4면 피라미드 실루엣', '서벽에 매달린 행잉 글레이셔(Hanging Glacier, 목걸이 형상)', '쿰부 트레킹 중 팡보체 마을에서의 조망'],
+    mapQuery: 'Ama Dablam Nepal',
+    geology: {
+      geologicalAge: '신생대 제3기 올리고세~마이오세 히말라야 조산대',
+      rockType: '고변성 화강암질 편마암 및 백운모 화강암',
+      tectonicSetting: '인도판과 유라시아판 대륙 충돌 주 융기대',
+      geomorphicAgent: '다방향 고산 빙하의 집약적 서클 굴식 삭박',
+      scale: { elevationMeters: 6812 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '대륙 충돌과 히말라야 융기', timeframe: '약 5,000만 년 전', process: '지층이 압축되며 6,000m 이상으로 치솟음', visualKeyFeature: '거대한 고산 암괴' },
+      { stageNumber: 2, title: '4개 방향 빙하의 삼각 깎기', timeframe: '수십만 년간', process: '사방의 빙하가 암벽을 파먹으며 정상부를 면도날처럼 조각', visualKeyFeature: '사면이 깎여 나간 뾰족한 삼각뿔' },
+      { stageNumber: 3, title: '세계에서 가장 아름다운 호른 완성', timeframe: '현재', process: '순백의 빙벽과 검은 암벽이 완벽한 조화를 이루는 히말라야의 어머니 안착', visualKeyFeature: '파란 하늘에 우뚝 솟은 완벽한 피라미드' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '10월~11월 가을 (히말라야 시계가 가장 맑고 청명한 시즌)',
+      satelliteCheckPoints: ['쿰부 계곡 동편에 독립된 피라미드 모양으로 뾰족하게 치솟은 눈 덮인 삼각뿔'],
+      cautionAndConservation: '해발 4,000m 이상 고산병 예방 및 보온 대비 필수'
+    }
   }
 ];
+

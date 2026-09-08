@@ -422,5 +422,357 @@ export const FLUVIAL_PLACES: PlaceInfo[] = [
       satelliteCheckPoints: ['하늘에서 보면 거대한 거인들의 계단처럼 강 양안에 평행하게 달리는 계단선들', '강바닥 전체를 은빛으로 뒤덮은 넓은 자갈밭과 그물망처럼 얽힌 푸른 물줄기', '평탄한 단구면 위에 조성된 대규모 원형 관개 목초지(Center-pivot)'],
       cautionAndConservation: '급류 및 자갈 바닥 침강 위험으로 허가된 전망대 관람 권장'
     }
+  },
+
+  // ==========================================
+  // 추가 1: 곡류천 (Meander River)
+  // ==========================================
+  {
+    id: 'meander-kr-2',
+    terrain: '곡류천',
+    region: 'korea',
+    placeName: '안동 하회마을 화천 감입곡류와 부용대',
+    countryOrArea: '대한민국 경상북도 안동시 풍천면 하회리',
+    tagline: '낙동강 물줄기가 태극 모양으로 마을을 360도 감싸 안고 흐르는 물도리동 곡류천의 절정',
+    description: `### 장소 소개 및 선정 이유
+유네스코 세계문화유산인 하회마을은 낙동강 지류인 화천(花川)이 마을을 S자 태극 모양으로 감싸 안고 흐른다 하여 '하회(河回, 물도리동)'라 불립니다. 맞은편 64m 높이의 깎아지른 부용대 절벽과 넓은 백사장이 공격사면과 활주사면의 완벽한 지형 대조를 보여줍니다.
+
+### 과학적 형성 과정
+낙동강이 중생대 퇴적암 지대를 굽이쳐 흐르면서 바깥쪽은 빠른 유속으로 암반을 깎아 부용대 급절벽(공격사면)을 만들고, 안쪽은 느린 유속으로 모래를 쌓아 만송정 솔숲과 백사장(활주사면)을 형성했습니다.`,
+    formationProcess: '하천 사행의 원심력에 의한 외측 공격사면 절벽 침식 및 내측 활주사면 모래 퇴적',
+    observationPoints: ['부용대 정상에서 내려다보는 하회마을 전경', '물길 안쪽 만송정 솔숲과 백사장', 'S자로 휘도는 화천 물길'],
+    mapQuery: '안동 하회마을 부용대',
+    geology: {
+      geologicalAge: '중생대 백악기 경상누층군 하산동층',
+      rockType: '적갈색 이암 및 사암',
+      tectonicSetting: '경상분지 의성소분지 북서부',
+      geomorphicAgent: '하천 측방 침식 및 포인트 바(Point Bar) 모래 퇴적',
+      scale: { lengthKm: 4.5, elevationMeters: 64 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '백악기 하천 퇴적암 형성', timeframe: '약 1억 년 전', process: '공룡 시대 붉은 모래와 진흙이 굳어 단단한 암반 형성', visualKeyFeature: '수평 줄무늬가 선명한 붉은 암벽' },
+      { stageNumber: 2, title: '하천 굽이침과 차별 침식', timeframe: '신생대', process: '물길이 바깥쪽 암벽을 계속 때려 64m 높이 부용대 절벽 형성', visualKeyFeature: '강물을 내려다보는 수직 바위 절벽' },
+      { stageNumber: 3, title: '하회 백사장과 마을 터 안착', timeframe: '현재', process: '안쪽에 모래가 쌓여 비옥한 터가 마련되고 풍산 류씨 씨족마을 정착', visualKeyFeature: '연꽃이 물 위에 뜬 형국의 길지' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '가을 안개 낀 아침 및 벚꽃 피는 봄',
+      satelliteCheckPoints: ['S자로 마을을 한 바퀴 감아 도는 낙동강의 뚜렷한 리본형 물길', '마을 맞은편 북측의 수직 암벽 부용대 그림자'],
+      cautionAndConservation: '전통 가옥 및 문화재 보호구역 준수'
+    }
+  },
+  {
+    id: 'meander-kr-3',
+    terrain: '곡류천',
+    region: 'korea',
+    placeName: '순천만 동천·이사천 자유곡류천과 S자 갯골',
+    countryOrArea: '대한민국 전라남도 순천시 대대동 순천만',
+    tagline: '광활한 갈대밭과 갯벌을 부드럽게 가르며 바다로 흘러드는 은빛 S자 곡류 수로',
+    description: `### 장소 소개 및 선정 이유
+세계자연유산 순천만의 동천과 이사천은 하류 평탄면과 갯벌 지대를 자유롭게 사행(Free Meander)하며 바다로 나아가는 전형적인 저지대 자유곡류천과 감조 하천 지형입니다.
+
+### 과학적 형성 과정
+하천 경사가 거의 0에 가까운 해안 저평지에서 조석의 밀물과 썰물이 하천수와 만나 유속이 느려지면서, 가장 작은 저항선을 찾아 좌우로 자유롭게 굽이치는 S자 곡류 갯골을 형성했습니다.`,
+    formationProcess: '극저경사 해안 평야에서의 조석 간만 및 유수 상호작용에 의한 자유 사행',
+    observationPoints: ['용산전망대에서 내려다보는 S자 해질녘 물길', '540만㎡의 광활한 갈대밭 군락', '칠면초 군락과 둥근 갈대 원형환'],
+    mapQuery: '순천만습지 용산전망대',
+    geology: {
+      geologicalAge: '신생대 제4기 홀로세 (약 6,000년 전~현재)',
+      rockType: '하천 및 조간대 실트·점토 퇴적물',
+      tectonicSetting: '남해안 침강 해안 만입부',
+      geomorphicAgent: '하천 퇴적 및 일 2회 조석 순환',
+      scale: { areaKm2: 21.6 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '후빙기 해수면 안정', timeframe: '약 6,000년 전', process: '순천만에 바닷물이 차오르고 하구에 미세 점토 퇴적', visualKeyFeature: '넓은 진흙 갯벌' },
+      { stageNumber: 2, title: '동천 토사 공급과 갈대 정착', timeframe: '수천 년간', process: '동천이 실어 온 토사가 쌓이며 거대한 갈대 군락 형성', visualKeyFeature: '바다로 뻗어나가는 갈대숲' },
+      { stageNumber: 3, title: 'S자 곡류 갯골 완성', timeframe: '현재', process: '일몰 시 붉게 물드는 은빛 S자 물길과 흑두루미 월동지 안착', visualKeyFeature: '황금빛 갈대와 어우러진 붉은 노을 물길' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '10월~12월 갈대꽃 절정과 흑두루미 월동 시즌',
+      satelliteCheckPoints: ['갯벌 한가운데 리본처럼 구불구불 이어지는 S자 조수로', '원형으로 자라난 갈대 섬들'],
+      cautionAndConservation: '철새 서식지 보호를 위해 정숙 및 플래시 촬영 금지'
+    }
+  },
+  {
+    id: 'meander-wd-2',
+    terrain: '곡류천',
+    region: 'world',
+    placeName: '미국 미시시피강 자유곡류천과 우각호 (Oxbow Lake)',
+    countryOrArea: '미국 아칸소주·미시시피주 경계 충적 평야',
+    tagline: '광대한 대평원을 뱀처럼 굽이치다 지름길을 뚫어 버려진 말굽 모양 호수(우각호)의 교과서',
+    description: `### 장소 소개 및 선정 이유
+미국 대륙을 관통하는 미시시피강 하류는 전 세계에서 가장 전형적이고 방대한 규모의 자유곡류천(Free Meander) 지대로, 심하게 굽이치던 물길의 목(Neck)이 홍수로 잘려 나가면서 생긴 우각호(Oxbow Lake)와 구하도가 무수히 널려 있습니다.
+
+### 과학적 형성 과정
+완만한 충적 평야에서 하천이 곡류를 거듭하며 고리 모양으로 팽창하다가, 대홍수 시 가장 좁아진 목 부분을 직선으로 관통하는 슈트 컷오프(Chute Cutoff)가 일어납니다. 버려진 옛 물길 양 끝에 모래가 쌓여 차단되면서 소뿔 모양의 호수인 우각호가 탄생합니다.`,
+    formationProcess: '자유 사행천의 곡경 팽창 후 홍수기 하도 절단(Cutoff) 및 하도 양단 차단',
+    observationPoints: ['치코 호수(Lake Chicot) 거대 우각호', '본류 옆에 남아 있는 초승달 모양 옛 물길 흔적', '자연제방과 배후습지 단면'],
+    mapQuery: 'Lake Chicot State Park Arkansas USA',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 말~홀로세',
+      rockType: '미시시피 충적 실트, 점토, 미세 모래',
+      tectonicSetting: '북미 대륙 내부 미시시피 침강 분지',
+      geomorphicAgent: '대하천 자유 사행 및 홍수 범람 하도 전이',
+      scale: { lengthKm: 35, areaKm2: 20 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '평야 위 자유 사행 팽창', timeframe: '수천 년 전', process: '측방 침식으로 곡류 루프가 원에 가깝게 부풀어 오름', visualKeyFeature: '극단적으로 부풀어 오른 뱀 물길' },
+      { stageNumber: 2, title: '대홍수와 목(Neck) 절단', timeframe: '수백 년 전', process: '홍수로 불어난 물이 좁아진 목을 직선으로 뚫고 직류화', visualKeyFeature: '직선 지름길로 쏟아지는 강물' },
+      { stageNumber: 3, title: '양단 폐색과 우각호 탄생', timeframe: '현재', process: '퇴적물이 옛 물길 입구를 막아 초승달 모양 독립 호수 안착', visualKeyFeature: '강 옆에 고요히 남겨진 말굽형 호수' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '봄과 가을 철새 이동기',
+      satelliteCheckPoints: ['미시시피강 주변을 따라 도열한 수십 개의 초승달 모양 호수들', '강이 끊어지며 남긴 나이테 모양의 옛 포인트 바 줄무늬'],
+      cautionAndConservation: '습지 악어 및 곤충 주의'
+    }
+  },
+
+  // ==========================================
+  // 추가 2: 선상지 (Alluvial Fan)
+  // ==========================================
+  {
+    id: 'fan-kr-3',
+    terrain: '선상지',
+    region: 'korea',
+    placeName: '경주 남산 서편 선상지',
+    countryOrArea: '대한민국 경상북도 경주시 남산동 일원',
+    tagline: '신라 천년의 불교 유적을 품은 경주 분지 산록의 전형적 충적 선상지',
+    description: `### 장소 소개 및 선정 이유
+경주 남산 서편 자락은 화강암 산지에서 발원한 소하천들이 형산강 분지 평야로 쏟아져 나오며 모래와 자갈을 부채꼴로 퇴적시킨 역사와 자연이 공존하는 선상지입니다.
+
+### 과학적 형성 과정
+남산 화강암 산괴의 심한 풍화 쇄설토가 집중 호우 시 급경사 계곡을 따라 운반되다가, 형산강 단층곡 평탄면에 진입하면서 유속이 급감하여 완경사의 부채꼴 선상지면을 형성했습니다.`,
+    formationProcess: '남산 화강암 풍화 쇄설토의 산록 탈출구 방사상 퇴적',
+    observationPoints: ['남산 서록의 완만한 부채꼴 경사면', '선정부의 굵은 화강암 자갈', '선단부의 논농사 지대'],
+    mapQuery: '경주 남산 서편',
+    geology: {
+      geologicalAge: '신생대 제4기 충적층',
+      rockType: '불국사화강암 풍화 조립사 및 자갈',
+      tectonicSetting: '양산단층대 동측 경주 분지',
+      geomorphicAgent: '산록 사면 유수 퇴적',
+      scale: { areaKm2: 3.8 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '화강암 심층 풍화', timeframe: '플라이스토세', process: '남산 암석이 잘게 부서져 토사 공급원 마련', visualKeyFeature: '화강암 마사토 사면' },
+      { stageNumber: 2, title: '급류 운반과 선상지 퇴적', timeframe: '홀로세', process: '골짜기 입구마다 부채꼴 자갈 둔덕 형성', visualKeyFeature: '방사상 퇴적 부채면' },
+      { stageNumber: 3, title: '신라 왕경 및 사찰 입지', timeframe: '삼국시대~현재', process: '배수가 좋고 조망이 뛰어난 선상지면에 포석정 등 유적 분포', visualKeyFeature: '솔숲과 고분이 어우러진 평화로운 경관' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '봄 벚꽃 및 가을 단풍철',
+      satelliteCheckPoints: ['남산 등고선이 평지와 만나는 지점에 둥글게 퍼져나간 완경사면'],
+      cautionAndConservation: '국립공원 사적지 보호구역 준수'
+    }
+  },
+
+  // ==========================================
+  // 추가 3: 삼각주 (Delta)
+  // ==========================================
+  {
+    id: 'delta-wd-2',
+    terrain: '삼각주',
+    region: 'world',
+    placeName: '미국 미시시피강 조족상 삼각주 (Bird-foot Delta)',
+    countryOrArea: '미국 루이지애나주 멕시코만 해안',
+    tagline: '멕시코만 바다를 향해 새의 발가락처럼 사방으로 뻗어나간 지구상 가장 대표적인 조족상 삼각주',
+    description: `### 장소 소개 및 선정 이유
+미시시피강 하구 삼각주는 북미 대륙 전체에서 운반된 막대한 토사가 멕시코만의 잔잔한 바다로 유입되면서, 여러 갈래의 분류(Distributaries) 수로를 따라 새 발가락(Bird-foot) 모양으로 바다를 파고든 세계 지형학의 최고 교과서입니다.
+
+### 과학적 형성 과정
+파도와 조류의 힘이 약하고 강이 운반하는 토사의 양이 압도적인 해양 환경에서, 강줄기 양옆에 자연제방이 길게 바다 쪽으로 뻗어나가면서 제방 사이에 수로가 생겨 새 발 모양의 돌출형 삼각주를 완성했습니다.`,
+    formationProcess: '하천 우세형(Fluvial-dominated) 해안에서 자연제방 전진에 따른 조족상(Bird-foot) 퇴적',
+    observationPoints: ['새 발가락 모양의 분류 수로망', '수로 양옆의 자연제방(Levee) 도로', '배후의 광활한 소금 습지(Salt Marsh)'],
+    mapQuery: 'Mississippi River Delta Louisiana USA',
+    geology: {
+      geologicalAge: '신생대 제4기 홀로세 발라드 삼각주 엽(약 1,000년 전~현재)',
+      rockType: '미세 모래, 실트, 유기질 점토',
+      tectonicSetting: '멕시코만 대륙붕 수동형 주변부(Passive Margin)',
+      geomorphicAgent: '하천 퇴적 우세 및 점토 다짐 침하',
+      scale: { areaKm2: 12000, lengthKm: 150 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '미시시피 토사 운반', timeframe: '수천 년간', process: '연간 수억 톤의 진흙과 모래가 하구로 집중', visualKeyFeature: '황토빛 강물이 바다로 분출' },
+      { stageNumber: 2, title: '자연제방 연장과 수로 분기', timeframe: '약 1,000년 전', process: '수로 양옆에 제방이 쌓이며 바다 깊숙이 새 발가락처럼 돌출', visualKeyFeature: '바다 한가운데로 뻗어가는 가늘고 긴 둑길' },
+      { stageNumber: 3, title: '현대 조족상 삼각주 안착', timeframe: '현재', process: '뉴올리언스 남단 해안선에 세계 최대 규모의 하천 우세 삼각주 위용', visualKeyFeature: '위성에서 선명하게 보이는 거대한 새 발 모양' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '11월~4월 (온화하고 허리케인 위험이 적은 계절)',
+      satelliteCheckPoints: ['멕시코만의 짙푸른 바다 속으로 손가락처럼 길게 뻗어나간 황갈색 퇴적 수로들'],
+      cautionAndConservation: '해수면 상승 및 지반 침하로 인한 습지 보존 이슈 지역'
+    }
+  },
+
+  // ==========================================
+  // 추가 4: 하안단구 (River Terrace)
+  // ==========================================
+  {
+    id: 'terrace-kr-2',
+    terrain: '하안단구',
+    region: 'korea',
+    placeName: '정선 동강 귤암리 다단 하안단구',
+    countryOrArea: '대한민국 강원특별자치도 정선군 정선읍 귤암리',
+    tagline: '동강의 깊은 석회암 협곡 벽에 선명하게 새겨진 3단 계단식 옛 강바닥 지형',
+    description: `### 장소 소개 및 선정 이유
+동강 최상류 귤암리 일대는 강변 절벽을 따라 고도가 서로 다른 3~4개의 평탄면이 계단처럼 층을 이루고 있는 전형적인 융기성 하안단구 지형으로, 천연기념물 동강할미꽃의 자생지로도 유명합니다.
+
+### 과학적 형성 과정
+신생대 제3기 말부터 시작된 한반도의 비대칭 요곡 융기 운동 과정에서 지반이 간헐적으로 솟아오를 때마다 동강이 암반을 수직으로 파고들어 새로운 골짜기를 만들고, 옛 하상(강바닥)은 절벽 위의 평탄한 계단으로 남았습니다.`,
+    formationProcess: '태백산맥 간헐적 지반 융기 및 하천 침식 부활에 의한 다단 침식 계단 형성',
+    observationPoints: ['고도별 3단 평탄 단구면', '단구면에 퇴적된 둥근 강자갈층', '동강 수직 암벽의 동강할미꽃'],
+    mapQuery: '정선 동강 귤암리',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세~홀로세',
+      rockType: '조선누층군 정선 석회암 위 하천 둥근 자갈층',
+      tectonicSetting: '옥천대 정선 카르스트 협곡',
+      geomorphicAgent: '지반 융기 및 감입곡류 하천 하방 굴착',
+      scale: { depthMeters: 80, lengthKm: 5 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '고기 하천 평탄 하상', timeframe: '약 15만 년 전', process: '동강이 현재보다 80m 높은 위치에서 자갈을 깔며 흐름', visualKeyFeature: '산 위에 넓게 깔린 둥근 강돌밭' },
+      { stageNumber: 2, title: '간헐적 지반 융기와 하각', timeframe: '수만 년간', process: '땅이 계단식으로 들릴 때마다 강물이 바닥을 깎아 3단 계단 형성', visualKeyFeature: '절벽 옆에 층층이 생긴 평평한 선반 지형' },
+      { stageNumber: 3, title: '취락 및 과수원 이용', timeframe: '현재', process: '홍수가 닿지 않는 단구 평탄면에 마을과 사과 과수원 안착', visualKeyFeature: '동강 푸른 물길과 층층이 늘어선 평화로운 마을' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '4월 동강할미꽃 개화기 및 가을 단풍철',
+      satelliteCheckPoints: ['동강 물줄기를 따라 협곡 사면에 계단식으로 형성된 평평한 밭자리들'],
+      cautionAndConservation: '동강할미꽃 훼손 및 채취 금지'
+    }
+  },
+
+  // ==========================================
+  // 추가 5: 폭포 (Waterfall)
+  // ==========================================
+  {
+    id: 'waterfall-kr-1',
+    terrain: '폭포',
+    region: 'korea',
+    placeName: '제주 서귀포 정방폭포 (해안 직하 폭포)',
+    countryOrArea: '대한민국 제주특별자치도 서귀포시 칠십리로 214번길',
+    tagline: '높이 23m의 은빛 물줄기가 검은 주상절리 절벽에서 푸른 바다로 곧장 꽂히는 동양 유일의 해안 폭포',
+    description: `### 장소 소개 및 선정 이유
+명승 제43호인 정방폭포는 폭포수가 육상 하천을 거치지 않고 검은 현무암 주상절리 해식애(해안 절벽)에서 에메랄드빛 바다로 직접 떨어지는 동양에서 보기 드문 해안 직하형 폭포입니다.
+
+### 과학적 형성 과정
+한라산에서 분출한 조면안산암 용암류가 식으면서 수직 주상절리가 발달했고, 이후 해수면 상승으로 파도가 절벽 밑동을 깎아 수직 해식애를 만들었습니다. 하천이 이 절벽을 만나 낙차 23m의 해안 폭포가 되었습니다.`,
+    formationProcess: '용암류 냉각 주상절리 및 파도 침식 해식애 단애면에 하천 낙하',
+    observationPoints: ['바다로 직접 쏟아지는 23m 물줄기', '폭포 벽을 이루는 육각형 주상절리 바위', '폭포 주변 몽돌 해변'],
+    mapQuery: '서귀포 정방폭포',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 서귀포 조면안산암류',
+      rockType: '조면안산암질 현무암 및 기둥 모양 주상절리',
+      tectonicSetting: '제주 화산도 남사면 해안선',
+      geomorphicAgent: '파도에 의한 해식애 절벽 굴착 및 하천 낙하',
+      scale: { depthMeters: 23, lengthKm: 0.1 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '조면안산암 용암 분출', timeframe: '약 40만 년 전', process: '용암이 두껍게 굳으며 수직 기둥(주상절리) 형성', visualKeyFeature: '거대한 육각 바위 기둥들' },
+      { stageNumber: 2, title: '파도의 해식애 굴착', timeframe: '후빙기', process: '파도가 바위를 때려 23m 수직 낭떠러지 완성', visualKeyFeature: '바다와 맞닿은 깎아지른 절벽' },
+      { stageNumber: 3, title: '해안 직하 폭포 탄생', timeframe: '현재', process: '동홍천 물줄기가 바다로 곧장 낙하하는 환상적인 절경 안착', visualKeyFeature: '푸른 바다로 하얗게 쏟아지는 물보라' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '여름철 장마 후 수량 풍부한 시기 (시원한 물보라 장관)',
+      satelliteCheckPoints: ['서귀포 해안선 절벽에서 바다로 하얗게 쏟아지는 폭포 낙하지점'],
+      cautionAndConservation: '젖은 해변 갯바위 미끄럼 주의'
+    }
+  },
+  {
+    id: 'waterfall-kr-2',
+    terrain: '폭포',
+    region: 'korea',
+    placeName: '철원 한탄강 삼부연폭포',
+    countryOrArea: '대한민국 강원특별자치도 철원군 갈말읍 신철원리',
+    tagline: '가마솥 모양의 3단 돌개구멍 소(沼)를 뚫고 쏟아지는 20m 높이의 화강암 협곡 폭포',
+    description: `### 장소 소개 및 선정 이유
+명승 제84호이자 겸재 정선의 진경산수화 소재로 유명한 삼부연(三釜淵)폭포는 물줄기가 세 번 꺾어지며 가마솥(釜) 모양의 깊은 웅덩이 세 개를 뚫고 쏟아져 내리는 한국 하식 폭포의 백미입니다.
+
+### 과학적 형성 과정
+중생대 쥐라기 화강암 절벽을 흐르던 하천 급류가 회전하며 소용돌이치는 자갈 마식 작용(포트홀 굴착)과 단열선을 따라 하방 침식을 일으켜, 상·중·하 3개의 거대한 가마솥 소와 20m 높이의 폭포를 조각했습니다.`,
+    formationProcess: '화강암 절리 단애면의 하천 유수 침식 및 자갈 마모에 의한 3단계 포트홀(Pothole) 굴착',
+    observationPoints: ['노귀소·가마소·용소 3단 가마솥 웅덩이', '20m 수직 화강암 절벽', '겸재 정선 그림 속 구도와의 일치'],
+    mapQuery: '철원 삼부연폭포',
+    geology: {
+      geologicalAge: '중생대 쥐라기 대보화강암 (약 1억 7,000만 년 전)',
+      rockType: '흑운모 화강암',
+      tectonicSetting: '추가령 구조곡 동측 명성산 지괴',
+      geomorphicAgent: '하천 급류 자갈 소용돌이 마식(Cavitation & Abrasion)',
+      scale: { depthMeters: 20 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '쥐라기 지하 화강암 관입', timeframe: '약 1억 7,000만 년 전', process: '마그마가 지하에서 식어 단단한 화강암 암반 형성', visualKeyFeature: '치밀한 백색 화강암 암괴' },
+      { stageNumber: 2, title: '지반 융기와 계곡 급류 침식', timeframe: '신생대', process: '급류에 자갈이 회전하며 바닥에 3개의 깊은 원형 구멍(포트홀)을 뚫음', visualKeyFeature: '바위에 뚫린 3개의 둥근 가마솥 웅덩이' },
+      { stageNumber: 3, title: '삼부연 명승 완성', timeframe: '현재', process: '사계절 마르지 않는 신비로운 3단 폭포의 위용 안착', visualKeyFeature: '비경을 이루는 에메랄드빛 소와 물줄기' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '비 온 뒤 여름철 (우레 같은 굉음과 풍부한 수량)',
+      satelliteCheckPoints: ['명성산 북서쪽 좁은 계곡 길목에 위치한 폭포 전망대'],
+      cautionAndConservation: '수심이 깊어 물놀이 절대 금지'
+    }
+  },
+  {
+    id: 'waterfall-wd-1',
+    terrain: '폭포',
+    region: 'world',
+    placeName: '미국·캐나다 나이아가라 폭포 (Niagara Falls)',
+    countryOrArea: '미국 뉴욕주 및 캐나다 온타리오주 경계',
+    tagline: '초당 2,800톤의 빙하 호수물이 쏟아지며 매년 상류로 후퇴하는 세계 3대 대폭포',
+    description: `### 장소 소개 및 선정 이유
+세계 3대 폭포 중 하나인 나이아가라 폭포는 캐나다 호스슈 폭포(폭 790m, 낙차 53m)와 미국 폭포로 이루어져 있으며, 5대호의 에리호에서 온타리오호로 흐르는 거대한 물길이 쏟아져 내리는 지구상 가장 역동적인 차별 침식 폭포입니다.
+
+### 과학적 형성 과정
+상부의 단단한 록포트 백운암층 아래에 연약한 로체스터 셰일층이 받치고 있는 구조로, 쏟아지는 물살이 하부의 부드러운 셰일을 먼저 파내면 버티지 못한 상부 백운암이 무너져 내리면서 폭포가 1만 2천 년 동안 상류 쪽으로 11km나 후퇴(Waterfall Retreat)했습니다.`,
+    formationProcess: '경암(백운암)과 연암(셰일)의 층서적 차별 침식 및 폭포 두부 후퇴(Headward Erosion)',
+    observationPoints: ['말굽 모양의 캐나다 호스슈 폭포', '안개 숙녀호(Maid of the Mist) 유람선 물보라 체험', '11km에 걸친 나이아가라 협곡'],
+    mapQuery: 'Niagara Falls Ontario Canada',
+    geology: {
+      geologicalAge: '고생대 실루리아기 (약 4억 3,000만 년 전) 위 후빙기 침식',
+      rockType: '상부 록포트 백운암(Dolomite) 및 하부 셰일·사암 교호대',
+      tectonicSetting: '북미 미시간 분지 동단 나이아가라 단애면(Niagara Cuesta)',
+      geomorphicAgent: '빙하 유출 대수량의 셰일 굴식 및 백운암 블록 붕괴',
+      scale: { depthMeters: 53, lengthKm: 1.2 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '실루리아기 단단한 백운암과 셰일 퇴적', timeframe: '약 4억 3,000만 년 전', process: '바다 밑에서 단단한 돌과 무른 진흙이 샌드위치처럼 층을 이룸', visualKeyFeature: '수평 줄무늬의 단애 암벽' },
+      { stageNumber: 2, title: '빙하기 종료와 폭포 탄생', timeframe: '약 1만 2,000년 전', process: '녹아내린 빙하 물이 온타리오호 절벽으로 쏟아지며 첫 폭포 시작', visualKeyFeature: '현재보다 11km 하류에서 시작된 거대 낙수' },
+      { stageNumber: 3, title: '하부 셰일 침식과 11km 후퇴', timeframe: '1만 2,000년간', process: '밑동이 파이며 바위가 무너져 매년 1m씩 상류로 뒷걸음질', visualKeyFeature: '폭포가 깎으며 지나간 깊은 나이아가라 협곡' },
+      { stageNumber: 4, title: '세계적인 경관 안착', timeframe: '현재', process: '수력발전 수량 조절로 연간 30cm 후퇴 속도로 완화되며 영구 보존', visualKeyFeature: '무지개가 피어오르는 거대한 말굽 폭포' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '5월~10월 (유람선 운항 및 야간 오색 조명쇼)',
+      satelliteCheckPoints: ['5대호 연결 수로 중간에 하얗게 거품을 일으키는 호스슈 모양 폭포 라인'],
+      cautionAndConservation: '물보라가 거세므로 우비 착용 및 방수 팩 필수'
+    }
+  },
+  {
+    id: 'waterfall-wd-2',
+    terrain: '폭포',
+    region: 'world',
+    placeName: '브라질·아르헨티나 이과수 폭포 (Iguazu Falls)',
+    countryOrArea: '아르헨티나 미시오네스주 및 브라질 파라나주 국경',
+    tagline: '총 너비 2.7km, 275개의 물줄기가 굉음을 내지르는 \'악마의 목구멍\', 세계 최대의 폭포 시스템',
+    description: `### 장소 소개 및 선정 이유
+유네스코 세계자연유산인 이과수 폭포는 현지 원주민 과라니어족 말로 '큰 물(Y-Guasu)'이라는 뜻으로, 나이아가라 폭포보다 폭이 2배, 높이가 1.5배에 달하며 275개의 크고 작은 폭포군이 반원형을 이루는 지구상 최대 규모의 대폭포입니다.
+
+### 과학적 형성 과정
+중생대 곤드와나 대륙 분열 시기에 분출한 세계 최대의 파라나 현무암 용암 대지에 단층 운동으로 거대한 균열 계곡이 생겼고, 이과수강이 현무암 단애면을 깎아내며 U자형의 거대한 '악마의 목구멍(Garganta del Diablo)' 협곡을 형성했습니다.`,
+    formationProcess: '파라나 홍수 현무암 대지의 테크토닉 단층 절벽 및 3단계 용암류 단애 낙하',
+    observationPoints: ['우레 같은 굉음의 악마의 목구멍 전망대', '275개 폭포를 잇는 숲속 산책로', '브라질 쪽 파노라마 전경'],
+    mapQuery: 'Iguazu Falls Argentina Brazil',
+    geology: {
+      geologicalAge: '중생대 백악기 파라나 트랩 현무암 (약 1억 3,500만 년 전)',
+      rockType: '다공질 및 주상절리형 홍수 현무암(Flood Basalt)',
+      tectonicSetting: '남미 대륙 내부 파라나 분지 열개 구조',
+      geomorphicAgent: '대용량 하천 유수의 현무암 절리 침식 및 후퇴',
+      scale: { depthMeters: 82, lengthKm: 2.7 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '백악기 거대 현무암 용암 분출', timeframe: '약 1억 3,500만 년 전', process: '남미 대륙이 찢어지며 두께 1,000m의 현무암 대지 형성', visualKeyFeature: '검고 두터운 용암 지층' },
+      { stageNumber: 2, title: '단층 균열과 단애면 발생', timeframe: '신생대 제3기', process: '지각 균열로 계단식 단층 단애가 생기며 강물이 떨어짐', visualKeyFeature: '말굽 모양으로 갈라진 거대한 바위 절벽' },
+      { stageNumber: 3, title: '2.7km 악마의 목구멍 완성', timeframe: '현재', process: '초당 1,500만 리터의 물이 쏟아지며 거대한 물안개 기둥을 뿜는 장관 안착', visualKeyFeature: '정글 속에서 피어오르는 거대한 수증기 구름' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '봄 9~11월 및 가을 3~5월 (쾌적한 기온과 적정 수량)',
+      satelliteCheckPoints: ['짙은 정글 한가운데 U자형으로 깊게 파인 협곡과 하얀 물보라 분출점'],
+      cautionAndConservation: '카메라 방수 대책 필수 및 야생 긴코너구리(코아티) 먹이주기 금지'
+    }
   }
 ];
+

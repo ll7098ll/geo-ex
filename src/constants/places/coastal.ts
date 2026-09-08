@@ -551,5 +551,257 @@ export const COASTAL_PLACES: PlaceInfo[] = [
       satelliteCheckPoints: ['발트해 지도에서 눈에 번쩍 띄는 가느다란 실 모양의 98km 사주 띠', '사주 서측의 짙푸른 발트해와 동측의 옅은 청록색 쿠로니안 석호의 색상 대비', '사주 중간중간에 보이는 황금빛 모래언덕 패치들'],
       cautionAndConservation: '국경선(리투아니아-러시아) 통과 구역 및 이동사구 보행 금지 펜스 준수'
     }
+  },
+
+  // ==========================================
+  // 추가 1: 사주·사취 (Spit and Barrier)
+  // ==========================================
+  {
+    id: 'spit-kr-2',
+    terrain: '사주·사취',
+    region: 'korea',
+    placeName: '제주 신양 섭지코지 사주·사취 해변',
+    countryOrArea: '대한민국 제주특별자치도 서귀포시 성산읍 고성리',
+    tagline: '성산 일출봉과 섭지코지 화산 곶 사이에 연안류가 모래를 쌓아 연결한 완만한 초승달 사주',
+    description: `### 장소 소개 및 선정 이유
+제주 동부의 신양섭지코지해변은 성산 일출봉 수성화산체와 섭지코지 화산암 지형 사이의 얕은 만입부에 연안류와 파도가 패각 모래를 실어 날라 쌓은 전형적인 해안 사주(Sand Spit) 지형입니다.
+
+### 과학적 형성 과정
+연안을 따라 흐르는 조류와 파랑이 성산 일출봉 주변 화산 쇄설물과 조개껍데기 모래를 운반하여 섭지코지 암초 쪽으로 길게 모래톱(사취)을 성장시켰고, 이것이 넓어지며 만을 반쯤 막는 사주로 진화했습니다.`,
+    formationProcess: '성산 일출봉-섭지코지 사이 연안류 모래 공급 및 해안 모래톱(사취·사주) 성장',
+    observationPoints: ['성산 일출봉을 배경으로 휜 백사장 곡선', '섭지코지 붉은 화산송이(스코리아) 사취 기점', '윈드서핑 명소의 잔잔한 배후 내해'],
+    mapQuery: '신양섭지코지해변',
+    geology: {
+      geologicalAge: '신생대 제4기 홀로세 (약 3,000년 전~현재)',
+      rockType: '패각질 중립사 및 화산 쇄설물 혼합 퇴적층',
+      tectonicSetting: '제주 동부 화산암 해안선',
+      geomorphicAgent: '연안류(Longshore Drift) 및 굴절 파랑 퇴적',
+      scale: { lengthKm: 1.5, depthMeters: 2.5 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '화산 분출과 만입 지형', timeframe: '수만 년 전', process: '일출봉과 섭지코지가 분출하며 사이에 얕은 바다 만 형성', visualKeyFeature: '두 화산체 사이 바다' },
+      { stageNumber: 2, title: '모래톱(사취) 뻗어나감', timeframe: '수천 년 전', process: '파도가 모래를 실어 와 섭지코지 쪽으로 길게 혓바닥처럼 퇴적', visualKeyFeature: '바다로 뻗는 좁은 백사장' },
+      { stageNumber: 3, title: '초승달 사주와 안식처 완성', timeframe: '현재', process: '외해 파도를 막아주는 잔잔한 신양만과 아름다운 사주 해변 안착', visualKeyFeature: '일출봉을 마주 보는 은빛 모래 해변' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '봄 유채꽃 철 및 여름 해양 레저 시즌',
+      satelliteCheckPoints: ['성산 일출봉과 섭지코지를 부드러운 호(Arc) 형태로 연결하는 백색 해변선'],
+      cautionAndConservation: '해안사구 보호구역 내 차량 진입 금지'
+    }
+  },
+  {
+    id: 'spit-wd-2',
+    terrain: '사주·사취',
+    region: 'world',
+    placeName: '미국 매사추세츠 케이프코드 사취 (Cape Cod Hook Spit)',
+    countryOrArea: '미국 매사추세츠주 대서양 연안',
+    tagline: '대서양을 향해 팔을 굽힌 갈고리 모양으로 뻗어나간 길이 100km의 세계 최대 사취 시스템',
+    description: `### 장소 소개 및 선정 이유
+미국 동부 대서양 연안의 케이프코드(Cape Cod)는 거대한 모래톱이 바다 쪽으로 뻗어나가며 끝이 갈고리처럼 휜 전형적인 후크 사취(Recurved Spit)로, 대서양 파랑 에너지가 빚어낸 세계적 지형 명소입니다.
+
+### 과학적 형성 과정
+빙하기 빙하가 남긴 거대한 빙퇴석(Moraine) 모래 언덕을 대서양의 강한 연안류가 북쪽으로 침식·운반하면서 바다 쪽으로 100km나 길게 모래톱을 연장시켰고, 끝부분에서 파랑 굴절에 의해 갈고리처럼 안쪽으로 휘어 들어갔습니다.`,
+    formationProcess: '빙퇴석 모래의 장거리 연안류 운반 및 파랑 굴절에 의한 만곡 사취(Recurved Spit) 성장',
+    observationPoints: ['프로빈스타운의 갈고리 모양 사취 끝단', '대서양 국립 해안(National Seashore) 사구', '배후의 케이프코드만 정온 수역'],
+    mapQuery: 'Cape Cod National Seashore Massachusetts USA',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 빙퇴석 위 홀로세 연안 재퇴적',
+      rockType: '석영질 모래 및 빙하 자갈',
+      tectonicSetting: '북미 대륙 동부 수동형 연안',
+      geomorphicAgent: '대서양 연안류 및 노스이스터(Nor\'easter) 폭풍 파랑',
+      scale: { lengthKm: 105, areaKm2: 880 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '빙하 퇴적물 집적', timeframe: '약 1만 8,000년 전', process: '로렌타이드 빙상이 후퇴하며 거대한 모래 자갈 언덕을 남김', visualKeyFeature: '바다에 돌출된 둔덕' },
+      { stageNumber: 2, title: '연안류에 의한 북향 모래 수송', timeframe: '수천 년간', process: '파도가 연간 수십만 톤의 모래를 북쪽으로 밀어 올려 모래톱 연장', visualKeyFeature: '바다 한가운데로 길게 자라는 모래 둑' },
+      { stageNumber: 3, title: '갈고리 사취와 국립해안 완성', timeframe: '현재', process: '끝자락이 나선형으로 휘어지며 천혜의 항구를 품은 케이프코드 완성', visualKeyFeature: '지도에서 뚜렷이 보이는 굽은 팔 모양 반도' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '6월~9월 (온화한 기후와 고래 관찰 투어)',
+      satelliteCheckPoints: ['미국 동북부 지도에서 대서양으로 구부러진 사람 팔 모양의 거대한 모래 반도'],
+      cautionAndConservation: '대서양 연안 강풍 및 이안류(Rip Current) 주의'
+    }
+  },
+
+  // ==========================================
+  // 추가 2: 해식애 (Sea Cliff)
+  // ==========================================
+  {
+    id: 'cliff-kr-2',
+    terrain: '해식애 (해안 절벽)',
+    region: 'korea',
+    placeName: '부산 태종대 신선바위 해식애와 파식대',
+    countryOrArea: '대한민국 부산광역시 영도구 전망로 24',
+    tagline: '대한해협의 거센 파도가 1억 년 된 백악기 퇴적암을 깎아 만든 100m 수직 절벽과 기암괴석',
+    description: `### 장소 소개 및 선정 이유
+명승 제17호인 태종대는 부산 영도 최남단에서 대한해협을 향해 돌출된 곶(Headland) 지형으로, 100m 높이의 깎아지른 수직 해식애(Sea Cliff)와 너른 파식대, 해식동굴이 한자리에 모인 한국 해안 침식 지형의 교과서입니다.
+
+### 과학적 형성 과정
+중생대 호수 밑바닥에 쌓였던 퇴적암 지층이 융기한 후, 외해에서 밀려오는 강력한 파랑 에너지가 곶의 밑동을 집중적으로 때려 해식애를 만들고, 무너져 내린 암반 바닥을 평평하게 깎아 파식대를 형성했습니다.`,
+    formationProcess: '돌출된 두부(Headland)에 대한 파랑 에너지 집중 침식 및 암괴 붕락(Collapse)',
+    observationPoints: ['100m 수직 낭떠러지 신선바위 해식애', '평평하게 펼쳐진 넓은 파식대 바위', '공룡 발자국 화석과 단층선'],
+    mapQuery: '부산 태종대 신선바위',
+    geology: {
+      geologicalAge: '중생대 백악기 경상누층군 다대포층',
+      rockType: '층리가 발달한 셰일, 사암, 응회암 교호대',
+      tectonicSetting: '한반도 남동부 경상분지 해안 융기대',
+      geomorphicAgent: '외해 파랑의 굴식(Quarrying) 및 마식(Abrasion)',
+      scale: { elevationMeters: 100, lengthKm: 1.8 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '백악기 호수 퇴적', timeframe: '약 8,000만 년 전', process: '호수 밑바닥에 붉은 진흙과 모래가 수평 줄무늬 층리를 이루며 퇴적', visualKeyFeature: '시루떡 같은 수평 암석 지층' },
+      { stageNumber: 2, title: '지반 융기와 파도 침식', timeframe: '신생대', process: '땅이 솟아오른 후 대한해협 파도가 암벽 밑동에 해식구를 뚫음', visualKeyFeature: '바위 절벽 밑에 파인 동굴' },
+      { stageNumber: 3, title: '상부 붕락과 수직 해식애 완성', timeframe: '현재', process: '버티지 못한 절벽 상부가 무너지며 100m 수직 낭떠러지와 신선바위 안착', visualKeyFeature: '검푸른 바다와 수직 암벽의 절경' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '사계절 (맑은 날에는 대마도가 육안으로 선명히 조망됨)',
+      satelliteCheckPoints: ['영도 남단 곶 끝자락에 하얗게 부서지는 파도와 깎아지른 절벽 그림자'],
+      cautionAndConservation: '추락 위험 구역 난간 절대 월경 금지'
+    }
+  },
+  {
+    id: 'cliff-wd-3',
+    terrain: '해식애 (해안 절벽)',
+    region: 'world',
+    placeName: '프랑스 노르망디 에트르타 해식애와 해식아치 (Étretat)',
+    countryOrArea: '프랑스 센마리팀주 노르망디 해안',
+    tagline: '모네가 사랑한 눈부신 백악(Chalk) 수직 절벽과 바다로 코를 박은 코끼리 바위(해식아치)',
+    description: `### 장소 소개 및 선정 이유
+클로드 모네의 그림으로 유명한 에트르타 해안은 영국해협을 따라 펼쳐진 눈부신 순백의 백악(Chalk) 해식애로, 거대한 코끼리가 바다에 코를 담그고 있는 형상의 아발 해식아치(Porte d'Aval)와 해식기둥(Aiguille)이 장관을 이룹니다.
+
+### 과학적 형성 과정
+중생대 백악기에 형성된 부드러운 백악층 사이의 단열선을 따라 북해의 거친 파도가 침투하여 해식동굴을 뚫었고, 곶의 양쪽에서 뚫린 동굴이 관통하여 아치(Sea Arch)가 되었습니다. 향후 아치가 무너지면 독립 해식기둥(Sea Stack)이 됩니다.`,
+    formationProcess: '백악층 단열선에 따른 파랑 침식 동굴 관통(해식아치) 및 해식기둥 분리',
+    observationPoints: ['코끼리 코 모양의 아발 아치(Porte d\'Aval)', '높이 70m의 뾰족한 백악 침봉(Aiguille)', '몽돌 자갈 해변과 백색 절벽 산책로'],
+    mapQuery: 'Étretat Cliffs Normandy France',
+    geology: {
+      geologicalAge: '중생대 백악기 세노마눔절~투론절 (약 9,000만 년 전)',
+      rockType: '미세 석회질 미결정 백악(Chalk) 및 부싯돌(Flint) 결핵',
+      tectonicSetting: '파리 분지 북서부 연안 단애',
+      geomorphicAgent: '영국해협 조석 파랑의 용식 및 수력 굴식',
+      scale: { elevationMeters: 85, lengthKm: 4 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '백악기 미세 플랑크톤 퇴적', timeframe: '약 9,000만 년 전', process: '따뜻한 백악기 바다에 조류 껍질이 수백 미터 쌓여 순백의 석회암 형성', visualKeyFeature: '눈처럼 하얀 암벽 지층' },
+      { stageNumber: 2, title: '파도의 침식과 동굴 관통', timeframe: '수만 년간', process: '파도가 곶의 양옆을 파고들어 가운데가 뻥 뚫린 거대한 문(아치) 완성', visualKeyFeature: '바다 위에 솟은 거대한 석회암 아치' },
+      { stageNumber: 3, title: '침봉 분리와 명승 안착', timeframe: '현재', process: '인상주의 화가들의 화폭에 담기며 세계에서 가장 로맨틱한 해안 절경 안착', visualKeyFeature: '푸른 바다와 하얀 절벽의 드라마틱한 대비' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '5월~9월 (청명한 햇빛과 절벽 위 잔디 산책로 개방)',
+      satelliteCheckPoints: ['하얀 백악 해안선과 바다 쪽으로 튀어나온 3개의 천연 아치 지형들'],
+      cautionAndConservation: '백악 절벽은 낙석 및 붕락이 잦으므로 절벽 가장자리 접근 금지'
+    }
+  },
+
+  // ==========================================
+  // 추가 3: 파식대 (Wave-cut Platform)
+  // ==========================================
+  {
+    id: 'platform-kr-2',
+    terrain: '파식대',
+    region: 'korea',
+    placeName: '변산반도 격포리 채석강 파식대',
+    countryOrArea: '대한민국 전라북도 부안군 변산면 격포리',
+    tagline: '수만 권의 책을 쌓아 올린 듯한 백악기 퇴적암 단애 아래 썰물 때 광활하게 드러나는 평탄 암반 파식대',
+    description: `### 장소 소개 및 선정 이유
+명승 제13호인 채석강(採石江)은 중국 당나라 이태백이 달을 잡으려다 빠졌다는 고사에서 이름을 딴 절경으로, 수만 권의 책을 차곡차곡 쌓아놓은 듯한 퇴적암 해식애 밑에 파도가 깎아놓은 평평한 암반 파식대(Wave-cut Platform)가 완벽하게 발달해 있습니다.
+
+### 과학적 형성 과정
+파도가 들이치는 평균 해수면 높이에서 파랑의 기계적 파쇄와 자갈 마모가 암벽 밑동을 수평으로 깎아내어 바다 쪽으로 완만하게 기운 넓은 바위 평탄면(파식대)을 만들었습니다. 썰물 때 파식대 바닥의 다양한 단층과 습곡, 조수웅덩이(Tide Pool)가 노출됩니다.`,
+    formationProcess: '해수면 파랑 마식에 의한 수평 파식대 절삭 및 상부 암벽 수직 후퇴',
+    observationPoints: ['시루떡 모양의 수만 권 책 지층 단면', '썰물 때 걸어서 탐방 가능한 너른 파식대', '파식대 바닥의 단층 엇갈림 구조'],
+    mapQuery: '변산반도 채석강',
+    geology: {
+      geologicalAge: '중생대 백악기 격포리층 (약 8,000만 년 전)',
+      rockType: '혈암(셰일), 사암, 역암 교호 퇴적암',
+      tectonicSetting: '격포 분지 화산 함몰대 주변 연안',
+      geomorphicAgent: '서해 조석 파랑의 수평 삭박 및 조간대 풍화',
+      scale: { areaKm2: 0.2, lengthKm: 1.5 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '백악기 호수 속 퇴적', timeframe: '약 8,000만 년 전', process: '호수에 진흙과 모래가 얇게 겹겹이 쌓여 단단한 퇴적암 형성', visualKeyFeature: '수천 겹의 책장 모양 지층' },
+      { stageNumber: 2, title: '파도의 수평 바닥 깎기', timeframe: '후빙기', process: '파도가 해수면 높이에서 바위를 면도하듯 평평하게 깎아냄', visualKeyFeature: '밀물 때 물에 잠기고 썰물 때 드러나는 평평한 바위 바닥' },
+      { stageNumber: 3, title: '채석강 명승 완성', timeframe: '현재', process: '해식동굴과 수평 파식대가 어우러진 서해안 지질공원 핵심 명소 안착', visualKeyFeature: '해질녘 노을빛에 빛나는 바위 책장과 평탄 파식대' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '사계절 썰물(간조) 2시간 전후 (바닥 파식대 도보 탐방 가능)',
+      satelliteCheckPoints: ['격포항 방파제 북측 해안을 따라 썰물 때 회색 암반으로 넓게 드러나는 평탄면'],
+      cautionAndConservation: '물때표 확인 필수, 밀물 시 퇴로 차단 해식동굴 고립 주의'
+    }
+  },
+
+  // ==========================================
+  // 추가 4: 석호 (Lagoon)
+  // ==========================================
+  {
+    id: 'lagoon-kr-3',
+    terrain: '석호',
+    region: 'korea',
+    placeName: '고성 화진포 동해안 최대 천연 석호',
+    countryOrArea: '대한민국 강원특별자치도 고성군 거진읍 화포리',
+    tagline: '둘레 16km, 동해안에서 가장 크고 원형이 잘 보존된 금빛 모래 사주로 닫힌 천연 기수호',
+    description: `### 장소 소개 및 선정 이유
+강원도 고성의 화진포(花津浦)는 호수 둘레 16km, 수면 면적 2.3㎢에 달하는 동해안 최대의 천연 석호(Lagoon)로, 울창한 송림과 깨끗한 모래톱이 바다를 가로막아 담수와 해수가 섞이는 풍요로운 기수 생태계를 유지하고 있습니다.
+
+### 과학적 형성 과정
+후빙기 해수면 상승으로 골짜기가 침수되어 생긴 만(Bay) 입구를 연안류가 운반한 모래가 사주(Sand Spit)로 가로막아 바다와 분리되면서 탄생했습니다. 강물과 바닷물이 교환되는 하구(갯트임)를 통해 다양한 기수성 어류가 서식합니다.`,
+    formationProcess: '후빙기 만입 침수 후 연안류 모래 사주(Barrier) 형성에 따른 외해 격리',
+    observationPoints: ['둘레 16km의 광활한 호수 수면', '호수와 바다를 가르는 화진포 해수욕장 모래 사주', '김일성 별장(화진포의 성)에서 내려다본 석호 전경'],
+    mapQuery: '고성 화진포',
+    geology: {
+      geologicalAge: '신생대 제4기 홀로세 (약 6,000년 전~현재)',
+      rockType: '선캄브리아기 편마암 기반암 위 충적 모래 및 기수성 유기 실트',
+      tectonicSetting: '동해안 비대칭 요곡 융기 해안선 만입부',
+      geomorphicAgent: '동해 북동 연안류 및 모래 사주 퇴적',
+      scale: { areaKm2: 2.3, lengthKm: 16 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '후빙기 골짜기 침수', timeframe: '약 6,000년 전', process: '해수면이 차오르며 강 골짜기가 깊숙한 바다 만으로 변모', visualKeyFeature: '바닷물이 들어찬 산간 만입' },
+      { stageNumber: 2, title: '모래 사주의 만 입구 차단', timeframe: '약 4,000년 전', process: '파도와 연안류가 모래를 쌓아 만 입구를 둑처럼 가로막음', visualKeyFeature: '바다와 호수를 가르는 긴 모래톱' },
+      { stageNumber: 3, title: '동해안 최대 석호 완성', timeframe: '현재', process: '담수와 해수가 공존하며 고니와 철새들이 찾는 천연 생태 호수 안착', visualKeyFeature: '울창한 솔숲에 둘러싸인 잔잔한 호수' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '가을 갈대꽃 철 및 겨울 철새(고니) 도래 시기',
+      satelliteCheckPoints: ['동해안과 맞닿아 8자 모양으로 넓게 펼쳐진 짙푸른 내륙 호수와 좁은 사주 띠'],
+      cautionAndConservation: '생태보전구역으로 낚시 및 쓰레기 투기 금지'
+    }
+  },
+
+  // ==========================================
+  // 추가 5: 갯벌 (Tidal Flat)
+  // ==========================================
+  {
+    id: 'mud-kr-3',
+    terrain: '갯벌',
+    region: 'korea',
+    placeName: '인천 강화도 남단 여차리 갯벌',
+    countryOrArea: '대한민국 인천광역시 강화도 화도면 여차리',
+    tagline: '한강·예성강·임진강 세 강이 실어 나른 토사가 조차 9m의 서해와 만나 빚어낸 350㎢의 거대 갯벌',
+    description: `### 장소 소개 및 선정 이유
+천연기념물 제419호인 강화 갯벌은 한강, 임진강, 예성강 하구에서 쏟아져 나온 막대한 토사가 서해의 세계적 대조차(최대 조차 9m)와 만나 형성된 여의도 면적의 50배가 넘는 거대한 모래-펄 갯벌로, 멸종위기종 저어새의 최대 번식지입니다.
+
+### 과학적 형성 과정
+세 대하천이 운반하는 방대한 토사가 하구 조석 전선(Tidal Front)에서 응집 침전되고, 강한 왕복 조류가 썰물 때 먼바다 쪽으로 펄과 모래를 넓게 펼쳐놓으면서 갯벌이 바다 쪽으로 수 킬로미터나 전진하여 발달했습니다.`,
+    formationProcess: '3개 하천 공급 토사와 대조차(9m) 왕복 조류 퇴적 작용에 의한 광역 간석지 형성',
+    observationPoints: ['끝없이 펼쳐진 수평선 갯벌', '천연기념물 저어새 서식지와 주걱부리 먹이 활동', '붉은 칠면초 군락'],
+    mapQuery: '강화 갯벌센터',
+    geology: {
+      geologicalAge: '신생대 제4기 홀로세 (약 6,000년 전~현재)',
+      rockType: '하구 기수역 실트, 모래, 점토',
+      tectonicSetting: '경기만 침강성 리아스 해안 하구 조간대',
+      geomorphicAgent: '대조차 조류(최대 조차 9m) 및 하천 유출수 퇴적',
+      scale: { areaKm2: 353 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '후빙기 침수와 경기만 형성', timeframe: '약 7,000년 전', process: '해수면 상승으로 서해 바다가 한강 골짜기까지 진입', visualKeyFeature: '물에 잠긴 한강 하구' },
+      { stageNumber: 2, title: '3대 하천의 대량 토사 공급', timeframe: '수천 년간', process: '한강·임진강·예성강이 연간 수백만 톤의 미세 흙모래를 경기만으로 쏟아냄', visualKeyFeature: '뿌옇게 혼탁해진 바다 밑 퇴적' },
+      { stageNumber: 3, title: '광활한 강화 갯벌 안착', timeframe: '현재', process: '세계 5대 갯벌이자 저어새들의 유일한 번식처로 천연기념물 보존', visualKeyFeature: '바다 저편까지 드러나는 장대한 펄 바다' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '5월~7월 저어새 번식기 및 9~10월 칠면초 단풍철',
+      satelliteCheckPoints: ['강화도 남단에서 영종도 사이 바다 전체가 썰물 때 거대한 연갈색 육지로 변하는 모습'],
+      cautionAndConservation: '갯골 수심이 깊고 조류가 매우 빠르므로 탐방로 외 갯벌 진입 금지'
+    }
   }
 ];
+

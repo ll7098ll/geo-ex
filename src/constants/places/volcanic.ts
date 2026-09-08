@@ -859,5 +859,249 @@ export const VOLCANIC_PLACES: PlaceInfo[] = [
       satelliteCheckPoints: ['캘리포니아 동부를 가로지르는 선명한 백색 화강암 산맥 능선', '오웬스 밸리 건조 평원과 산맥 기저부 사이의 날카로운 선형 경계선', '산기슭마다 쏟아져 나온 거대한 선상지 부채꼴 군락'],
       cautionAndConservation: '고산 지대 극단적 기상 변화 및 3,000m 이상 고산증 대비 필수'
     }
+  },
+
+  // ==========================================
+  // 추가 1: 기생화산 (오름 / Cinder Cone)
+  // ==========================================
+  {
+    id: 'cinder-kr-1',
+    terrain: '기생화산 (오름)',
+    region: 'korea',
+    placeName: '제주 다랑쉬오름 (월랑봉)',
+    countryOrArea: '대한민국 제주특별자치도 제주시 구좌읍 세화리',
+    tagline: '둘레 1,500m, 깊이 115m의 거대한 깔때기 분화구를 품은 제주 동부의 단성화산 \'오름의 여왕\'',
+    description: `### 장소 소개 및 선정 이유
+'오름의 여왕'이라 불리는 다랑쉬오름(해발 382m)은 원추형 화산체의 비례미가 완벽하고, 백록담 깊이와 맞먹는 115m의 거대한 깔때기 모양 화구(크레이터)를 원형 그대로 간직한 제주의 대표 기생화산(스코리아 콘)입니다.
+
+### 과학적 형성 과정
+지하의 마그마가 화도(Vent)를 통해 가스와 함께 공중으로 뿜어져 나와 식으면서 굳은 다공질 화산 자갈(스코리아/송이)들이 화구 주변에 층층이 떨어져 쌓여, 안식각(약 30°)을 유지하는 완벽한 원추형 분석구를 형성했습니다.`,
+    formationProcess: '휘발성 가스 팽창에 의한 스트롬볼리식 스코리아(송이) 공중 낙하 집적',
+    observationPoints: ['깊이 115m의 압도적인 깔때기 분화구', '경사각 30도의 완벽한 대칭 사면', '정상 분화구 둘레길에서 바라보는 성산 일출봉'],
+    mapQuery: '다랑쉬오름',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 후기~홀로세',
+      rockType: '현무암질 스코리아(송이, Cinder) 및 화산탄',
+      tectonicSetting: '한라산 동부 산록 기생화산 밀집대',
+      geomorphicAgent: '스트롬볼리식 화산 분출 및 중력식 사면 안정화',
+      scale: { elevationMeters: 382, depthMeters: 115, lengthKm: 1.5 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '화산 가스 폭발 분출', timeframe: '수만 년 전', process: '단일 화도에서 불꽃놀이처럼 붉은 마그마 덩어리들이 공중으로 솟구침', visualKeyFeature: '하늘 높이 튀어 오르는 시뻘건 화산탄' },
+      { stageNumber: 2, title: '스코리아 강하 및 원추체 축조', timeframe: '수개월~수년간', process: '굳은 송이 알갱이들이 화구 주변에 비 오듯 쏟아져 30도 경사의 언덕 구축', visualKeyFeature: '점점 자라나는 검붉은 원뿔형 산' },
+      { stageNumber: 3, title: '분화 종료와 식생 피복', timeframe: '현재', process: '화산 활동이 멈추고 억새와 삼나무 숲이 덮이며 신비로운 오름의 여왕 안착', visualKeyFeature: '가을바람에 은빛 억새가 일렁이는 원형 분화구' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '10월~11월 (은빛 억새 물결과 분화구 림 일주 최적기)',
+      satelliteCheckPoints: ['구좌읍 평원 위에 도넛 모양으로 둥글게 파인 완벽한 원형 분화구'],
+      cautionAndConservation: '분화구 안쪽 사면은 급경사로 진입 금지'
+    }
+  },
+  {
+    id: 'cinder-kr-2',
+    terrain: '기생화산 (오름)',
+    region: 'korea',
+    placeName: '제주 용눈이오름',
+    countryOrArea: '대한민국 제주특별자치도 제주시 구좌읍 종달리',
+    tagline: '용이 누워 있는 듯 세 개의 분화구와 부드러운 곡선 능선이 빚어낸 제주 능선미의 극치',
+    description: `### 장소 소개 및 선정 이유
+사진작가 고(故) 김영갑이 평생을 바쳐 기록한 용눈이오름(247m)은 용이 누워있는 형상이라 하여 붙여진 이름으로, 중심 화구와 2개의 딸린 분화구가 복합적으로 어우러져 어머니 품처럼 포근하고 부드러운 능선 곡선을 자랑합니다.
+
+### 과학적 형성 과정
+스코리아가 쌓여 원추형 분석구를 이룬 후, 마그마가 화산체 하부의 약한 틈새를 뚫고 용암류(Lava Flow)로 흘러나오면서 산체 동쪽 사면이 침하하고 말굽형으로 터진 복합 분화구를 형성했습니다.`,
+    formationProcess: '스코리아 콘 형성 후 기저부 용암 유출에 따른 산체 붕괴 및 복합 말굽형 화구 진화',
+    observationPoints: ['3개의 타원형 분화구 능선', '성산 일출봉과 다랑쉬오름이 파노라마로 펼쳐지는 정상', '방목 중인 제주마'],
+    mapQuery: '용눈이오름',
+    geology: {
+      geologicalAge: '신생대 제4기 홀로세',
+      rockType: '현무암질 스코리아 및 화산재',
+      tectonicSetting: '제주 동부 표선리 현무암 용암대지 위 측화산',
+      geomorphicAgent: '단성화산 폭발 분출 및 용암류 유출 침하',
+      scale: { elevationMeters: 247, areaKm2: 0.8 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '초기 분화구 형성', timeframe: '수만 년 전', process: '중심 분화구에서 송이가 분출하며 원형 분석구 형성', visualKeyFeature: '원형 화산체' },
+      { stageNumber: 2, title: '화구 분기와 용암 유출', timeframe: '수천 년 전', process: '동쪽 사면에서 용암이 뿜어져 나오며 산비탈이 무너져 부드러운 능선으로 전이', visualKeyFeature: '동쪽으로 터진 말굽형 계곡' },
+      { stageNumber: 3, title: '자연휴식년제와 복원', timeframe: '현재', process: '식생 매트와 탐방로 정비로 태곳적 부드러운 잔디 능선의 평화로운 풍광 안착', visualKeyFeature: '바람 따라 굽이치는 초원 능선' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '일출 및 일몰 시간대 (황금빛 햇살이 능선 윤곽을 그리는 순간)',
+      satelliteCheckPoints: ['부드럽게 겹쳐진 3개의 둥근 능선 고리와 동쪽으로 완만하게 퍼진 용암류 흔적'],
+      cautionAndConservation: '지정된 야자 매트 탐방로 준수'
+    }
+  },
+  {
+    id: 'cinder-kr-3',
+    terrain: '기생화산 (오름)',
+    region: 'korea',
+    placeName: '제주 금오름 (검은오름)',
+    countryOrArea: '대한민국 제주특별자치도 제주시 한림읍 금악리',
+    tagline: '산정 화구벽 안에 푸른 물이 찰랑이는 신비로운 분화구 습지(원형 화구호)를 품은 서부의 명봉',
+    description: `### 장소 소개 및 선정 이유
+제주 서부 중산간의 대표 오름인 금오름(427m)은 정상부에 깊이 50m의 거대한 원형 분화구가 있고, 그 바닥에 물이 차오르는 원형 화구호(금악담)를 간직하고 있어 '작은 백록담'이라 불립니다.
+
+### 과학적 형성 과정
+스코리아 분출로 둥근 분석구가 만들어진 뒤, 분화구 밑바닥에 불투수성의 미세한 화산재와 유기물이 쌓여 점토층을 형성함으로써 빗물이 지하로 빠져나가지 않고 고이는 희귀한 산정 분화구 습지가 탄생했습니다.`,
+    formationProcess: '분석구(Scoria cone) 분화 후 화구저 불투수 점토층 침전에 따른 분화구 습지 형성',
+    observationPoints: ['왕매(금악담) 분화구 습지 수면', '한림 앞바다 비양도와 서쪽 바다 조망', '패러글라이딩 활공장'],
+    mapQuery: '금오름',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 후기',
+      rockType: '알칼리 현무암질 스코리아 및 화산재 점토',
+      tectonicSetting: '제주 서부 중산간 화산 쇄설구 밀집대',
+      geomorphicAgent: '폭발성 화산 분출 및 화구저 불투수층 강수 저류',
+      scale: { elevationMeters: 427, depthMeters: 50 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '스코리아 분출과 화구 축조', timeframe: '수만 년 전', process: '가스가 뿜어져 나오며 원형 성곽 모양의 화산체 구축', visualKeyFeature: '둥근 사발 모양 산정 화구' },
+      { stageNumber: 2, title: '화구저 점토화 및 담수', timeframe: '수천 년간', process: '낙엽과 화산재가 분화구 바닥을 메워 방수층 형성', visualKeyFeature: '분화구 바닥에 고인 오아시스 연못' },
+      { stageNumber: 3, title: '서부 대표 일몰 명소 안착', timeframe: '현재', process: '분화구 수면에 붉은 노을이 비치는 환상적인 포토존 안착', visualKeyFeature: '화구호 물결에 어리는 붉은 석양' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '비 온 다음 날 맑은 해질녘 (화구호 수량이 풍부하고 노을이 극치)',
+      satelliteCheckPoints: ['한림읍 산록에 뚜렷한 도넛 모양 분화구와 그 안쪽의 짙은 원형 습지 수면'],
+      cautionAndConservation: '화구호 안쪽 생태계 훼손 및 쓰레기 투기 엄금'
+    }
+  },
+  {
+    id: 'cinder-wd-1',
+    terrain: '기생화산 (오름)',
+    region: 'world',
+    placeName: '멕시코 파리쿠틴 화산 (Parícutin Cinder Cone)',
+    countryOrArea: '멕시코 미초아칸주 트란스멕시코 화산대',
+    tagline: '1943년 옥수수밭에서 솟아올라 마을을 집어삼키며 9년 만에 424m로 성장한 20세기 가장 젊은 화산',
+    description: `### 장소 소개 및 선정 이유
+세계 7대 자연경관 후보였던 파리쿠틴(Parícutin)은 인류 역사상 처음으로 화산의 탄생부터 사멸까지의 전 과정을 과학자들이 현장에서 지켜본 전설적인 단성 스코리아 콘(Cinder Cone) 화산입니다.
+
+### 과학적 형성 과정
+1943년 2월 20일 평화롭던 옥수수밭 갈라진 틈에서 갑자기 가스와 스코리아가 뿜어져 나오며 24시간 만에 높이 50m, 1년 만에 336m의 산으로 솟아올랐습니다. 9년간의 분화 동안 검은 용암류가 흘러 산후안 마을을 덮쳤고 오직 성당 종탑만이 용암 위에 남았습니다.`,
+    formationProcess: '단일 마그마 통로를 통한 폭발적 스트롬볼리 분출 및 검은 현무암질 스코리아 급속 축적',
+    observationPoints: ['용암 바다 한가운데 솟아 있는 산후안 파랑가리쿠티로 성당 종탑', '높이 424m의 완벽한 흑갈색 스코리아 원뿔', '분화구 내부의 유황 분기공'],
+    mapQuery: 'Parícutin Volcano Michoacan Mexico',
+    geology: {
+      geologicalAge: '현대 (1943년 2월 20일 분출 시작 ~ 1952년 정지)',
+      rockType: '현무암질 안산암 스코리아, 아아 용암(Aa Lava)',
+      tectonicSetting: '코코스판 섭입대 트란스멕시코 화산대',
+      geomorphicAgent: '단구성 마그마 폭발성 분출(Monogenetic Eruption)',
+      scale: { elevationMeters: 2800, depthMeters: 424, areaKm2: 25 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '옥수수밭 균열과 첫 폭발', timeframe: '1943년 2월 20일', process: '농부 디오니시오의 밭에서 연기와 불꽃이 치솟으며 반나절 만에 30m 분석구 탄생', visualKeyFeature: '평지에서 갑자기 솟구치는 화산재 기둥' },
+      { stageNumber: 2, title: '폭발적 성장과 용암 분출', timeframe: '1943~1944년', process: '매일 수천 톤의 돌덩이가 쏟아져 산체가 급팽창하고 마을을 집어삼킨 아아 용암 유출', visualKeyFeature: '마을을 덮치며 전진하는 검은 바위 용암 파도' },
+      { stageNumber: 3, title: '분화 종료와 휴면', timeframe: '1952년~현재', process: '높이 424m에서 분화가 영구 정지되며 완벽한 20세기 화산 탄생 교과서 완성', visualKeyFeature: '검은 화산재 사막에 솟은 웅장한 원뿔산' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '11월~4월 (멕시코 건기로 트레킹 및 승마 투어 최적기)',
+      satelliteCheckPoints: ['초록빛 숲 한가운데 거대한 검은색 용암류 지대와 그 중심에 솟은 원추형 화산구'],
+      cautionAndConservation: '용암 지대 바위가 매우 날카로우므로 두꺼운 등산화 착용 필수'
+    }
+  },
+
+  // ==========================================
+  // 추가 2: 용암동굴 (Lava Tube)
+  // ==========================================
+  {
+    id: 'lavatube-kr-2',
+    terrain: '용암동굴',
+    region: 'korea',
+    placeName: '제주 용천동굴 (탄산염 석순을 품은 복합 용암동굴)',
+    countryOrArea: '대한민국 제주특별자치도 제주시 구좌읍 월정리',
+    tagline: '검은 용암동굴 속에 새하얀 석회암 종유석과 신비로운 지하 호수가 어우러진 세계 유일의 지질 보물',
+    description: `### 장소 소개 및 선정 이유
+유네스코 세계자연유산이자 천연기념물 제466호인 용천동굴은 전신주 공사 중 우연히 발견된 길이 3.4km의 거대 용암동굴로, 전 세계 용암동굴 중 가장 아름다운 동굴 2차 탄산염 생성물과 800m 길이의 에메랄드빛 지하 호수를 품고 있습니다.
+
+### 과학적 형성 과정
+약 30만~10만 년 전 거문오름에서 분출한 용암이 흐르며 표면이 굳고 내부가 빠져나가 용암동굴을 만들었습니다. 그 후 지표면 위에 날아와 쌓인 패각(조개껍데기) 모래 언덕(사구)의 탄산칼슘이 빗물에 녹아 동굴 내부로 스며들면서 석회암 동굴에서만 볼 수 있는 눈부신 종유석과 석순, 석주를 자라게 했습니다.`,
+    formationProcess: '현무암 용암 튜브 형성 후 지표 패각 사구 탄산염 침투에 의한 2차 동굴 생성물 복합 성장',
+    observationPoints: ['검은 현무암 벽에 돋아난 순백의 탄산염 종유관', '수심 12m의 신비로운 천연 지하 호수', '통일신라시대 토기와 철기 유물 흔적'],
+    mapQuery: '제주 용천동굴',
+    geology: {
+      geologicalAge: '신생대 제4기 거문오름 분출기 (약 30만~10만 년 전)',
+      rockType: '알칼리 감람석 현무암 위 탄산염 2차 방해석 광물',
+      tectonicSetting: '거문오름 용암동굴계 하류 해안 접점부',
+      geomorphicAgent: '용암류 동굴 굴착 및 지표 탄산염 침출 용식 작용',
+      scale: { lengthKm: 3.4, depthMeters: 15 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '거문오름 용암류 흐름', timeframe: '약 30만 년 전', process: '거문오름에서 분출한 섭씨 1,100도의 파호이호이 용암이 바다로 흘러가며 내부 터널 형성', visualKeyFeature: '거대한 지하 용암 배수로' },
+      { stageNumber: 2, title: '해안 패각 사구 피복', timeframe: '수천 년 전', process: '동굴 위 지표면에 바람을 타고 조개껍데기 모래 언덕(사구)이 두껍게 덮임', visualKeyFeature: '동굴 지붕 위에 쌓인 하얀 모래 언덕' },
+      { stageNumber: 3, title: '탄산염 2차 생성물 기적', timeframe: '수천 년간', process: '빗물이 모래의 칼슘을 녹여 동굴 천장에 떨어지며 종유석과 석순 숲 완성', visualKeyFeature: '검은 벽에 매달린 눈부신 하얀 고드름들' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '국가 유산 영구 비공개 구역 (제주세계자연유산센터 전시관에서 가상 체험)',
+      satelliteCheckPoints: ['월정리 해안가 방향으로 뻗어 내려간 거문오름 용암류 줄기선'],
+      cautionAndConservation: '동굴 보존을 위해 학술 목적 외 일반인 출입 엄격 통제'
+    }
+  },
+  {
+    id: 'lavatube-wd-2',
+    terrain: '용암동굴',
+    region: 'world',
+    placeName: '스페인 테네리페 쿠에바 델 비엔토 (Cueva del Viento)',
+    countryOrArea: '스페인 카나리아 제도 테네리페섬 이코드 데 로스 비노스',
+    tagline: '피코 델 테이데 화산 사면에 3개 층으로 복잡하게 얽힌 총연장 18km의 유럽 최대 용암동굴',
+    description: `### 장소 소개 및 선정 이유
+'바람의 동굴'이라는 뜻의 쿠에바 델 비엔토(Cueva del Viento)는 테이데 화산(Pico del Teide) 기슭에 형성된 총연장 18km의 초대형 용암동굴로, 하와이 카주무라 동굴 등에 이어 세계에서 5번째로 길며 복층(3-tier) 미로 구조의 최고 표본입니다.
+
+### 과학적 형성 과정
+2만 7천 년 전 피코 비에호 화산에서 흘러나온 현무암 용암류가 수차례 겹쳐 흐르며 상·중·하 3단의 튜브 시스템을 구축했고, 내부의 강한 기압 차로 인해 동굴 입구에서 항상 거센 바람이 불어 나옵니다.`,
+    formationProcess: '다단계 파호이호이 용암류 중첩 유출에 따른 3단 입체 용암 튜브 복합체',
+    observationPoints: ['3개 층으로 겹쳐진 수직 연결 통로', '용암 폭포(Lava Cascade) 응고 흔적', '동굴 고유의 무안(Blind) 고유종 곤충들'],
+    mapQuery: 'Cueva del Viento Tenerife Spain',
+    geology: {
+      geologicalAge: '신생대 제4기 플라이스토세 (약 2만 7,000년 전)',
+      rockType: '테네리페 피코 비에호 현무암 용암',
+      tectonicSetting: '카나리아 열점 화산섬 북사면',
+      geomorphicAgent: '용암류 튜브 유출 및 내부 용암 수위 하강',
+      scale: { lengthKm: 18, depthMeters: 480 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '피코 비에호 다층 용암 분출', timeframe: '약 2만 7,000년 전', process: '화산 사면을 따라 수차례 용암이 흘러 층층이 굳어 복층 통로 배태', visualKeyFeature: '사면을 덮는 붉은 용암 바다' },
+      { stageNumber: 2, title: '내부 엠프티(Empty) 배출', timeframe: '분화 말기', process: '용암 공급이 멈추며 튜브 내부 마그마가 바다로 빠져나가 거대한 18km 빈 동굴 완성', visualKeyFeature: '3층 미로 구조의 어두운 지하 터널' },
+      { stageNumber: 3, title: '바람의 동굴 탐사', timeframe: '현재', process: '외부 공기와 내부 기압 차이로 시원한 바람이 통하는 세계적 화산 지질 명소 안착', visualKeyFeature: '용암 석순과 기묘한 용암 커튼' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '연중 (사전 가이드 투어 예약 필수, 헬멧 및 헤드램프 제공)',
+      satelliteCheckPoints: ['테이데 화산 북사면을 따라 대서양 해안으로 완만하게 흘러내린 용암 부채꼴 사면'],
+      cautionAndConservation: '조명이 없는 자연 보존 동굴로 운동화 필수 및 폐소공포증 주의'
+    }
+  },
+
+  // ==========================================
+  // 추가 3: 주상절리 (Columnar Joint)
+  // ==========================================
+  {
+    id: 'joint-wd-3',
+    terrain: '주상절리',
+    region: 'world',
+    placeName: '스코틀랜드 스태파섬 핑갈의 동굴 (Fingal\'s Cave)',
+    countryOrArea: '영국 스코틀랜드 이너헤브리디스 제도 스태파섬',
+    tagline: '멘델스존에게 핑갈의 동굴 서곡 영감을 준 완벽한 육각형 현무암 기둥들이 빚은 바다 대성당',
+    description: `### 장소 소개 및 선정 이유
+작곡가 멘델스존, 빅토르 위고, 터너가 감탄한 핑갈의 동굴은 무인도인 스태파(Staffa)섬 해식애에 발달한 높이 20m, 깊이 66m의 해식동굴로, 동굴 벽과 천장 전체가 한 치의 오차도 없는 육각형 주상절리 기둥들로 꽉 들어찬 자연의 대성당입니다.
+
+### 과학적 형성 과정
+약 6,000만 년 전 북대서양이 열리며 분출한 고제3기 거대 현무암 용암류가 천천히 식으면서 중심점을 향해 수축하여 규칙적인 육각 기둥들을 만들었고, 대서양 파도가 주상절리 틈을 파고들어 거대한 해식동굴을 조각했습니다.`,
+    formationProcess: '용암류 중심 냉각 수축 육각 주상절리 형성 및 대서양 파랑의 해식동굴 관통',
+    observationPoints: ['동굴 내부를 가득 채운 육각형 현무암 돌기둥들', '파도가 동굴 벽에 부딪히며 내는 장엄한 천연 오르간 음향', '스태파섬 퍼핀(Puffin) 바다새 군락'],
+    mapQuery: 'Fingals Cave Isle of Staffa Scotland',
+    geology: {
+      geologicalAge: '신생대 고제3기 팔레오세 (약 6,000만 년 전)',
+      rockType: '북대서양 화성암구(NAIP) 톨레아이트 현무암',
+      tectonicSetting: '유라시아-북미 대륙 분열 및 그린란드 열개 분출',
+      geomorphicAgent: '용암 냉각 절리 및 대서양 거친 파랑 해식 작용',
+      scale: { depthMeters: 66, elevationMeters: 20 }
+    },
+    evolutionStages: [
+      { stageNumber: 1, title: '대서양 분열과 현무암 홍수', timeframe: '약 6,000만 년 전', process: '대륙이 찢어지며 분출한 용암이 두껍게 대지를 덮음', visualKeyFeature: '두께 수십 미터의 용암 층' },
+      { stageNumber: 2, title: '느린 냉각과 육각 기둥 조각', timeframe: '수천 년간', process: '열이 고르게 빠져나가며 거대한 육각형 돌기둥들이 촘촘하게 갈라짐', visualKeyFeature: '자로 잰 듯 반듯한 기둥의 숲' },
+      { stageNumber: 3, title: '파도의 동굴 굴착과 음향 완성', timeframe: '현재', process: '파도가 기둥들을 뜯어내며 깊은 동굴을 뚫어 천연 음향 홀 안착', visualKeyFeature: '파도 소리가 웅장하게 울려 퍼지는 바다 성당' }
+    ],
+    fieldGuide: {
+      bestVisitingSeason: '5월~9월 (보트 투어 운항 및 귀여운 퍼핀 관찰 시즌)',
+      satelliteCheckPoints: ['스코틀랜드 서해 앞바다에 떠 있는 납작하고 푸른 스태파섬의 수직 주상절리 테두리'],
+      cautionAndConservation: '바다 파도가 거칠 경우 보트 상륙이 제한될 수 있음'
+    }
   }
 ];
+

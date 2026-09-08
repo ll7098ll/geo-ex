@@ -44,6 +44,12 @@ export function getPlacesForTerrain(terrain: string, region: Region): PlaceInfo[
     // Support sub-matches like "호른" matching "혼 (호른)"
     if (p.terrain.includes(terrain) || terrain.includes(normPlace)) return true;
 
+    // Specific alias handling
+    if ((normSearch.includes('곡류') || normSearch === '곡류천') && normPlace.includes('곡류')) return true;
+    if ((normSearch === '혼' || normSearch === '호른') && (normPlace.includes('혼') || normPlace.includes('호른'))) return true;
+    if ((normSearch === '모레인' || normSearch === '빙퇴석') && (normPlace.includes('모레인') || normPlace.includes('빙퇴석'))) return true;
+    if ((normSearch.includes('오름') || normSearch.includes('기생화산')) && (normPlace.includes('오름') || normPlace.includes('기생화산'))) return true;
+
     return false;
   });
 }

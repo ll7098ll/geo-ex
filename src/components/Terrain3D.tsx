@@ -84,9 +84,48 @@ const mixColor = (c1: string, c2: string, t: number) => {
   return color1;
 };
 
-// Normalize terrain name (strip parenthetical text for reliable matching)
+// Normalize terrain name and resolve to canonical 3D terrain archetype
 export const normalizeTerrainName = (name: string): string => {
   return name.replace(/\s*\(.*?\)\s*/g, '').trim();
+};
+
+export const resolveTerrainKey = (name: string): string => {
+  const norm = normalizeTerrainName(name);
+  if (norm.includes('오름') || norm.includes('기생화산')) return '기생화산';
+  if (norm.includes('사주') || norm.includes('사취')) return '사주·사취';
+  if (norm.includes('석호')) return '석호';
+  if (norm.includes('파식대')) return '파식대';
+  if (norm.includes('해식애')) return '해식애';
+  if (norm.includes('시스택')) return '시스택';
+  if (norm.includes('사구')) return '해안 사구';
+  if (norm.includes('감입곡류') || norm.includes('곡류')) return '곡류천';
+  if (norm.includes('범람원')) return '범람원';
+  if (norm.includes('선상지')) return '선상지';
+  if (norm.includes('삼각주')) return '삼각주';
+  if (norm.includes('하안단구')) return '하안단구';
+  if (norm.includes('폭포')) return '폭포';
+  if (norm.includes('석회동굴')) return '석회동굴';
+  if (norm.includes('돌리네')) return '돌리네';
+  if (norm.includes('카렌')) return '카렌';
+  if (norm.includes('탑 카르스트') || norm.includes('탑카르스트')) return '탑 카르스트';
+  if (norm.includes('U자곡') || norm.includes('유자곡')) return 'U자곡';
+  if (norm.includes('피오르드')) return '피오르드';
+  if (norm.includes('혼') || norm.includes('호른')) return '혼';
+  if (norm.includes('권곡') || norm.includes('카르')) return '권곡';
+  if (norm.includes('모레인') || norm.includes('빙퇴석')) return '모레인';
+  if (norm.includes('메사') || norm.includes('뷰트')) return '메사·뷰트';
+  if (norm.includes('와디')) return '와디';
+  if (norm.includes('버섯바위')) return '버섯바위';
+  if (norm.includes('오아시스')) return '오아시스';
+  if (norm.includes('플라야')) return '플라야';
+  if (norm.includes('사막')) return '사막';
+  if (norm.includes('주상절리')) return '주상절리';
+  if (norm.includes('용암동굴')) return '용암동굴';
+  if (norm.includes('칼데라')) return '칼데라';
+  if (norm.includes('단층 산맥') || norm.includes('단층')) return '단층 산맥';
+  if (norm.includes('갯벌')) return '갯벌';
+  if (norm.includes('화산')) return '화산';
+  return norm;
 };
 
 // ==========================================
@@ -97,6 +136,11 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '정상 화구 & 용암호', description: '화산가스와 마그마가 솟구치는 화구 중심', position: [0, 4.2, 0] },
     { name: '기생화산 (오름)', description: '화산 사면의 균열을 통해 분출한 분석구', position: [4.5, 2.3, 2.0] },
     { name: '용암류 협곡', description: '용암이 경사면을 따라 흘러내리며 굳은 골짜기', position: [-2.5, 1.5, -3.5] },
+  ],
+  기생화산: [
+    { name: '분화구 림 (Rim)', description: '스코리아가 비오듯 쏟아져 쌓인 30도 안식각 화구벽 능선', position: [0, 3.8, -1.8] },
+    { name: '산정 화구호 (분화구 습지)', description: '화구 바닥 불투수 점토층에 빗물이 고인 신비로운 천연 못', position: [0, 1.8, 0] },
+    { name: '말굽형 터진 용암 유출부', description: '화산체 기저부 약한 틈새로 용암류가 흘러나오며 무너진 사면', position: [2.8, 2.0, 1.8] },
   ],
   칼데라: [
     { name: '외륜산 절벽', description: '마그마방 함몰로 형성된 칼데라 테두리 산벽', position: [0, 4.5, -5.5] },
@@ -123,12 +167,12 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '조간대 펄갯벌', description: '미립질 점토와 유기물이 두껍게 퇴적된 평탄지', position: [3.5, 0.6, -3.0] },
     { name: '상부 염습지 전이대', description: '칠면초와 갈대가 모래와 펄을 붙잡아두는 경계', position: [5.5, 0.9, 4.0] },
   ],
-  '해식애 (해안 절벽)': [
+  해식애: [
     { name: '수직 해식애', description: '파도의 침식 작용으로 형성된 깎아지른 수직 바위 절벽', position: [0, 3.8, -1.5] },
     { name: '평탄한 파식대', description: '절벽이 후퇴하면서 파도에 깎여 바다 밑에 평평하게 남은 암반', position: [-3.5, 0.4, 1.5] },
     { name: '해식동 노치 (Notch)', description: '절벽 기저부 연약부가 파도에 뚫려 형성된 동굴', position: [1.2, 0.7, -0.5] },
   ],
-  '시스택 (바위섬)': [
+  시스택: [
     { name: '독립 시스택 기둥', description: '해식아치가 무너져 본토와 완전히 분리된 외딴 바위탑', position: [2.5, 3.6, -1.0] },
     { name: '해식아치 (천연교)', description: '바다로 뻗은 곶의 양쪽이 파도에 뚫려 연결된 아치', position: [-2.5, 2.8, 1.5] },
     { name: '후퇴하는 해안 곶', description: '파도의 집중 공격을 받는 돌출된 해식애 지형', position: [-4.5, 3.2, -3.5] },
@@ -138,10 +182,20 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '풍성 연흔 (물결무늬)', description: '모래알이 바람결을 따라 춤추며 남긴 미세 주름', position: [-3.5, 1.2, -2.5] },
     { name: '사구 배후 습지 (두웅습지)', description: '모래언덕 뒤편 담수가 고여 형성된 독특한 사구습지', position: [4.5, 0.8, 2.5] },
   ],
-  사주: [
-    { name: '육계사주 둑길 (Tombolo)', description: '파랑 회절로 섬과 본토 사이에 쌓인 모래톱 길', position: [0, 0.9, 0] },
-    { name: '육계도 (연결된 바위섬)', description: '본래 바다 위의 섬이었으나 사주로 이어진 육계도', position: [4.5, 3.2, 3.0] },
-    { name: '정온한 배후 석호', description: '사주에 의해 외해의 거센 파도가 차단된 잔잔한 호수', position: [-3.0, 0.5, 2.5] },
+  '사주·사취': [
+    { name: '만곡 사취 갈고리 (Hook Spit)', description: '연안류와 파랑 굴절에 의해 안쪽으로 휜 모래톱 선단', position: [4.2, 1.2, 2.5] },
+    { name: '사주 둑길 (Barrier)', description: '외해 파도를 가로막고 만을 폐쇄해 나가는 모래 띠', position: [0, 0.9, 0] },
+    { name: '배후 정온 수역 (만입)', description: '사취 뒤편 파도가 잦아들어 안전한 천연 항만 구역', position: [-3.2, 0.5, 2.0] },
+  ],
+  석호: [
+    { name: '금빛 모래 사주 (Barrier)', description: '외해 바다를 가로막아 내해를 호수로 만든 긴 모래톱', position: [-2.5, 1.3, 0] },
+    { name: '천연 기수호 수면', description: '담수와 해수가 만나 풍요로운 생태계를 품은 잔잔한 석호', position: [1.5, 0.6, 0] },
+    { name: '하구 갯트임 (Inlet)', description: '폭풍이나 밀물 때 바닷물이 석호로 교환되는 통로', position: [-2.5, 0.4, -4.5] },
+  ],
+  파식대: [
+    { name: '수평 암반 파식대', description: '간조(썰물) 때 넓게 드러나는 평평하게 깎인 퇴적암 바위 바닥', position: [-1.5, 0.7, 0] },
+    { name: '조수 웅덩이 (Tide Pool)', description: '파식대 홈에 바닷물이 고여 해양 생물들이 서식하는 웅덩이', position: [-3.5, 0.5, 2.2] },
+    { name: '퇴적암 책장 해식애', description: '수만 권의 책을 차곡차곡 쌓아 올린 듯한 수직 층리 단애벽', position: [3.8, 4.2, 0] },
   ],
   선상지: [
     { name: '선정 (Apex)', description: '급류 계곡이 평지로 터져나오며 거력이 퇴적되는 입구', position: [0, 3.8, -4.5] },
@@ -152,6 +206,11 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '공격사면 하식애 (Cut Bank)', description: '원심력으로 빠른 물살이 외벽을 쳐서 깎아낸 수직 절벽', position: [2.5, 2.2, -2.5] },
     { name: '활주사면 포인트바 (Point Bar)', description: '유속이 느린 안쪽에 모래와 자갈이 퇴적된 백사장', position: [-1.2, 0.6, -1.8] },
     { name: '단절된 우각호 (Oxbow Lake)', description: '홍수 때 곡류 목이 끊어지며 남은 소뿔 모양의 쇠뿔호수', position: [-3.2, 0.6, 2.5] },
+  ],
+  범람원: [
+    { name: '미앤더 사행 하천', description: '낮은 구배의 충적 평야를 굽이쳐 흐르는 본류 물길', position: [0, 0.4, 0] },
+    { name: '자연제방 (Natural Levee)', description: '홍수 시 거친 토사가 하천 양안에 쌓여 살짝 솟은 둑', position: [1.6, 1.4, -1.5] },
+    { name: '배후습지 (Backswamp)', description: '제방 뒤편 배수가 원활하지 않아 형성된 비옥한 저습지', position: [4.2, 0.7, 2.0] },
   ],
   삼각주: [
     { name: '분류 하천망 (Distributaries)', description: '하구에서 유속이 느려져 여러 갈래로 갈라지는 물길', position: [0, 0.6, -2.5] },
@@ -183,6 +242,11 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '봉우리 기저부 해식와/풍화홈', description: '물과 산성 토양에 접촉한 기둥 밑둥이 잘록하게 파인 홈', position: [1.2, 1.4, 0.5] },
     { name: '수평 침식 평원', description: '석회암 기둥 사이를 흐르는 잔잔한 카르스트 수면', position: [-2.5, 0.6, 2.5] },
   ],
+  카렌: [
+    { name: '석회암 침봉 숲 (Karren Pinnacles)', description: '빗물의 용식 작용으로 뾰족하게 깎여 솟은 수직 석회암 기둥', position: [0, 3.8, 0] },
+    { name: '용식 구곡 (Rinnen)', description: '빗물이 바위 표면을 타고 흘러내리며 조각한 매끄러운 고랑 홈', position: [2.5, 2.2, -1.8] },
+    { name: '테라로사 붉은 점토', description: '석회암의 탄산염이 녹고 남은 불용성 산화철 적색 풍화토', position: [-2.8, 1.2, 2.2] },
+  ],
   U자곡: [
     { name: '평탄한 U자곡 바닥', description: '빙하 혀가 바닥을 넓고 평평하게 밀어내어 형성된 바닥면', position: [0, 0.6, 0] },
     { name: '수직 빙식곡 암벽', description: '빙하의 강력한 찰과 작용으로 깎인 1,000m급 화강암 거벽', position: [-4.2, 4.2, 0] },
@@ -193,10 +257,15 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '1,000m 수직 단애벽', description: '바다에서 곧바로 수직으로 치솟아 오른 장엄한 협곡 암벽', position: [-4.0, 4.5, 0] },
     { name: '만년설 빙식 연봉', description: '피오르드 절벽 꼭대기에 사계절 내내 하얗게 빛나는 빙하 설원', position: [4.5, 4.8, -3.5] },
   ],
-  '혼 (호른)': [
+  혼: [
     { name: '피라미드형 호른 첨두', description: '3~4개 방향의 빙하 권곡이 사면을 갉아먹어 만든 뾰족한 바위산', position: [0, 5.2, 0] },
     { name: '칼날 능선 아레트 (Arête)', description: '이웃한 두 빙식곡 사이가 얇게 깎여 칼날처럼 날카로운 산등성이', position: [-2.5, 3.4, -2.0] },
     { name: '빙식 권곡 (카르 / Cirque)', description: '빙하가 태동하여 둥글게 파낸 안락의자 모양의 원형 와지', position: [2.5, 1.8, 2.5] },
+  ],
+  권곡: [
+    { name: '안락의자형 권곡 와지', description: '고산 만년설과 빙하의 태동부가 사면을 둥글게 파낸 반원형 분지', position: [0, 1.6, 0] },
+    { name: '타른 (Tarn / 권곡호)', description: '빙하가 녹아 물러난 권곡 바닥 와지에 차오른 옥빛 산정 호수', position: [0, 1.2, 0.8] },
+    { name: '수직 권곡 두벽 (Headwall)', description: '빙하의 동결파쇄와 찰과로 형성된 깎아지른 3면 암벽', position: [0, 4.8, -3.5] },
   ],
   모레in: [
     { name: '말단 종퇴석 (Terminal Moraine)', description: '빙하가 후퇴하며 말단부에 불도저처럼 밀어 쌓아둔 흙돌 둔덕', position: [0, 2.2, 2.0] },
@@ -213,6 +282,16 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '모래바람 마식 목 (Pedestal)', description: '지표 1m 부근 모래알 도약(Saltation) 마모로 잘록해진 기둥', position: [0, 2.2, 0] },
     { name: '풍식 자갈 대지', description: '모래는 바람에 날아가고 굵은 자갈만 남은 사막 포장(Desert Pavement)', position: [-3.5, 0.5, 2.5] },
   ],
+  '메사·뷰트': [
+    { name: '메사 평탄 정상면 (Tableland)', description: '수평 지층의 단단한 캡록이 침식을 방어하여 형성된 테이블 고원', position: [-2.2, 4.5, -1.0] },
+    { name: '고립된 바위 탑 (뷰트 / Butte)', description: '메사가 침식되어 더 작고 뾰족하게 분리된 독립 바위 첨탑', position: [4.2, 3.8, 2.2] },
+    { name: '기저부 탤러스 (Talus) 사면', description: '절벽에서 떨어져 나온 풍화 암석 조각들이 쌓인 45도 너덜 비탈', position: [-2.2, 1.5, 1.8] },
+  ],
+  와디: [
+    { name: '건천 자갈 하상 (Dry Bed)', description: '평소에는 물이 전혀 없으나 폭우 시 급류가 쏟아지는 자갈 바닥', position: [0, 0.6, 0] },
+    { name: '붉은 사암 슬롯 캐니언', description: '돌발 홍수가 깎아지른 수직 협곡으로 깊게 파낸 단애벽', position: [-2.8, 3.8, 0] },
+    { name: '플래시 플러드 충적 부채꼴', description: '협곡 출구로 급류가 터져 나오며 토사가 쏟아진 퇴적체', position: [0, 1.0, 4.5] },
+  ],
   오아시스: [
     { name: '오아시스 천연 수면', description: '사구 사이 깊은 바람 파임 와지가 지하수면과 만나 형성된 샘', position: [0, 0.6, 0] },
     { name: '야자수 녹색 식생 띠', description: '수분을 머금은 오아시스 주변에 번성하는 대추야자 숲', position: [1.5, 1.2, 0.8] },
@@ -224,6 +303,8 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
     { name: '천연 거울 염수면', description: '우기에 얕은 물이 고여 하늘과 구름을 완벽히 반사하는 거울 수면', position: [-2.5, 0.25, 2.5] },
   ],
 };
+// Alias mapping for moraine
+TERRAIN_ANNOTATIONS['모레인'] = TERRAIN_ANNOTATIONS['모레in'];
 
 // ==========================================
 // Geometry Cache & Generator
@@ -231,7 +312,7 @@ export const TERRAIN_ANNOTATIONS: Record<string, TerrainAnnotation[]> = {
 const GEOMETRY_CACHE: Record<string, THREE.BufferGeometry> = {};
 
 export const generateTerrainGeometry = (category: string, subTerrain: string, reliefScale = 1.0) => {
-  const normSub = normalizeTerrainName(subTerrain);
+  const normSub = resolveTerrainKey(subTerrain);
   const cacheKey = `${category}-${normSub}-${reliefScale.toFixed(2)}`;
   if (GEOMETRY_CACHE[cacheKey]) return GEOMETRY_CACHE[cacheKey];
 
@@ -253,7 +334,40 @@ export const generateTerrainGeometry = (category: string, subTerrain: string, re
     // =====================================
     // 1. VOLCANIC
     // =====================================
-    if (normSub === '화산') {
+    if (normSub === '기생화산') {
+      // Classic Jeju Cinder Cone (Oreum) with 30-degree scoria slopes & circular summit crater lake
+      const coneR = 7.5;
+      const coneH = Math.max(0, 4.5 * (1.0 - Math.pow(d / coneR, 1.3)));
+      
+      // Deep crater bowl at the summit (금오름 / 다랑쉬오름 분화구)
+      const craterR = 2.4;
+      const craterDepth = d < craterR ? smoothstep(craterR, 0, d) * 2.8 : 0;
+      
+      // Horseshoe breach (말굽형 분화구 유출 틈새, 용암이 빠져나간 골짜기)
+      const breachAngle = Math.atan2(y - 1.0, x - 2.5);
+      const isBreach = Math.abs(breachAngle - 0.4) < 0.6 && d > 1.8 && d < 6.0;
+      const breachCut = isBreach ? 1.2 * smoothstep(0.6, 0, Math.abs(breachAngle - 0.4)) : 0;
+      
+      // Subtle parasitic ripples & scoria scree
+      const oreumRibs = Math.abs(Math.sin(angle * 5 + fbm(x * 0.5, y * 0.5) * 1.5)) * 0.25 * smoothstep(2.0, 6.5, d);
+      
+      h = Math.max(0.35, (coneH - craterDepth - breachCut + oreumRibs + fbm(x * 1.2, y * 1.2) * 0.2) * reliefScale);
+      
+      if (d < 1.0) {
+        // Crater bottom wetland / crater lake bed (분화구 습지/화구호)
+        color.set(mixColor('#1e4034', '#2d5e4d', fbm(x * 5, y * 5)));
+      } else if (d < craterR + 0.5) {
+        // Crater inner walls: dark red-brown scoria (송이석) and dark basalt
+        color.set(mixColor('#5a3224', '#3d1e15', fbm(x * 6, y * 6)));
+      } else if (h > 2.8 * reliefScale) {
+        // Summit ridge: golden silver-grass (억새) & low shrubs
+        color.set(mixColor('#7a8543', '#969950', fbm(x * 3, y * 3)));
+      } else {
+        // Slopes: green grassland (초원)
+        color.set(mixColor('#385e2b', '#4c7a3a', fbm(x * 2, y * 2)));
+      }
+    }
+    else if (normSub === '화산') {
       // Elegant stratovolcano with exponential cone + summit crater
       const cone = 5.2 * Math.exp(-d * 0.32);
       const craterR = 1.8;
@@ -485,7 +599,7 @@ export const generateTerrainGeometry = (category: string, subTerrain: string, re
         color.set(mixColor('#d4b87c', '#e6cca0', fbm(x * 4, y * 4)));
       }
     }
-    else if (normSub === '사주') {
+    else if (normSub === '사주' || normSub === '사주·사취') {
       // Sandspit & Tombolo connecting rocky island to mainland with lagoon
       const mainland = Math.exp(-(x + 7.5) * 0.6) * 3.0;
       const tiedIsland = Math.exp(-(Math.pow(x - 6.0, 2) + Math.pow(y - 4.0, 2)) * 0.3) * 3.8;
@@ -508,6 +622,77 @@ export const generateTerrainGeometry = (category: string, subTerrain: string, re
       } else {
         // Coastal water & lagoon
         color.set(mixColor('#0e2e42', '#184763', fbm(x * 2, y * 2)));
+      }
+    }
+    else if (normSub === '석호') {
+      // Classic coastal lagoon: Open Sea (left) -> Long sand barrier spit (center) -> Calm brackish lagoon basin (right) -> Inland pine hills
+      const barrierX = -2.5;
+      const distToBarrier = Math.abs(x - barrierX);
+      const isBarrier = distToBarrier < 1.4;
+      
+      // Tidal inlet gap through the sand spit (하구 갯트임 수로)
+      const isTidalInlet = isBarrier && Math.abs(y - (-4.0)) < 1.2;
+      
+      const barrierHeight = (isBarrier && !isTidalInlet)
+        ? Math.cos((distToBarrier / 1.4) * Math.PI * 0.5) * 1.5
+        : 0;
+
+      // Inland pine hills on the far right
+      const inlandHills = x > 4.5 ? Math.exp((x - 4.5) * 0.4) * 0.8 + fbm(x * 0.8, y * 0.8) * 0.6 : 0;
+      
+      if (x < barrierX - 1.4) {
+        // Open sea floor
+        h = (0.2 + fbm(x * 1.5, y * 1.5) * 0.15) * reliefScale;
+        color.set(mixColor('#0a2436', '#123954', fbm(x * 3, y * 3)));
+      } else if (isBarrier) {
+        // Sand barrier ridge or tidal inlet
+        h = Math.max(0.3, (0.35 + barrierHeight + fbm(x * 2, y * 2) * 0.1) * reliefScale);
+        if (isTidalInlet) {
+          color.set(mixColor('#15425c', '#1d5573', fbm(x * 4, y * 4)));
+        } else {
+          color.set(mixColor('#dfc78d', '#eedcb0', fbm(x * 5, y * 5)));
+        }
+      } else if (x < 5.0) {
+        // Calm shallow brackish lagoon lake bed (석호 기수호 바닥)
+        h = (0.4 + fbm(x * 0.8, y * 0.8) * 0.12) * reliefScale;
+        color.set(mixColor('#194a4f', '#246166', fbm(x * 3, y * 3)));
+      } else {
+        // Inland vegetated pine dunes & hills
+        h = (1.2 + inlandHills) * reliefScale;
+        color.set(mixColor('#38572d', '#4c733f', fbm(x * 2, y * 2)));
+      }
+    }
+    else if (normSub === '파식대') {
+      // Extensive horizontal wave-cut rock platform exposed at low tide with tide pools & bookstack cliffs (Chaeseokgang / Taejongdae)
+      const cliffLine = 3.5;
+      
+      if (x > cliffLine) {
+        // Book-stacked layered sedimentary sea cliff (책장 층리 해식 절벽)
+        const cliffH = 4.4 + fbm(x * 0.8, y * 0.8) * 0.5;
+        h = cliffH * reliefScale;
+        // Fine horizontal strata coloring (퇴적암 층리 줄무늬)
+        const strata = Math.sin(y * 8.0 + h * 6.0) * 0.5 + 0.5;
+        color.set(mixColor('#4a443e', '#736b63', strata));
+      } else if (x > -6.0) {
+        // Wide horizontal wave-cut rock platform (파식대 평탄면)
+        const jointFissures = (Math.sin(x * 3.5) * Math.cos(y * 3.0)) * 0.08;
+        // Tide pools (조수 웅덩이 함몰부)
+        const tp1 = Math.exp(-(Math.pow(x + 3.0, 2) + Math.pow(y - 2.0, 2)) * 0.8) * 0.35;
+        const tp2 = Math.exp(-(Math.pow(x + 0.5, 2) + Math.pow(y + 3.0, 2)) * 0.7) * 0.3;
+        
+        h = Math.max(0.35, (0.75 + jointFissures - tp1 - tp2 + fbm(x * 1.5, y * 1.5) * 0.08) * reliefScale);
+        
+        if (tp1 > 0.15 || tp2 > 0.15) {
+          // Tide pools with green algae and sea water
+          color.set(mixColor('#163b40', '#255259', fbm(x * 5, y * 5)));
+        } else {
+          // Dark wet wave-cut bedrock
+          color.set(mixColor('#3e4347', '#535b61', fbm(x * 4, y * 4)));
+        }
+      } else {
+        // Sea beyond platform
+        h = (0.2 + fbm(x * 1.5, y * 1.5) * 0.15) * reliefScale;
+        color.set(mixColor('#0a2133', '#11354f', fbm(x * 2, y * 2)));
       }
     }
 
@@ -589,6 +774,35 @@ export const generateTerrainGeometry = (category: string, subTerrain: string, re
       } else {
         // Green floodplain
         color.set(mixColor('#3f612d', '#527a3c', fbm(x * 2, y * 2)));
+      }
+    }
+    else if (normSub === '범람원') {
+      // Extensive alluvial floodplain: S-curved river channel + elevated Natural Levees on both banks + low Backswamps & marshes
+      const riverPath = Math.sin(y * 0.45) * 3.5;
+      const distToRiver = Math.abs(x - riverPath);
+      
+      // Natural Levees (자연제방): sandy ridges flanking both sides of the river
+      const leveeWidth = 1.6;
+      const isLevee = distToRiver >= 1.2 && distToRiver < 3.2;
+      const leveeHeight = isLevee
+        ? Math.sin(((distToRiver - 1.2) / 2.0) * Math.PI) * 0.9
+        : 0;
+
+      // Backswamp (배후습지): lower muddy wetland behind the natural levees
+      const isBackswamp = distToRiver >= 3.2;
+      
+      if (distToRiver < 1.2) {
+        // Active River Bed
+        h = 0.35 * reliefScale;
+        color.set(mixColor('#1f1812', '#140f0a', fbm(x * 6, y * 6)));
+      } else if (isLevee) {
+        // Natural Levee: well-drained fertile sandy ridge with villages and orchards
+        h = (1.4 + leveeHeight + fbm(x * 1.5, y * 1.5) * 0.15) * reliefScale;
+        color.set(mixColor('#829654', '#9eb06b', fbm(x * 4, y * 4)));
+      } else {
+        // Backswamp: low poorly drained flat wetland / rice paddy fields
+        h = (0.75 + fbm(x * 0.8, y * 0.8) * 0.12) * reliefScale;
+        color.set(mixColor('#2b4c34', '#3d6148', fbm(x * 3, y * 3)));
       }
     }
     else if (normSub === '삼각주') {
@@ -756,6 +970,32 @@ export const generateTerrainGeometry = (category: string, subTerrain: string, re
         color.set(mixColor('#14453e', '#1c5e55', fbm(x * 2, y * 2)));
       }
     }
+    else if (normSub === '카렌') {
+      // Limestone Stone Forest: dense knife-sharp Karren pinnacles, solution flutes (Rinnen), and terra rossa clefts
+      // Solution flutes: directional chemical erosion grooves
+      const fluteNoise = Math.sin(x * 2.8 + fbm(x * 0.5, y * 0.5) * 2.5) * 0.5 + 0.5;
+      const { dist: cellDist, cellId } = hexVoronoi(x * 0.85, y * 0.85);
+      
+      // Pinnacles stand up where cellDist is low, deep clefts where cellDist is high
+      const pinnacleProfile = Math.pow(Math.max(0, 1.0 - cellDist * 1.3), 2.2);
+      const pinnacleHeight = 1.8 + cellId * 2.8;
+      
+      // Secondary razor-sharp micro-flutes on pinnacle flanks
+      const microFlutes = Math.abs(Math.sin(y * 6.0 + x * 2.0)) * 0.35 * smoothstep(0.3, 0.9, pinnacleProfile);
+      
+      h = Math.max(0.4, (0.8 + pinnacleProfile * pinnacleHeight + microFlutes + fluteNoise * 0.3) * reliefScale);
+      
+      if (pinnacleProfile > 0.45) {
+        // Sharp grey limestone pinnacles with lichen
+        color.set(mixColor('#7a7d80', '#9aa0a6', fbm(x * 6, y * 6)));
+      } else if (pinnacleProfile > 0.15) {
+        // Fluted rock walls
+        color.set(mixColor('#545759', '#666b6e', fbm(x * 4, y * 4)));
+      } else {
+        // Cleft floor filled with Terra Rossa (red clay residual soil)
+        color.set(mixColor('#873926', '#9e4632', fbm(x * 5, y * 5)));
+      }
+    }
 
     // =====================================
     // 5. GLACIAL
@@ -825,6 +1065,41 @@ export const generateTerrainGeometry = (category: string, subTerrain: string, re
       } else {
         // Lower slope vegetation & scree
         color.set(mixColor('#384c2a', '#4b6139', fbm(x * 2, y * 2)));
+      }
+    }
+    else if (normSub === '권곡') {
+      // Classic Alpine Cirque: Amphitheater-shaped glacial basin carved into mountain headwall with circular Tarn lake
+      const bowlDist = Math.sqrt(x * x + Math.pow(y + 1.0, 2));
+      const headwallAngle = Math.atan2(y + 1.0, x);
+      
+      // Surrounding 3-sided sheer headwall (권곡 두벽) for y < 2
+      const isHeadwall = y < 1.5 && (bowlDist > 3.8 && bowlDist < 8.5);
+      const headwallH = isHeadwall
+        ? Math.pow(smoothstep(3.8, 7.5, bowlDist), 1.4) * 4.8
+        : (y < -3.5 ? 4.8 : 0);
+
+      // Rock threshold / lip at the cirque outlet (암석 턱) around y = 2.8
+      const isLip = Math.abs(y - 2.8) < 1.2 && Math.abs(x) < 3.5;
+      const lipHeight = isLip ? 1.6 : 0;
+      
+      // Flat basin / Tarn lake depression inside bowl
+      if (bowlDist <= 3.8) {
+        // Deep Tarn Lake bowl
+        h = (1.0 + Math.pow(bowlDist / 3.8, 2) * 0.4 + fbm(x * 1.5, y * 1.5) * 0.1) * reliefScale;
+        color.set(mixColor('#195361', '#247a8c', fbm(x * 4, y * 4)));
+      } else if (isHeadwall || y < -3.5) {
+        // Steep granite headwall with snow pockets & bergschrund
+        h = Math.max(1.4, (1.2 + headwallH + fbm(x * 2, y * 2) * 0.4) * reliefScale);
+        if (h > 4.2 * reliefScale) {
+          color.set(mixColor('#d8e7ed', '#ffffff', fbm(x * 5, y * 5)));
+        } else {
+          color.set(mixColor('#464e54', '#5e6870', fbm(x * 6, y * 6)));
+        }
+      } else {
+        // Down-valley threshold & moraine till slope
+        const valleySlope = Math.max(0.6, 2.0 - (y - 2.0) * 0.28 + lipHeight);
+        h = (valleySlope + fbm(x * 1.2, y * 1.2) * 0.25) * reliefScale;
+        color.set(mixColor('#546944', '#706456', fbm(x * 3, y * 3)));
       }
     }
     else if (normSub === '모레인') {
@@ -901,6 +1176,80 @@ export const generateTerrainGeometry = (category: string, subTerrain: string, re
       } else {
         // Desert gravel plain
         color.set(mixColor('#a68453', '#8f6f43', fbm(x * 3, y * 3)));
+      }
+    }
+    else if (normSub === '메사·뷰트') {
+      // Monument Valley style: Flat-topped Mesa tableland, isolated slender Butte pillar, and 45-degree talus scree aprons
+      // Mesa 1: Large tableland on the left
+      const mesaDist = Math.max(Math.abs(x - (-3.2)) / 3.4, Math.abs(y - (-1.0)) / 2.6);
+      const isMesaTop = mesaDist < 0.7;
+      const isMesaCliff = mesaDist >= 0.7 && mesaDist < 1.0;
+      const isMesaTalus = mesaDist >= 1.0 && mesaDist < 1.7;
+      
+      let mesaH = 0;
+      if (isMesaTop) {
+        mesaH = 4.4 + fbm(x * 0.8, y * 0.8) * 0.15;
+      } else if (isMesaCliff) {
+        const cliffProg = (1.0 - mesaDist) / 0.3;
+        mesaH = 2.4 + cliffProg * 2.0;
+      } else if (isMesaTalus) {
+        const talusProg = (1.7 - mesaDist) / 0.7;
+        mesaH = 0.6 + talusProg * 1.8;
+      }
+
+      // Butte: Slender rock spire on the right (x=4.2, y=2.5)
+      const butteDist = Math.sqrt(Math.pow(x - 4.2, 2) + Math.pow(y - 2.5, 2));
+      let butteH = 0;
+      if (butteDist < 0.9) {
+        butteH = 3.9 + fbm(x * 2, y * 2) * 0.15;
+      } else if (butteDist < 1.4) {
+        butteH = 1.8 + ((1.4 - butteDist) / 0.5) * 2.1;
+      } else if (butteDist < 2.5) {
+        butteH = 0.6 + ((2.5 - butteDist) / 1.1) * 1.2;
+      }
+
+      const desertPlain = 0.5 + fbm(x * 0.4, y * 0.4) * 0.2;
+      h = Math.max(desertPlain, Math.max(mesaH, butteH)) * reliefScale;
+
+      // Color based on geological strata (Navajo red sandstone + shale layers)
+      const strata = Math.sin(h * 5.0) * 0.5 + 0.5;
+      if (h > 4.0 * reliefScale) {
+        // Mesa resistant caprock table
+        color.set(mixColor('#c47743', '#d98b54', fbm(x * 5, y * 5)));
+      } else if (h > 2.0 * reliefScale) {
+        // Sheer red sandstone cliffs with horizontal strata
+        color.set(mixColor('#a64d2d', '#c25c36', strata));
+      } else if (h > 0.9 * reliefScale) {
+        // Talus debris slope (scree apron)
+        color.set(mixColor('#b87349', '#cf885b', fbm(x * 4, y * 4)));
+      } else {
+        // Desert floor
+        color.set(mixColor('#cfa067', '#dbb079', fbm(x * 3, y * 3)));
+      }
+    }
+    else if (normSub === '와디') {
+      // Dry desert canyon (Wadi): meander slot canyon deeply incised into arid sandstone plateau
+      const wadiCurve = Math.sin(y * 0.45) * 2.8 + Math.cos(y * 0.2) * 1.2;
+      const distToWadi = Math.abs(x - wadiCurve);
+      
+      const plateauH = 3.6 + fbm(x * 0.5, y * 0.5) * 0.6;
+      
+      if (distToWadi < 1.1) {
+        // Dry gravel riverbed floor
+        h = (0.5 + fbm(x * 2, y * 2) * 0.12) * reliefScale;
+        // Dry greyish gravel & desert sand
+        color.set(mixColor('#948474', '#a89887', fbm(x * 6, y * 6)));
+      } else if (distToWadi < 2.2) {
+        // Sheer slot canyon walls
+        const wallProg = (distToWadi - 1.1) / 1.1;
+        h = (0.5 + Math.pow(wallProg, 0.8) * 3.1) * reliefScale;
+        // Striped red canyon rock strata
+        const strata = Math.sin(h * 6.0) * 0.5 + 0.5;
+        color.set(mixColor('#a14728', '#bd5c3a', strata));
+      } else {
+        // Arid sandstone plateau above
+        h = plateauH * reliefScale;
+        color.set(mixColor('#bf8a54', '#d49e65', fbm(x * 3, y * 3)));
       }
     }
     else if (normSub === '오아시스') {
@@ -1056,7 +1405,7 @@ const TerrainMesh: React.FC<TerrainMeshProps> = ({
   reliefScale,
   showAnnotations,
 }) => {
-  const normSub = normalizeTerrainName(subTerrain);
+  const normSub = resolveTerrainKey(subTerrain);
   const geometry = useMemo(() => {
     return generateTerrainGeometry(category, subTerrain, reliefScale);
   }, [category, subTerrain, reliefScale]);
@@ -1087,12 +1436,17 @@ const TerrainMesh: React.FC<TerrainMeshProps> = ({
         normSub === '오아시스' ||
         normSub === '피오르드' ||
         normSub === '사주' ||
+        normSub === '사주·사취' ||
+        normSub === '석호' ||
+        normSub === '파식대' ||
         normSub === '시스택' ||
         normSub === '시스택 (바위섬)' ||
         normSub === '해식애' ||
         normSub === '해식애 (해안 절벽)' ||
         normSub === '곡류천' ||
+        normSub === '범람원' ||
         normSub === '삼각주' ||
+        normSub === '권곡' ||
         normSub === '모레인' ||
         normSub === '폭포') && (
         <AnimatedWater
@@ -1105,8 +1459,16 @@ const TerrainMesh: React.FC<TerrainMeshProps> = ({
               ? 0.55 * reliefScale
               : normSub === '피오르드'
               ? 0.75 * reliefScale
+              : normSub === '권곡'
+              ? 1.15 * reliefScale
               : normSub === '모레인'
               ? 1.05 * reliefScale
+              : normSub === '석호'
+              ? 0.48 * reliefScale
+              : normSub === '파식대'
+              ? 0.38 * reliefScale
+              : normSub === '범람원'
+              ? 0.38 * reliefScale
               : normSub === '폭포'
               ? 0.45 * reliefScale
               : 0.45 * reliefScale,
@@ -1116,6 +1478,10 @@ const TerrainMesh: React.FC<TerrainMeshProps> = ({
               ? '#0d7c94'
               : normSub === '모레인'
               ? '#3ba3ba'
+              : normSub === '권곡'
+              ? '#2a949e'
+              : normSub === '석호'
+              ? '#14637d'
               : normSub === '피오르드'
               ? '#0a2e47'
               : '#00628f'
@@ -1188,7 +1554,7 @@ export default function Terrain3D({ category, subTerrain }: Terrain3DProps) {
     controlsRef.current.update();
   };
 
-  const normSub = normalizeTerrainName(subTerrain);
+  const normSub = resolveTerrainKey(subTerrain);
   const annotationList = TERRAIN_ANNOTATIONS[normSub] || [];
 
   return (
@@ -1200,10 +1566,11 @@ export default function Terrain3D({ category, subTerrain }: Terrain3DProps) {
           turbidity={category === 'arid' ? 6 : 0.2}
           rayleigh={category === 'arid' ? 1.8 : 0.6}
         />
-        <Environment preset={category === 'volcanic' ? 'night' : category === 'glacial' ? 'dawn' : 'sunset'} />
-        <ambientLight intensity={category === 'volcanic' ? 0.35 : 0.6} />
-        <directionalLight position={[12, 14, 8]} intensity={1.6} castShadow />
-        <directionalLight position={[-10, 6, -10]} intensity={0.4} color="#a0c4ff" />
+        <Environment preset={category === 'volcanic' ? 'sunset' : category === 'glacial' ? 'dawn' : 'city'} />
+        <ambientLight intensity={0.65} />
+        <directionalLight position={[12, 16, 8]} intensity={1.8} castShadow />
+        <directionalLight position={[-10, 8, -10]} intensity={0.55} color="#c2d9ff" />
+        <directionalLight position={[0, -10, 5]} intensity={0.25} color="#e6f0ff" />
 
         <React.Suspense fallback={null}>
           <TerrainMesh
