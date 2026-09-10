@@ -13,6 +13,7 @@ import {
   Compass,
   Info,
   X,
+  Clock,
 } from 'lucide-react';
 import { TerrainAnnotation } from '../types';
 import {
@@ -32,6 +33,7 @@ interface DioramaMeshProps {
   reliefScale: number;
   showAnnotations: boolean;
   showStrata: boolean;
+  evolutionStage: number;
   activeAnnotationIndex: number | null;
   onSelectAnnotation: (idx: number | null) => void;
 }
@@ -43,6 +45,7 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
   reliefScale,
   showAnnotations,
   showStrata,
+  evolutionStage,
   activeAnnotationIndex,
   onSelectAnnotation,
 }) => {
@@ -50,8 +53,8 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
 
   // Generate solid diorama block geometry with terrain surface + geological strata skirts
   const geometry = useMemo(() => {
-    return generateTerrainDioramaGeometry(category, subTerrain, reliefScale, showStrata);
-  }, [category, subTerrain, reliefScale, showStrata]);
+    return generateTerrainDioramaGeometry(category, subTerrain, reliefScale, showStrata, evolutionStage);
+  }, [category, subTerrain, reliefScale, showStrata, evolutionStage]);
 
   const annotations: TerrainAnnotation[] = TERRAIN_ANNOTATIONS[normSub] || [];
 
@@ -183,6 +186,7 @@ export default function Terrain3D({ category, subTerrain }: Terrain3DProps) {
   const [reliefScale, setReliefScale] = useState(1.0);
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [showStrata, setShowStrata] = useState(true);
+  const [evolutionStage, setEvolutionStage] = useState(4);
   const [activeAnnotationIndex, setActiveAnnotationIndex] = useState<number | null>(null);
 
   const controlsRef = useRef<any>(null);
@@ -253,6 +257,7 @@ export default function Terrain3D({ category, subTerrain }: Terrain3DProps) {
             reliefScale={reliefScale}
             showAnnotations={showAnnotations}
             showStrata={showStrata}
+            evolutionStage={evolutionStage}
             activeAnnotationIndex={activeAnnotationIndex}
             onSelectAnnotation={setActiveAnnotationIndex}
           />
@@ -370,22 +375,53 @@ export default function Terrain3D({ category, subTerrain }: Terrain3DProps) {
         </div>
       </div>
 
-      {/* Bottom Controls: Relief Scale Slider & Subterrain Status */}
-      <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3 pointer-events-none z-20">
-        {/* Relief exaggeration slider */}
-        <div className="bg-slate-950/80 backdrop-blur-md px-3.5 py-2 rounded-md border border-white/15 pointer-events-auto flex items-center gap-2.5 text-xs text-white shadow-xl">
-          <span className="text-gray-300 font-medium whitespace-nowrap">
-            고저차 과장: <span className="text-[#FFCC00] font-bold">{reliefScale.toFixed(1)}x</span>
-          </span>
-          <input
-            type="range"
-            min="0.5"
-            max="1.8"
-            step="0.1"
-            value={reliefScale}
-            onChange={(e) => setReliefScale(parseFloat(e.target.value))}
-            className="w-20 sm:w-28 accent-[#FFCC00] cursor-pointer"
-          />
+      {/* Bottom Controls: Relief Scale Slider, Evolution Stage & Subterrain Status */}
+      <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-end justify-between gap-2.5 pointer-events-none z-20">
+        <div className="flex flex-wrap items-center gap-2 pointer-events-auto">
+          {/* Relief exaggeration slider */}
+          <div className="bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-md border border-white/15 flex items-center gap-2 text-xs text-white shadow-xl">
+            <span className="text-gray-300 font-medium whitespace-nowrap text-[11px]">
+              고저차 과장: <span className="text-[#FFCC00] font-bold">{reliefScale.toFixed(1)}x</span>
+            </span>
+            <input
+              type="range"
+              min="0.5"
+              max="1.8"
+              step="0.1"
+              value={reliefScale}
+              onChange={(e) => setReliefScale(parseFloat(e.target.value))}
+              className="w-16 sm:w-24 accent-[#FFCC00] cursor-pointer"
+            />
+          </div>
+
+          {/* Geological Evolution Stage Stepper */}
+          <div className="bg-slate-950/80 backdrop-blur-md px-2.5 py-1.5 rounded-md border border-white/15 flex items-center gap-1.5 text-xs text-white shadow-xl">
+            <span className="text-gray-300 font-medium whitespace-nowrap flex items-center gap-1 text-[11px]">
+              <Clock className="w-3 h-3 text-amber-400" />
+              <span className="hidden sm:inline">형성 과정:</span>
+            </span>
+            <div className="flex items-center gap-1">
+              {[
+                { stage: 1, label: '1.초기' },
+                { stage: 2, label: '2.발달' },
+                { stage: 3, label: '3.침식' },
+                { stage: 4, label: '4.현대' },
+              ].map(({ stage, label }) => (
+                <button
+                  key={stage}
+                  onClick={() => setEvolutionStage(stage)}
+                  className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
+                    evolutionStage === stage
+                      ? 'bg-amber-400 text-slate-950 font-bold shadow-xs'
+                      : 'text-gray-300 hover:text-white hover:bg-white/10'
+                  }`}
+                  title={`${stage}단계 지형 발달 시뮬레이션`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Subterrain Status Pill */}

@@ -975,10 +975,11 @@ export function generateTerrainDioramaGeometry(
   category: string,
   subTerrain: string,
   reliefScale = 1.0,
-  showStrata = true
+  showStrata = true,
+  evolutionStage = 4
 ): THREE.BufferGeometry {
   const normSub = resolveTerrainKey(subTerrain);
-  const cacheKey = `${category}-${normSub}-${reliefScale.toFixed(2)}-strata:${showStrata}`;
+  const cacheKey = `${category}-${normSub}-${reliefScale.toFixed(2)}-strata:${showStrata}-stage:${evolutionStage}`;
   if (GEOMETRY_CACHE[cacheKey]) return GEOMETRY_CACHE[cacheKey];
 
   const size = 20;
@@ -986,6 +987,10 @@ export function generateTerrainDioramaGeometry(
   const halfSize = size / 2;
   const step = size / segments;
   const numGridVerts = (segments + 1) * (segments + 1);
+
+  // Evolution morphological factor (1: nascent stage, 2: building/uplift, 3: mature erosion, 4: modern)
+  const stageMorph = evolutionStage === 1 ? 0.45 : evolutionStage === 2 ? 0.7 : evolutionStage === 3 ? 0.88 : 1.0;
+  const effectiveRelief = reliefScale * stageMorph;
 
   // Grid vertex heights & colors cache
   const gridHeights: number[][] = [];
@@ -997,7 +1002,7 @@ export function generateTerrainDioramaGeometry(
     const y = -halfSize + j * step;
     for (let i = 0; i <= segments; i++) {
       const x = -halfSize + i * step;
-      const res = evaluateTerrainPoint(normSub, category, x, y, reliefScale);
+      const res = evaluateTerrainPoint(normSub, category, x, y, effectiveRelief);
       gridHeights[j][i] = res.height;
       gridColors[j][i] = res.color;
     }
@@ -1058,40 +1063,75 @@ export function generateTerrainDioramaGeometry(
     if (!showStrata) {
       return new THREE.Color('#22242b');
     }
-    // Geological layer bands depending on terrain category
-    const layer = Math.sin(z * 4.5 + fbm(x * 0.3, y * 0.3) * 1.5) * 0.5 + 0.5;
-    const subLayer = Math.sin(z * 12.0) * 0.5 + 0.5;
 
+    // 1. 단층 산맥: 명확한 단층선 변위(Fault Displacement)와 단층 파쇄대(Gouge Zone)
+    let effZ = z;
+    if (normSub === '단층 산맥') {
+      const faultX = Math.sin(y * 0.15) * 0.7; // 자연스러운 주향 굴곡
+      const distToFault = Math.abs(x - faultX);
+      if (distToFault < 0.38) {
+        // 단층 마찰 파쇄대 (어두운 각력암 및 단층점토)
+        const gouge = Math.sin(z * 16.0 + y * 2.0) * 0.5 + 0.5;
+        return new THREE.Color('#141416').lerp(new THREE.Color('#382820'), gouge);
+      }
+      // 단층면 기준 상반/하반 층리 수직 변위 어긋남
+      effZ = x < faultX ? z + 1.15 : z - 0.75;
+    }
+
+    // 2. 화산 지형: 중심부 지하 마그마 화도(Magma Conduit) 및 마그마방 관입 표현
+    if (category === 'volcanic' || normSub === '화산' || normSub === '기생화산' || normSub === '칼데라') {
+      const distToCenter = Math.sqrt(x * x + y * y);
+      const conduitRadius = 1.35 + (z < 0 ? 0.75 : 0.15);
+      if (distToCenter < conduitRadius) {
+        const pulse = Math.sin(z * 5.0 + x * 2.0) * 0.5 + 0.5;
+        const magmaCore = new THREE.Color('#ff3c00').lerp(new THREE.Color('#ff8c00'), pulse);
+        const contactAureole = new THREE.Color('#2c140d');
+        const factor = distToCenter / conduitRadius;
+        return magmaCore.lerp(contactAureole, factor * factor);
+      }
+    }
+
+    // 3. 지형 계열별 정밀 층리
     if (category === 'volcanic') {
-      // Dark basaltic strata, red scoria beds, and dark ash
+      // 현무암질 용암류, 다공질 스코리아, 화산재 응회암 호층
+      const layer = Math.sin(effZ * 4.4 + fbm(x * 0.3, y * 0.3) * 1.5) * 0.5 + 0.5;
+      const subLayer = Math.sin(effZ * 14.0) * 0.5 + 0.5;
       const colA = new THREE.Color('#242120');
-      const colB = new THREE.Color('#422822');
-      const colC = new THREE.Color('#141416');
+      const colB = new THREE.Color('#4c2920');
+      const colC = new THREE.Color('#151618');
       return colA.lerp(colB, layer).lerp(colC, subLayer * 0.4);
     } else if (category === 'arid') {
-      // Red Navajo sandstone and beige siltstone layers
+      // 건조 사암의 사층리(Cross-bedding, 25도 경사)와 수평 이암층
+      const crossBed = Math.sin((effZ * 4.8 + x * 0.7) + fbm(x * 0.25, effZ * 0.25) * 1.2) * 0.5 + 0.5;
+      const planarBed = Math.sin(effZ * 2.0) * 0.5 + 0.5;
       const colA = new THREE.Color('#944e34');
       const colB = new THREE.Color('#b86e49');
-      const colC = new THREE.Color('#d4976c');
-      return colA.lerp(colB, layer).lerp(colC, subLayer * 0.35);
+      const colC = new THREE.Color('#d99c72');
+      return colA.lerp(colB, crossBed).lerp(colC, planarBed * 0.4);
     } else if (category === 'karst') {
-      // Massive grey limestone with horizontal bedding joints
+      // 후층 석회암의 수평 층리면과 수직 용식 절리(Joint Fissure), 테라로사 점토대
+      const bed = Math.sin(effZ * 3.4) * 0.5 + 0.5;
+      const isJoint = Math.sin(x * 2.5 + y * 0.3) > 0.88;
       const colA = new THREE.Color('#4c4f52');
       const colB = new THREE.Color('#676c70');
-      const colC = new THREE.Color('#383a3c');
-      return colA.lerp(colB, layer).lerp(colC, subLayer * 0.3);
+      const colTerra = new THREE.Color('#783428');
+      const baseCol = colA.lerp(colB, bed);
+      return isJoint ? baseCol.lerp(colTerra, 0.65) : baseCol;
     } else if (category === 'glacial') {
-      // Cold granitic bedrock and dark moraine till
+      // 결정질 화강편마암 기반암과 불규칙한 빙퇴석(Till) 혼재층
+      const foliation = Math.sin(effZ * 5.5 + (x - y) * 0.35) * 0.5 + 0.5;
       const colA = new THREE.Color('#3c4247');
       const colB = new THREE.Color('#555e66');
-      const colC = new THREE.Color('#282c30');
-      return colA.lerp(colB, layer).lerp(colC, subLayer * 0.3);
+      const colC = new THREE.Color('#25282c');
+      return colA.lerp(colB, foliation).lerp(colC, (Math.sin(effZ * 15) * 0.5 + 0.5) * 0.35);
     } else {
-      // Fluvial / Coastal: alternating sedimentary layers (clay, silt, sand)
-      const colA = new THREE.Color('#403831');
-      const colB = new THREE.Color('#5c5044');
-      const colC = new THREE.Color('#786754');
-      return colA.lerp(colB, layer).lerp(colC, subLayer * 0.3);
+      // 하천/해안: 점이층리(Graded bedding)와 모래/실트/점토 교호 퇴적층
+      const bed = Math.sin(effZ * 4.6 + fbm(x * 0.2, y * 0.2) * 1.1) * 0.5 + 0.5;
+      const fineBed = Math.sin(effZ * 16.0) * 0.5 + 0.5;
+      const colA = new THREE.Color('#3f3730');
+      const colB = new THREE.Color('#5d4f43');
+      const colC = new THREE.Color('#7d6b58');
+      return colA.lerp(colB, bed).lerp(colC, fineBed * 0.3);
     }
   };
 
