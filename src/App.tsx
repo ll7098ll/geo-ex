@@ -113,11 +113,11 @@ export default function App() {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black text-white font-sans selection:bg-[#FFCC00] selection:text-black">
+    <div className="relative w-full h-screen overflow-hidden bg-black text-white font-sans selection:bg-[#FFCC00] selection:text-black flex flex-col">
       {/* Global Loading Overlay */}
       <LoadingOverlay loading={loading} region={region} selectedTerrain={selectedTerrain} />
 
-      {/* Global Fixed Top Navigation */}
+      {/* Solid Independent Top Navigation Header (h-14 / 56px) */}
       <Navigation region={region} setRegion={handleRegionChange} onReset={handleReset} />
 
       {/* Global Fixed Right Floating Slide Dock */}
@@ -130,11 +130,11 @@ export default function App() {
       <ErrorMessage error={error} />
 
       {/* ========================================================
-          Main Full-Page Scroll-Snap Container (4 Distinct Slides)
+          Main Full-Page Scroll-Snap Container (Fills exact remaining viewport)
          ======================================================== */}
       <main
         ref={containerRef}
-        className="w-full h-full overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth no-scrollbar"
+        className="w-full flex-1 overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth no-scrollbar relative"
         tabIndex={0}
       >
         {/* ========================================================
@@ -144,7 +144,7 @@ export default function App() {
           id="section-main"
           data-slide-index="0"
           ref={(el) => { slideRefs.current[0] = el; }}
-          className="h-screen w-full snap-start snap-always relative overflow-hidden"
+          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
           aria-label="01 메인 화면"
         >
           <HeroSlideshow
@@ -159,13 +159,13 @@ export default function App() {
         </section>
 
         {/* ========================================================
-            SLIDE 02: 구글 위성지도 (100vh FULLSCREEN MAP)
+            SLIDE 02: 구글 위성지도 (FULLSCREEN MAP)
            ======================================================== */}
         <section
           id="section-map"
           data-slide-index="1"
           ref={(el) => { slideRefs.current[1] = el; }}
-          className="h-screen w-full snap-start snap-always relative overflow-hidden"
+          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
           aria-label="02 구글 위성지도"
         >
           {result ? (
@@ -186,13 +186,13 @@ export default function App() {
         </section>
 
         {/* ========================================================
-            SLIDE 03: 3D 입체 지형 (100vh 3D DIORAMA STUDIO)
+            SLIDE 03: 3D 입체 지형 (3D DIORAMA STUDIO)
            ======================================================== */}
         <section
           id="section-3d"
           data-slide-index="2"
           ref={(el) => { slideRefs.current[2] = el; }}
-          className="h-screen w-full snap-start snap-always relative overflow-hidden"
+          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
           aria-label="03 3D 입체 지형"
         >
           {result ? (
@@ -219,7 +219,7 @@ export default function App() {
           id="section-guide"
           data-slide-index="3"
           ref={(el) => { slideRefs.current[3] = el; }}
-          className="h-screen w-full snap-start snap-always relative overflow-hidden"
+          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
           aria-label="04 상세 지형 해설"
         >
           {result ? (

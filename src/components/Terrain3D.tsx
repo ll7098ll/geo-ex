@@ -483,21 +483,52 @@ const TerrainEnvironmentRig: React.FC<TerrainAtmosphereProps> = ({ category }) =
 // ==========================================
 // Main Export: Terrain3D Component
 // ==========================================
+export interface Terrain3DRef {
+  resetCamera: () => void;
+  toggleAutoRotate: () => void;
+}
+
 export interface Terrain3DProps {
   category: string;
   subTerrain: string;
   onToggleFullscreen?: () => void;
   isFullscreen?: boolean;
+  hideHud?: boolean;
+  autoRotate?: boolean;
+  onAutoRotateChange?: (autoRotate: boolean) => void;
 }
 
-export default function Terrain3D({
+const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   category,
   subTerrain,
   onToggleFullscreen,
   isFullscreen,
-}: Terrain3DProps) {
-  const [autoRotate, setAutoRotate] = useState(true);
+  hideHud = false,
+  autoRotate: autoRotateProp,
+  onAutoRotateChange,
+}, ref) => {
+  const [internalAutoRotate, setInternalAutoRotate] = useState(true);
+  const autoRotate = autoRotateProp !== undefined ? autoRotateProp : internalAutoRotate;
   const controlsRef = useRef<any>(null);
+
+  const setAutoRotateState = (val: boolean | ((prev: boolean) => boolean)) => {
+    const nextVal = typeof val === 'function' ? val(autoRotate) : val;
+    setInternalAutoRotate(nextVal);
+    onAutoRotateChange?.(nextVal);
+  };
+
+  const handleResetCamera = () => {
+    if (!controlsRef.current) return;
+    setAutoRotateState(false);
+    controlsRef.current.object.position.set(0, 10, 16);
+    controlsRef.current.target.set(0, 0.5, 0);
+    controlsRef.current.update();
+  };
+
+  React.useImperativeHandle(ref, () => ({
+    resetCamera: handleResetCamera,
+    toggleAutoRotate: () => setAutoRotateState((prev) => !prev),
+  }), [autoRotate]);
 
   const matDefaults = useMemo(
     () => getDefaultMaterialSettings(category, subTerrain),
@@ -507,14 +538,6 @@ export default function Terrain3D({
   const demField = useMemo(() => {
     return generateTerrainElevationField(category, subTerrain, 1.0, 4);
   }, [category, subTerrain]);
-
-  const handleResetCamera = () => {
-    if (!controlsRef.current) return;
-    setAutoRotate(false);
-    controlsRef.current.object.position.set(0, 10, 16);
-    controlsRef.current.target.set(0, 0.5, 0);
-    controlsRef.current.update();
-  };
 
   return (
     <div className="w-full h-full bg-radial from-slate-900 via-slate-950 to-black relative overflow-hidden select-none">
@@ -568,70 +591,77 @@ export default function Terrain3D({
         />
       </Canvas>
 
-      {/* Top Left: SubTerrain Label */}
-      <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none z-20">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white shadow-lg pointer-events-auto">
-          <span className="w-2 h-2 rounded-full bg-[#FFCC00]" />
-          <span className="font-serif font-bold text-sm text-white">{subTerrain}</span>
-          <span className="text-xs text-slate-400 font-light hidden sm:inline">· 3D 입체 디오라마</span>
+      {/* Top Left: SubTerrain Label (Only shown if !hideHud) */}
+      {!hideHud && (
+        <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none z-20">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white shadow-lg pointer-events-auto">
+            <span className="w-2 h-2 rounded-full bg-[#FFCC00]" />
+            <span className="font-serif font-bold text-sm text-white">{subTerrain}</span>
+            <span className="text-xs text-slate-400 font-light hidden sm:inline">· 3D 입체 디오라마</span>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Top Right: Minimalist Action Controls */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 pointer-events-none z-20">
-        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white shadow-lg pointer-events-auto">
-          <button
-            onClick={handleResetCamera}
-            className="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
-            title="카메라 각도 기본값으로 리셋"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-[#FFCC00]" />
-            <span className="hidden sm:inline">뷰 리셋</span>
-          </button>
-
-          <button
-            onClick={() => setAutoRotate(!autoRotate)}
-            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
-              autoRotate
-                ? 'text-[#FFCC00] bg-white/10 font-semibold'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
-            }`}
-            title={autoRotate ? '자동 회전 일시정지' : '자동 360° 회전 시작'}
-          >
-            <RotateCw
-              className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`}
-              style={{ animationDuration: '10s' }}
-            />
-            <span className="hidden sm:inline">{autoRotate ? '회전 중' : '회전'}</span>
-          </button>
-
-          {onToggleFullscreen && (
+      {/* Top Right: Minimalist Action Controls (Only shown if !hideHud) */}
+      {!hideHud && (
+        <div className="absolute top-4 right-4 flex items-center gap-2 pointer-events-none z-20">
+          <div className="flex items-center gap-1.5 p-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white shadow-lg pointer-events-auto">
             <button
-              onClick={onToggleFullscreen}
-              className="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors flex items-center gap-1.5 cursor-pointer border-l border-white/10 ml-0.5"
-              title={isFullscreen ? '전체화면 종료' : '전체화면으로 보기'}
+              onClick={handleResetCamera}
+              className="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="카메라 각도 기본값으로 리셋"
             >
-              {isFullscreen ? (
-                <>
-                  <Minimize2 className="w-3.5 h-3.5 text-[#FFCC00]" />
-                  <span className="hidden sm:inline">축소</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="w-3.5 h-3.5 text-[#FFCC00]" />
-                  <span className="hidden sm:inline">전체화면</span>
-                </>
-              )}
+              <RotateCcw className="w-3.5 h-3.5 text-[#FFCC00]" />
+              <span className="hidden sm:inline">뷰 리셋</span>
             </button>
-          )}
+
+            <button
+              onClick={() => setAutoRotateState(!autoRotate)}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
+                autoRotate
+                  ? 'text-[#FFCC00] bg-white/10 font-semibold'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+              title={autoRotate ? '자동 회전 일시정지' : '자동 360° 회전 시작'}
+            >
+              <RotateCw
+                className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`}
+                style={{ animationDuration: '10s' }}
+              />
+              <span className="hidden sm:inline">{autoRotate ? '회전 중' : '회전'}</span>
+            </button>
+
+            {onToggleFullscreen && (
+              <button
+                onClick={onToggleFullscreen}
+                className="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors flex items-center gap-1.5 cursor-pointer border-l border-white/10 ml-0.5"
+                title={isFullscreen ? '전체화면 종료' : '전체화면으로 보기'}
+              >
+                {isFullscreen ? (
+                  <>
+                    <Minimize2 className="w-3.5 h-3.5 text-[#FFCC00]" />
+                    <span className="hidden sm:inline">축소</span>
+                  </>
+                ) : (
+                  <>
+                    <Maximize2 className="w-3.5 h-3.5 text-[#FFCC00]" />
+                    <span className="hidden sm:inline">전체화면</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Bottom Right: Clean Subtle Guidance */}
-      <div className="absolute bottom-3 right-4 pointer-events-none z-10 text-[11px] text-slate-400 font-light bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/5 hidden sm:block">
-        드래그하여 360° 회전 · 스크롤하여 확대/축소
-      </div>
-
+      {/* Bottom Right: Clean Subtle Guidance (Only shown if !hideHud) */}
+      {!hideHud && (
+        <div className="absolute bottom-3 right-4 pointer-events-none z-10 text-[11px] text-slate-400 font-light bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/5 hidden sm:block">
+          드래그하여 360° 회전 · 스크롤하여 확대/축소
+        </div>
+      )}
     </div>
   );
-}
+});
+
+export default Terrain3D;

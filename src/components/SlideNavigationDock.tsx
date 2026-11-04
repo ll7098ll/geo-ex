@@ -82,48 +82,54 @@ export const SlideNavigationDock: React.FC<SlideNavigationDockProps> = ({
   return (
     <aside
       aria-label="슬라이드 네비게이션"
-      className="fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-2 select-none"
+      className="fixed right-4 sm:right-6 top-[calc(50%+28px)] -translate-y-1/2 z-40 flex flex-col items-center gap-2 select-none"
     >
       {/* Up Arrow */}
       <button
         onClick={() => onNavigate(Math.max(0, activeSlideIndex - 1))}
         disabled={activeSlideIndex === 0}
-        aria-label="이전 슬라이드로 이동"
-        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+        aria-label="이전 챕터로 이동"
+        className={`w-8 h-8 rounded-sm flex items-center justify-center transition-all cursor-pointer ${
           activeSlideIndex === 0
             ? 'opacity-20 cursor-not-allowed text-white/40'
-            : 'bg-black/60 hover:bg-[#FFCC00] text-white hover:text-black border border-white/10 hover:border-[#FFCC00] backdrop-blur-md shadow-lg active:scale-90'
+            : 'bg-black/70 hover:bg-[#FFCC00] text-white hover:text-black border border-white/20 hover:border-[#FFCC00] backdrop-blur-md shadow-lg active:scale-95'
         }`}
       >
         <ChevronUp className="w-4 h-4" />
       </button>
 
-      {/* Dots Strip Container */}
-      <div className="bg-[#0e0e14]/80 backdrop-blur-xl border border-white/15 rounded-full px-2.5 py-4 shadow-2xl flex flex-col items-center gap-3.5">
+      {/* Editorial Chapter Strip Container */}
+      <div className="bg-[#0b0b10]/90 backdrop-blur-xl border border-white/20 rounded-sm px-2 py-3.5 shadow-2xl flex flex-col items-center gap-3">
+        <span className="text-[8px] font-mono tracking-widest text-[#FFCC00] uppercase font-bold writing-mode-vertical">
+          CH
+        </span>
+        <div className="w-3.5 h-[1px] bg-white/20 my-0.5" />
         {SLIDE_ITEMS.map((slide, idx) => {
           const isActive = activeSlideIndex === idx;
           const Icon = slide.icon;
 
           return (
             <div key={slide.id} className="relative group flex items-center">
-              {/* Tooltip on hover (left side) */}
-              <div className="absolute right-10 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 translate-x-2 group-hover:translate-x-0 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#14141c]/95 border border-white/20 shadow-xl backdrop-blur-md whitespace-nowrap z-50">
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FFCC00]' : 'text-slate-300'}`} />
-                <span className="text-[11px] font-bold text-[#FFCC00] font-mono">{slide.number}</span>
-                <span className="text-xs font-semibold text-white">{slide.title}</span>
-                <span className="text-[11px] text-slate-400 font-light hidden md:inline">· {slide.subtitle}</span>
+              {/* Tooltip on hover (left side) with Magazine Chapter preview */}
+              <div className="absolute right-9 opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 translate-x-1 group-hover:translate-x-0 hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-sm bg-[#111118]/95 border border-[#FFCC00]/40 shadow-2xl backdrop-blur-md whitespace-nowrap z-50">
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-[#FFCC00]' : 'text-slate-400'}`} />
+                <span className="text-[11px] font-bold text-[#FFCC00] font-mono">CHAPTER {slide.number}</span>
+                <span className="text-xs font-semibold text-white font-serif">{slide.title}</span>
+                <span className="text-[11px] text-zinc-400 font-light hidden md:inline">· {slide.subtitle}</span>
               </div>
 
-              {/* Dot / Pill Button */}
+              {/* Magazine Index Button */}
               <button
                 onClick={() => onNavigate(idx)}
-                aria-label={`${slide.number} ${slide.title} 슬라이드로 이동`}
-                className={`transition-all duration-300 flex items-center justify-center cursor-pointer ${
+                aria-label={`Chapter ${slide.number}: ${slide.title}`}
+                className={`transition-all duration-300 flex items-center justify-center cursor-pointer font-mono text-[11px] font-bold ${
                   isActive
-                    ? 'w-3 h-7 bg-[#FFCC00] rounded-full shadow-[0_0_12px_rgba(255,204,0,0.8)]'
-                    : 'w-2.5 h-2.5 bg-white/30 hover:bg-white/80 rounded-full hover:scale-125'
+                    ? 'w-6 h-6 bg-[#FFCC00] text-black shadow-[0_0_12px_rgba(255,204,0,0.6)]'
+                    : 'w-6 h-6 text-white/50 hover:text-white hover:bg-white/10'
                 }`}
-              />
+              >
+                {slide.number}
+              </button>
             </div>
           );
         })}
@@ -133,19 +139,19 @@ export const SlideNavigationDock: React.FC<SlideNavigationDockProps> = ({
       <button
         onClick={() => onNavigate(Math.min(SLIDE_ITEMS.length - 1, activeSlideIndex + 1))}
         disabled={activeSlideIndex === SLIDE_ITEMS.length - 1}
-        aria-label="다음 슬라이드로 이동"
-        className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+        aria-label="다음 챕터로 이동"
+        className={`w-8 h-8 rounded-sm flex items-center justify-center transition-all cursor-pointer ${
           activeSlideIndex === SLIDE_ITEMS.length - 1
             ? 'opacity-20 cursor-not-allowed text-white/40'
-            : 'bg-black/60 hover:bg-[#FFCC00] text-white hover:text-black border border-white/10 hover:border-[#FFCC00] backdrop-blur-md shadow-lg active:scale-90'
+            : 'bg-black/70 hover:bg-[#FFCC00] text-white hover:text-black border border-white/20 hover:border-[#FFCC00] backdrop-blur-md shadow-lg active:scale-95'
         }`}
       >
         <ChevronDown className="w-4 h-4" />
       </button>
 
-      {/* Current Page Tag (Mobile / Small view helper) */}
-      <div className="text-[10px] font-mono font-bold text-[#FFCC00] bg-black/60 border border-white/10 px-2 py-0.5 rounded-full backdrop-blur-md">
-        0{activeSlideIndex + 1}/04
+      {/* Issue Index Indicator */}
+      <div className="text-[10px] font-mono font-bold text-[#FFCC00] bg-black/80 border border-[#FFCC00]/40 px-2 py-0.5 rounded-sm backdrop-blur-md">
+        P.0{activeSlideIndex + 1}
       </div>
     </aside>
   );

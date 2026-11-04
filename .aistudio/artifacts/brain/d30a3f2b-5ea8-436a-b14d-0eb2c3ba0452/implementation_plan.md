@@ -1,130 +1,143 @@
-# 지형 상세 학습 페이지 구조 및 콘텐츠 체계 개편 계획서 (개정판)
+# National Geographic Editorial Style Renewal Plan
 
-지형 학습 상세 해설 페이지(슬라이드 04)의 방대한 줄글과 무분별한 스크롤 나열을 탈피하고, **중·고교 지구과학 연계 핵심 개념**과 **한눈에 보는 형성 원리**를 중심으로 **주제별 탭 전환형 정형화 카드 레이아웃**으로 전면 재편하며, **기본 탐험 지역을 '전 세계(World)'로 설정**합니다.
+A unified, publication-grade editorial redesign transforming the entire Geography Explorer slide sequence into a cohesive National Geographic magazine experience—featuring signature yellow borders, editorial dateline panels for map and 3D viewports, and an illustrated multi-column feature article with drop-caps and pull quotes for geological in-depth studies.
 
----
-
-## User Review & Critical Decisions
+### User Review & Critical Decisions
 
 > [!IMPORTANT]
-> 사용자 피드백 및 사전 질의(Phase 1)를 반영한 핵심 설계 결정사항:
-> 1. **기본 지역 설정 (신규 반영)**: 앱 초기 진입 시 기본 탐험 지역을 **'전 세계(World)'**로 설정하여 하와이 마우나로아/킬라우에아, 그랜드 캐니언 등 세계적인 대표 지형을 메인으로 우선 제공 (대한민국 지형 토글 전환 지원).
-> 2. **학습 깊이 및 목적**: 중·고교 지구과학 교과 연계 핵심 개념과 한눈에 보는 형성 원리 중심
-> 3. **화면 구성 방식**: 긴 스크롤 없이 필요한 정보만 선택 조회할 수 있는 **주제별 탭 전환형(Tabbed) 구조**
-> 4. **콘텐츠 제공 체계**: 군더더기 긴 줄글 배제, 엄선된 핵심 요약과 정제된 지질 데이터 중심의 **정형화 카드 & 용어 사전** 체계
+> The following design directions have been confirmed based on user feedback and will serve as the architectural and visual foundation for this renewal:
+
+- **Confirmed Decision 1 (Slide 02 & Slide 03 Viewports)**: Yellow-bordered magazine feature spread with editorial dateline panel. The full-screen Google satellite map and 3D terrain canvas will be framed in iconic magazine border geometry (`border-[#FFCC00]`), paired with an editorial expedition dateline placard (coordinates, elevation, expedition log tags, and place selector).
+- **Confirmed Decision 2 (Slide 04 Geological Guide)**: Multi-column magazine feature article layout with editorial drop-caps, elegant serif typography (`Noto Serif KR`), wide pull quotes, field figure captions (`Fig. 1`, `Fig. 2`), and structured tab panels that read like an investigative science spread.
+- **Confirmed Decision 3 (Unified Tone & Aesthetic)**: Signature National Geographic yellow borders (`#FFCC00`) set against a deep expedition dark canvas (`#07070a` / `#0d0d12`), warm paper-white and antique cream text hierarchies, hairline dividers, and removal of generic pill badge clutter in favor of clean typographic dateline metadata.
 
 ---
 
-## 1. Overview & Core Concept
+### 1. Overview & Core Concept
 
-- **기본 탐험 시나리오 ('전 세계' 중심)**:
-  - 앱 첫 진입 시 **'전 세계'의 대표 지형(예: 하와이 마우나로아 순상화산, 그랜드 캐니언, 피오르 등)**이 화려한 고해상도 위성지도 및 3D 디오라마와 함께 즉시 로드됩니다.
-  - 내비게이션 바에서 언제든지 '대한민국' 지형으로 1클릭 전환이 가능하며, 두 권역 모두 동일하게 정돈된 교과 연계 콘텐츠를 열람할 수 있습니다.
-- **슬라이드 04 목적**:
-  - 기존의 장황하고 중복되던 텍스트 나열(일반 소개 + 마크다운 보고서 + 외부 링크 + 타임라인이 한 화면에 길게 나열)을 제거하고, 학습자 및 교사가 필요로 하는 **교과 핵심 포인트**, **단계별 형성 메커니즘**, **현장·위성 관찰법**, **지질 용어 해설**을 목적에 맞게 즉시 열람할 수 있도록 개선합니다.
-- **주요 대상**:
-  - 중·고등학교 지구과학 및 지리 학습자, 탐구 수업 교사, 자연지리 탐방객.
-- **핵심 가치**:
-  - 한눈에 들어오는 직관적인 글로벌 지형 프로필(암석, 시대, 판구조 환경, 규모).
-  - 스크롤 피로감 없는 콤팩트한 뷰포트 내 4개 탭 분할 탐색.
-  - 교과서 시험 및 수행평가, 글로벌 자연유산 탐구에 직결되는 핵심 개념의 명확한 전달.
+- **What It Does**: Unifies the visual language and layout across all four full-page slides (Slide 01 Hero Cover, Slide 02 Google Satellite Viewport, Slide 03 3D Terrain Diorama, Slide 04 Geological Guide) under a cohesive National Geographic magazine editorial identity.
+- **Target Audience / Persona**: Students, educators, geography enthusiasts, and exploratory learners seeking an immersive, aesthetically elevated publication experience rather than a generic tech dashboard.
+- **Key Value**: Eliminates the jarring aesthetic disconnect between the cinematic magazine cover on Page 1 and subsequent utility-focused slides, transforming the journey into a continuous, high-prestige editorial expedition feature story.
 
 ---
 
-## 2. User Experience & Visual Design
+### 2. User Experience & Visual Design
 
-### A. 4대 주제별 탭 구조 (Tabbed Architecture)
-슬라이드 04 상단에 깔끔한 세그먼트형 탭 바(Tab Bar)를 배치하여, 사용자가 원하는 탭을 클릭하여 즉각 전환합니다:
+#### Key User Flows
+1. **Slide 01 (The Cover & Feature Teasers)**:
+   - Full-bleed cinematic cover photo with National Geographic yellow frame branding, prominent serif masthead ("GEOGRAPHY EXPLORER"), editorial volume kicker, and refined horizontal article teasers.
+2. **Slide 02 (Satellite Cartography Feature Spread)**:
+   - Yellow-bordered satellite viewport simulating a double-page cartographic gatefold.
+   - Left-aligned editorial dateline card: Coordinates, elevation, biome, country, and alternative site selector styled as expedition dispatch field points.
+   - Interactive map toggle button styled as an editorial viewer loupe affordance.
+3. **Slide 03 (3D Topographic Diorama Spread)**:
+   - Yellow-framed 3D viewport with an editorial expedition dateline plaque.
+   - Top-right control strip with clean typographic buttons for contour slices, terrain comparison, lighting, and camera reset.
+   - Bottom dispatch strip with geological formation mechanics and stratum annotations styled as scientific figure callouts.
+4. **Slide 04 (In-Depth Geological Feature Story)**:
+   - Redesigned as an authentic magazine publication spread.
+   - Lead story section with an editorial drop cap, balanced 2-column or 3-column prose, thematic pull quotes flanked by hairline dividers, and figure-numbered image diagrams.
+   - Tabbed study sections (Core Curriculum Overview, 4-Stage Evolution Mechanism, Field & Satellite Inspection, Geologic Glossary) styled as magazine departments with clean serif typography.
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────┐
-│ 04 · 지형 형성 해설 및 탐방 가이드                                              │
-│ [하와이 마우나로아 / 킬라우에아] 자연 지리 핵심 해설 (전 세계 · 순상화산)       │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│  [ 01. 교과 핵심 개요 ]   [ 02. 형성 원리 4단계 ]   [ 03. 현장·위성 탐방 ]   [ 04. 용어·심층 정리 ] │
-├──────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                  │
-│   (선택된 탭의 정돈된 정형화 카드 그리드가 뷰포트 내 쾌적하게 렌더링)            │
-│                                                                                  │
-└──────────────────────────────────────────────────────────────────────────────────┘
-```
-
-1. **Tab 1: 교과 핵심 개요 (Core Concepts & Profile)**
-   - **교과 연계 안내**: 중·고교 지구과학 I / 지리 (화산 활동과 판구조론, 열점 분출, 대륙/해양 지형 발달) 핵심 연계 단원 명시
-   - **지형 핵심 팩트 시트**:
-     - 주요 암석(Rock Type), 형성 지질시대(Age), 지구조 환경(Tectonic Setting), 지형 형성력(Agent), 지형 규모(고도/면적/단차/체적)
-   - **3대 핵심 요약 포인트**: 해당 지형에서 반드시 기억해야 할 3가지 특성
-2. **Tab 2: 단계별 형성 원리 (Step-by-Step Geological Evolution)**
-   - 4단계 형성 타임라인을 대화형 스테퍼(Interactive Stepper) 또는 일목요연한 4분할 수평 카드로 제공
-   - 단계별 "당시 시대", "작용 메커니즘(지구과학적 원리)", "현장 판독 핵심 단서" 제시
-3. **Tab 3: 현장·위성 탐방 가이드 (Field & Satellite Observation)**
-   - 현장 답사 시 확인해야 할 체크포인트 목록
-   - 위성사진 및 항공사진 판독 시 식별되는 패턴(칼데라 함몰선, 용암류 방향, 활성 균열대)
-   - 최적 방문 시기 및 지질 유산 보존/안전 주의사항
-   - Google 지도 고해상도 위성뷰, Google Earth 3D 웹 바로가기 링크 버튼
-4. **Tab 4: 지형 심층 정리 및 용어 해설 (In-Depth & Glossary)**
-   - 군더더기 없는 정제된 형성 종합 설명문
-   - 교과 핵심 지질학 용어 사전(Glossary Cards): 예) 열점(Hotspot), 칼데라(Caldera), 파호이호이/아아 용암, 순상화산, 주상절리 등
-   - 학술 및 신뢰할 수 있는 백과사전 출처 링크
-
-### B. 비주얼 디자인 및 안티-슬롭(Anti-Slop) 원칙 준수
-- **Zero-Pill 철학**: 무분별한 캡슐형 뱃지 남발 배제, 타이포그래피 구분선(`·`, `/`)과 위계 있는 폰트 크기로 정보 분리
-- **단일 고도(Single Elevation)**: 박스 안에 박스가 계속 중첩되는 번잡함 제거, 섬세한 헤어라인 테두리(`border border-white/10`)와 여백 중심 분리
-- **60-30-10 색상 배분**: 깊은 차콜 캔버스(60%), 단정한 다크 카드 표면(30%), 앰버 골드(`text-[#FFCC00]`) 및 기능별 시맨틱 컬러(10%) 적용
-- **키보드 접근성**: 좌우 방향키로 탭 전환 지원 및 `focus-visible` 아웃라인 제공
+#### Visual Identity & Theme
+- **Aesthetic Direction**: Classic National Geographic magazine editorial—curatorial elegance, scientific authority, photojournalism discipline.
+- **Color Palette & Mood**:
+  - Dominant Canvas (60%): Deep expedition black & ink tones (`#07070a`, `#0a0a0f`, `#121218`).
+  - Structural Surfaces (30%): Deep charcoal plaques (`#16161f`), frosted glass scrims, hairline borders (`rgba(255,255,255,0.12)`).
+  - Accent Budget (10%): Iconic National Geographic yellow (`#FFCC00`) used for the signature framing borders, masthead accents, active tab underlines, and key coordinate markers.
+- **Typography & Hierarchy**:
+  - Display & Headings: `Noto Serif KR` (weights 600, 700, 900) for article titles, issue headers, and drop caps.
+  - Body Prose: `Inter` / `Noto Serif KR` with relaxed line height (1.75) and constrained line measures (65–75 characters) to ensure effortless long-form reading.
+  - Cartographic & Dateline Metadata: Subdued uppercase tracking sans-serif (`tracking-[0.2em] font-mono text-xs`) for coordinates, elevation, and issue volume markers.
+- **Anti-Slop Discipline**:
+  - Zero pill enclosures on static metadata; clean typographic separators (`·` or `/`).
+  - Elimination of mechanical code prefixes (`//`, `01_SLIDE`).
+  - Elimination of thick left colored bars; replacement with balanced hairline borders and pull quote typestyles.
 
 ---
 
-## 3. Key Product Decisions & Trade-Offs
+### 3. Key Product Decisions & Trade-Offs
 
-- **결정 1: 기본 권역을 '전 세계(World)'로 초기화**
-  - *이유*: 사용자의 요청에 따라 세계 각지의 웅장한 지형(하와이 화산, 그랜드 캐니언, 요세미티 등)을 메인으로 전면에 내세워 지구과학 스케일의 시각적 몰입감을 극대화.
-- **결정 2: 무한 세로 스크롤 대신 탭 전환형 구조 채택**
-  - *이유*: 기존 긴 스크롤 방식은 아래쪽 내용(학술 자료, 상세 설명)을 보려면 마우스를 한참 굴려야 하고 정보가 흩어져 가독성이 떨어짐. 탭 전환을 통해 사용자가 원하는 카테고리의 핵심 데이터에 0.1초 만에 접근 가능.
-- **결정 3: 비정형 긴 줄글 마크다운의 정형화(Structuring) 및 용어 사전화**
-  - *이유*: 긴 줄글은 중고교생이나 일반 탐방객이 핵심 개념을 발췌하기 어려움. 교과 핵심 요약, 팩트 수치, 형성 4단계, 핵심 용어 사전으로 정형화하여 학습 효율 극대화.
+- **Decision 1: Magazine Framing Around 3D Canvas and Map iFrame**:
+  - *Chosen Approach*: Encase both the Map and 3D viewports inside an inset magazine frame with the signature `#FFCC00` border, accompanied by an editorial dateline panel and figure title.
+  - *Why*: Directly preserves the full interactive functionality of Google Maps and Three.js while visually transforming them from generic software widgets into interactive magazine feature illustrations.
+  - *Alternatives Considered*: Leaving them edge-to-edge full-bleed was rejected because it felt like a software tool rather than a magazine publication.
+- **Decision 2: Geological Guide (Slide 4) Layout Architecture**:
+  - *Chosen Approach*: Replace generic card-heavy grids with a multi-column magazine article format featuring drop-caps, wide pull quotes, figure captions (`Fig. 1`), and horizontal department navigation.
+  - *Why*: Elevates the educational content into an engaging National Geographic special investigation report.
+  - *Alternatives Considered*: Accordion-only or plain markdown dump, both of which lack editorial presence and visual pacing.
+- **Decision 3: Slide Navigation Dock Styling**:
+  - *Chosen Approach*: Redesign the right floating dock as a vertical publication index / table of contents ribbon (`VOL. 01 · ISSUE CONTENTS`) with yellow accent highlights and issue-style roman/numeral typography.
+  - *Why*: Reinforces the feeling of flipping through an editorial volume rather than browsing an arbitrary slide deck.
 
 ---
 
-## 4. Technical Architecture & Component Mapping
+### 4. Technical Architecture & Data Strategy (Technical Reference)
+
+#### Architecture & Component Diagram
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        App.tsx (Full-page Snap)                        │
-│             ★ Default Region: 'world' (전 세계 메인)                   │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ Active Slide: 04 (Guide)
-┌───────────────────────────────────▼────────────────────────────────────┐
-│                       GeologicalGuideSlide.tsx                         │
-│                                                                        │
-│ ┌────────────────────────────────────────────────────────────────────┐ │
-│ │ Header: Place Title, Region, Tagline, Curriculum Tag               │ │
-│ └────────────────────────────────────────────────────────────────────┘ │
-│ ┌────────────────────────────────────────────────────────────────────┐ │
-│ │ Tab Bar: [01. 핵심 개요] [02. 형성 원리] [03. 탐방 가이드] [04. 용어 해설] │ │
-│ └──────────────────┬─────────────────┬─────────────────┬─────────────┘ │
-│                    │                 │                 │               │
-│          ┌─────────▼──────┐ ┌────────▼──────┐ ┌────────▼─────┐ ┌───────▼──────┐
-│          │ OverviewTab    │ │ EvolutionTab  │ │ FieldGuideTab│ │ GlossaryTab  │
-│          │ - Fast Facts   │ │ - 4-Stage     │ │ - Checkpoints│ │ - Curriculum │
-│          │ - 3 Key Points │ │   Timeline    │ │ - Satellite  │ │   Terms Dict │
-│          │ - Scale Metrics│ │ - Mechanisms  │ │ - Map Links  │ │ - Reference  │
-│          └────────────────┘ └───────────────┘ └───────────────┘ └────────────┘
-└────────────────────────────────────────────────────────────────────────┘
+│ App.tsx (Root Editorial Scroll-Snap Container)                         │
+├────────────────────────────────┬───────────────────────────────────────┤
+│ Top Navigation                 │ Slide Navigation Dock                 │
+│ - Brand Masthead ("GEOGRAPHY") │ - Magazine Table of Contents Ribbon   │
+│ - Yellow Brand Border Accent   │ - Active Page Indicator               │
+└────────────────────────────────┴───────────────────────────────────────┘
+                                   │
+      ┌────────────────────────────┼────────────────────────────┐
+      ▼                            ▼                            ▼
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────────┐
+│ Slide 01: Cover  │     │ Slide 02: Map    │     │ Slide 03: 3D Studio  │
+│ HeroSlideshow    │     │ GoogleMapSlide   │     │ Terrain3DSlide       │
+│ - Full-bleed Art │     │ - Yellow Frame   │     │ - Yellow Frame       │
+│ - Issue Masthead │     │ - Dateline Panel │     │ - Dateline Plaque    │
+│ - Feature Teasers│     │ - Interactive Map│     │ - Three.js Diorama   │
+└──────────────────┘     └──────────────────┘     └──────────────────────┘
+                                   │
+                                   ▼
+                         ┌──────────────────────────────────────┐
+                         │ Slide 04: Geological Guide Slide     │
+                         │ - Editorial Masthead & Deck          │
+                         │ - Drop Cap Opening Story             │
+                         │ - Multi-column Layout & Pull Quotes  │
+                         │ - Department Tabs (Overview/Stages)  │
+                         │ - Figure-Captioned Scientific Assets │
+                         └──────────────────────────────────────┘
 ```
 
-### 구현 상세 단계
-1. **기본 권역 '전 세계' 변경 (`src/App.tsx`)**:
-   - `region` 초기 상태를 `'world'`로 설정.
-   - 초기 데이터 검색을 전 세계의 대표 랜드마크(예: 하와이 마우나로아 또는 킬라우에아 순상화산)로 호출.
-2. **타입 정의 보강 (`src/types/index.ts`)**:
-   - `PlaceInfo`에 교과 연계 단원(`curriculumLink`), 핵심 요약 키워드(`keyTakeaways`), 지질 용어 사전 목록(`glossary?: { term: string; definition: string }[]`) 필드 확장 지원.
-3. **지형 데이터셋 보강 (`src/constants/places/*.ts`)**:
-   - 전 세계 및 국내 주요 지형 데이터에 핵심 교과 개념, 정제된 4단계 형성 메커니즘, 핵심 용어 사전 데이터 정비.
-4. **`GeologicalGuideSlide.tsx` 전면 재구성**:
-   - 탭 상태 관리(`activeTab: 'overview' | 'evolution' | 'field' | 'glossary'`).
-   - 탭별 컴포넌트 분리 및 콤팩트 카드 그리드 구현.
-   - 부드러운 탭 전환 애니메이션 및 키보드 탐색 지원.
-   - 하단 슬라이드 퀵 내비게이션 도크 유지.
-5. **검증 및 빌드**:
-   - `compile_applet`으로 타입 체크 및 번들링 무결성 검증.
+#### State & Interaction Mapping
+
+| Component | State / Trigger | Magazine UI Response |
+| :--- | :--- | :--- |
+| `Navigation.tsx` | Region Switch (`korea` vs `world`) | Switches magazine edition ("KOREA EDITION" / "GLOBAL EXPEDITION") with yellow border badge |
+| `SlideNavigationDock.tsx` | Scroll / Keydown / Dot Click | Smooth scroll transition; updates volume chapter indicator with gold underline |
+| `GoogleMapSlide.tsx` | `isInteractiveMode` Toggle | Toggles pointer events and illuminates dateline badge ("CARTOGRAPHIC EXPLORATION ACTIVE") |
+| `GoogleMapSlide.tsx` | Alternative Place Click | Updates dispatch coordinates, elevation, and satellite location smoothly |
+| `Terrain3DSlide.tsx` | Contour / Slice / Compare | Opens magazine scientific cross-section overlays without breaking frame geometry |
+| `GeologicalGuideSlide.tsx` | Tab Switch (`overview`, `evolution`, etc.) | Smooth transition between editorial chapters; maintains drop-caps and pull quotes |
+
+---
+
+### 5. Step-by-Step Implementation Strategy
+
+1. **Step 1: Theme & Typography Polish (`src/index.css` & Global Tokens)**
+   - Ensure `Noto Serif KR` and `Inter` are cleanly configured with magazine utility classes (`drop-cap`, `pull-quote`, `magazine-frame`).
+2. **Step 2: Navigation & Slide Dock Renewal (`Navigation.tsx`, `SlideNavigationDock.tsx`)**
+   - Update header with authentic magazine masthead typography and yellow border logo mark.
+   - Refactor right navigation dock to look like a publication issue index.
+3. **Step 3: Google Map Slide Editorial Frame Renewal (`GoogleMapSlide.tsx`)**
+   - Implement the signature `#FFCC00` magazine frame around the satellite viewport.
+   - Add the editorial dateline placard: coordinates, elevation, field dispatch summary, and styled alternative place selection strip.
+4. **Step 4: 3D Terrain Slide Editorial Spread Renewal (`Terrain3DSlide.tsx`)**
+   - Wrap 3D diorama canvas in matching yellow magazine frame geometry.
+   - Build a scientific expedition dateline HUD: stratum data, formation epoch, and publication-style figure controls.
+5. **Step 5: Geological Guide Multi-Column Feature Redesign (`GeologicalGuideSlide.tsx`)**
+   - Redesign layout into an authentic multi-column magazine article:
+     - Lead paragraph with elegant drop cap.
+     - Central pull quotes with italic serif styling and subtle divider bars.
+     - Clean definition lists for geologic facts.
+     - 4-step evolution stages formatted as a chronological magazine photo-essay.
+     - Field inspection guide formatted as an on-site explorer report.
+6. **Step 6: Build Verification & Compilation Check**
+   - Run `compile_applet` and verify no TypeScript or styling regressions occur across all viewport states.

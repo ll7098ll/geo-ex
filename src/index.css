@@ -48,3 +48,25 @@ html, body, #root {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 204, 0, 0.6);
 }
+
+/* Magazine Editorial Utilities */
+.magazine-drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  line-height: 0.85;
+  font-weight: 900;
+  padding-right: 0.75rem;
+  padding-top: 0.25rem;
+  color: #FFCC00;
+}
+
+.magazine-pullquote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  position: relative;
+}
+
+.magazine-frame {
+  box-shadow: 0 0 0 1px rgba(255, 204, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}

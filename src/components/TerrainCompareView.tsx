@@ -452,7 +452,7 @@ export const TerrainCompareView: React.FC<TerrainCompareViewProps> = ({
 
             {/* Left 3D Canvas Box */}
             <div className="w-full h-[360px] sm:h-[420px] bg-slate-950 relative border-b border-slate-800">
-              <Terrain3D category={baseCategory} subTerrain={basePlace.terrain} />
+              <Terrain3D category={baseCategory} subTerrain={basePlace.terrain} hideHud={true} />
               <div className="absolute top-3 left-3 pointer-events-none z-10">
                 <span className="px-2 py-0.5 bg-black/60 backdrop-blur-md rounded text-[11px] font-medium text-slate-300 border border-slate-700">
                   3D 시뮬레이터 A (기준)
@@ -573,7 +573,7 @@ export const TerrainCompareView: React.FC<TerrainCompareViewProps> = ({
 
             {/* Right 3D Canvas Box */}
             <div className="w-full h-[360px] sm:h-[420px] bg-slate-950 relative border-b border-slate-800">
-              <Terrain3D category={targetCategory} subTerrain={targetPlace.terrain} />
+              <Terrain3D category={targetCategory} subTerrain={targetPlace.terrain} hideHud={true} />
               <div className="absolute top-3 left-3 pointer-events-none z-10">
                 <span className="px-2 py-0.5 bg-black/60 backdrop-blur-md rounded text-[11px] font-medium text-slate-300 border border-slate-700">
                   3D 시뮬레이터 B (대조)

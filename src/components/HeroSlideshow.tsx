@@ -26,7 +26,7 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
   const ActiveIcon = activeCategory.icon;
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-black">
+    <div className="relative h-full w-full overflow-hidden bg-black">
       <AnimatePresence>
         <motion.img
           key={activeIndex}
@@ -41,8 +41,8 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
       </AnimatePresence>
       
       {/* Gradients for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent h-40 pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent h-40 pointer-events-none z-10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none z-10" />
 
       {/* Hero Content */}
       <div className="absolute inset-0 flex flex-col justify-end pb-36 sm:pb-40 md:pb-44 lg:pb-48 px-6 sm:px-12 md:px-16 max-w-7xl mx-auto w-full z-30 pointer-events-none">
@@ -103,24 +103,25 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
             ))}
           </div>
           
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-2.5 mb-4 font-mono">
             {onScrollNext && (
               <button
                 onClick={onScrollNext}
-                className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-full bg-black/60 hover:bg-[#FFCC00] text-white hover:text-black border border-white/20 hover:border-[#FFCC00] backdrop-blur-md text-xs font-semibold transition-all shadow-lg cursor-pointer group active:scale-95"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-black/80 hover:bg-[#FFCC00] text-white hover:text-black border border-white/20 hover:border-[#FFCC00] backdrop-blur-md text-xs font-bold tracking-wider uppercase transition-all shadow-lg cursor-pointer group active:scale-95"
                 title="구글 위성 지도 슬라이드로 바로 이동"
               >
-                <span>구글 위성 지도 둘러보기</span>
+                <span>CH.02 위성 지도 둘러보기</span>
                 <ChevronDown className="w-3.5 h-3.5 text-[#FFCC00] group-hover:text-black transition-colors" />
               </button>
             )}
 
             <button
               onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-              className="w-12 h-12 rounded-full border border-white/30 flex items-center justify-center text-white hover:bg-white/10 transition-colors shrink-0"
+              className="w-9 h-9 border border-white/20 bg-black/80 flex items-center justify-center text-white hover:bg-[#FFCC00] hover:text-black hover:border-[#FFCC00] transition-colors shrink-0 shadow-lg cursor-pointer"
               aria-label={isAutoPlaying ? "Pause slideshow" : "Play slideshow"}
+              title={isAutoPlaying ? "슬라이드쇼 일시정지" : "슬라이드쇼 재생"}
             >
-              {isAutoPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
             </button>
           </div>
         </div>
