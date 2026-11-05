@@ -1,59 +1,60 @@
 # 🏗️ 지형 탐험가 시스템 아키텍처 (System Architecture)
 
-> 본 문서는 **지형 탐험가 (Geography Explorer)**의 소프트웨어 아키텍처, 절차적 3D 지형 렌더링 파이프라인, 수치 표고 모델(DEM) 및 등고선 산출 알고리즘, 그리고 컴포넌트 간 데이터 흐름을 상세히 기술합니다.
+> 본 문서는 **지형 탐험가 (Geography Explorer)**의 소프트웨어 아키텍처, 절차적 3D 지형 렌더링 파이프라인, 수치 표고 모델(DEM) 및 등고선 산출 알고리즘, 컴포넌트 계층도 및 데이터 흐름을 상세히 기술합니다.
 
 ---
 
 ## 📌 1. 전체 아키텍처 개요 (High-Level Overview)
 
-본 애플리케이션은 **React 19**, **Three.js / React Three Fiber(R3F)**, **TypeScript** 기반의 고성능 클라이언트 사이드 인터랙티브 시뮬레이션 플랫폼입니다. 무거운 지형 3D 에셋 파일(GLTF/OBJ 등)을 네트워크로 매번 다운로드하는 대신, **클라이언트 사이드 절차적 수치 알고리즘(Procedural Math)**을 통해 지형 형상을 실시간 연산하여 즉시 렌더링합니다.
+본 애플리케이션은 **React 19**, **Three.js / React Three Fiber(R3F)**, **TypeScript 5.8**, **Tailwind CSS v4** 기반의 고성능 클라이언트 사이드 인터랙티브 시뮬레이션 플랫폼입니다. 무거운 지형 3D 에셋 파일(GLTF/OBJ 등)을 네트워크로 매번 다운로드하는 대신, **클라이언트 사이드 절차적 수치 알고리즘(Procedural Math)**을 통해 지형 형상을 실시간 연산하여 즉시 렌더링합니다.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                          사용자 인터페이스 계층                          │
-│   Navigation · HeroSlideshow · 3D Diorama Studio · SearchResult        │
-│   ContourMapModal (2D 등고선) · TerrainCompareView (듀얼 3D 비교)        │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ React Props & State
-┌───────────────────────────────────▼────────────────────────────────────┐
-│                         상태 관리 및 비즈니스 로직                        │
-│   useTerrainSearch Hook  ──▶  PRESET_PLACES (112개소 메타데이터)        │
-│   Region (Korea / World) ──▶  TERRAIN_CATEGORIES (6대 범주 / 26종)      │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │
-         ┌──────────────────────────┴──────────────────────────┐
-         ▼                                                     ▼
-┌───────────────────────────────────┐ ┌───────────────────────────────────┐
-│     3D 렌더링 엔진 (Three.js/R3F)   │ │  2D 등고선 & 단면 분석 엔진 (Canvas) │
-│ - PlaneGeometry 정점 변위 (Math)  │ │ - 80x80 DEM 표고 그리드 생성     │
-│ - 절차적 텍스처 (Canvas CanvasTex) │ │ - Marching Squares 등고선 추적   │
-│ - 지질 단면 슬라이스 (Custom Plane)│ │ - A-B 단면선 고도 프로파일 차트  │
-│ - 3D 피처 어노테이션 핀 (3D Pins) │ │ - 고도 색채환 (Hypsometric Tint) │
-└───────────────────────────────────┘ └───────────────────────────────────┘
+│                        지형 탐험가 전체 시스템 계층 구조                          │
+├────────────────────────────────────────────────────────────────────────┤
+│ 1. 프리젠테이션 계층 (Presentation Layer)                                │
+│    Navigation (권역 전환/글로벌 퀵 점프) · SlideNavigationDock (우측 독)        │
+│    Slide 01: HeroSlideshow (6대 대분류 캐러셀, 26개 지형 칩 선택)              │
+│    Slide 02: GoogleMapSlide (100vh 구글 위성지도, 대안 명소 칩 바)              │
+│    Slide 03: Terrain3DSlide (Three.js/R3F 디오라마, 등고선 모달, 듀얼 비교 뷰)   │
+│    Slide 04: GeologicalGuideSlide (4탭 교과 가이드, 팩트시트, 용어사전)         │
+├────────────────────────────────────────────────────────────────────────┤
+│ 2. 상태 관리 및 비즈니스 로직 (State & Domain Layer)                      │
+│    App.tsx (활성 슬라이드 0~3, 현재 검색 결과 SearchResult, 권역 world/korea)   │
+│    useTerrainSearch Hook  ──▶  PRESET_PLACES (112개소 메타데이터 필터링)        │
+│    curriculumHelper.ts    ──▶  2022/2015 교육과정 성취기준 및 4탭 데이터 변환   │
+├────────────────────────────────────────────────────────────────────────┤
+│ 3. 그래픽스 및 수치 분석 엔진 (Graphics & Analytical Engine)              │
+│    Terrain3D / R3F Canvas ──▶  PlaneGeometry 정점 변위 및 법선 벡터 연산        │
+│    terrainMath.ts         ──▶  PRNG, 2D Value Noise, fBm, Warping, Voronoi     │
+│    generators/*.ts        ──▶  6대 범주 26종 고도 함수 z = f(x, y)             │
+│    terrainDEMGenerator.ts ──▶  80x80 수치 표고 모델(DEM) 추출                  │
+│    marchingSquares.ts     ──▶  Marching Squares 2D 등고선 벡터 추적           │
+│    crossSectionMath.ts    ──▶  A-B 단면선 100샘플 바이리니어 보간 및 경사각 연산│
+│    terrainContourShader.ts──▶  Custom GLSL 셰이더 및 Hypsometric Tinting       │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🏔️ 2. 절차적 3D 지형 생성 파이프라인 (Procedural 3D Pipeline)
 
-지형의 표고값은 `src/components/terrain/` 내 전용 지형 생성기(`generators/`)에 의해 결정됩니다.
+지형의 표고값은 `src/components/terrain/` 내 전용 지형 생성기(`generators/`)에 의해 결정됩니다. 상세 수학 공식은 [절차적 지형 수식 및 셰이더 가이드](PROCEDURAL_TERRAIN_MATH.md)를 참조하십시오.
 
-### 2.1 수학적 노이즈 기초
-- **단일 소스 수학 모듈 (`terrainMath.ts`)**:
-  - `random(seed)`: 결정론적 의사 난수 생성기(PRNG)
-  - `noise(x, y)`: 2차원 값 노이즈(Value Noise) 및 바이리니어 보간
-  - `fbm(x, y, octaves, persistence, lacunarity)`: 다중 옥타브 분수 브라운 운동(Fractional Brownian Motion)
-  - `warpedFbm(x, y)`: 도메인 왜곡(Domain Warping)을 통한 복잡한 유체·지층 침식 패턴 생성
-  - `hexVoronoi(x, y)`: 6각형 보로노이 셀 거리 및 셀 중심 추출 (주상절리 생성 전용)
+### 2.1 수학적 노이즈 엔진 (`terrainMath.ts`)
+- **결정론적 의사 난수(PRNG)**: 시드에 기반하여 동일 입력에 대해 항상 일관된 난수를 반환.
+- **2D 밸류 노이즈 (Value Noise)**: 정수 격자 해시와 3차 Hermite 스무스스텝 보간을 결합한 지표 요철 생성.
+- **다중 옥타브 분수 브라운 운동 (fBm)**: 진폭 감쇠(0.5)와 주파수 증폭(2.0)을 누적하여 다중 스케일 프랙탈 지표면 연산.
+- **도메인 왜곡 (Domain Warping)**: 2차원 좌표 벡터를 노이즈 벡터장으로 비틀어 유체 침식과 횡압력 지층 주름 생성.
+- **6각형 보로노이 셀 (`hexVoronoi`)**: 주상절리 현무암 기둥의 수축 냉각 다각형 균열 연산.
 
 ### 2.2 지형별 전문 생성기 (`src/components/terrain/generators/`)
-각 대분류별로 독립 모듈이 구성되어 세부 지형의 고도 $z = f(x, y)$ 및 지질 특성을 반환합니다:
-- **`volcanic.ts`**: 화산(원추형 가우스 곡선), 칼데라(칼데라호 분지 함몰), 주상절리(육각 기둥 표면 수축), 용암동굴, 단층 산맥
-- **`coastal.ts`**: 갯벌(조석 갯골 네트워크 및 완경사), 해식애(파식 절벽 및 파식대), 시스택(촛대 바위섬), 해안 사구(풍성 풍식 립플), 사주
-- **`fluvial.ts`**: 선상지(부채꼴 퇴적 경사), 곡류천(사행천 사인파 곡선 및 우각호), 삼각주(하구 분지), 하안단구(계단식 평탄면), 폭포
-- **`karst.ts`**: 석회동굴(용식 공동), 돌리네(원형 싱크홀 깔때기), 탑 카르스트(용식 잔류 석회암 봉우리)
-- **`glacial.ts`**: U자곡(빙식 U자형 단면), 피오르드(침수 협만 해수면 연동), 혼(3~4개 권곡이 깎아낸 피라미드 봉우리), 모레인(빙퇴석 융기)
-- **`arid.ts`**: 사막(바르한 초승달 사구), 버섯바위(풍식 협소 기둥), 오아시스(사구 사이 지하수 노출), 플라야(건조 염호 평원)
+- **`volcanic.ts`**: 화산(가우스 곡선 융기 및 분화구), 칼데라(외륜산 링 및 함몰 호수), 주상절리(육각 기둥 단차), 용암동굴, 단층 산맥
+- **`coastal.ts`**: 갯벌(조간대 완경사 및 수지상 갯골), 해식애(파식 절벽 및 파식대), 시스택(촛대 바위 기둥), 해안 사구(풍성 립플), 사주
+- **`fluvial.ts`**: 선상지(부채꼴 방사상 경사), 곡류천(사인파 사행 수로 및 우각호), 삼각주(하구 분기 분지), 하안단구(계단식 단구면), 폭포
+- **`karst.ts`**: 석회동굴(용식 공동), 돌리네(역원추형 싱크홀 와지), 탑 카르스트(탑상 잔류 석회암)
+- **`glacial.ts`**: U자곡(빙식 U자 단면 협곡), 피오르드(침수 협만 및 해수면 연동), 혼(피라미드 암봉), 모레인(빙퇴석 융기 언덕)
+- **`arid.ts`**: 사막(바르한 초승달 사구), 버섯바위(풍식 좁은 기둥), 오아시스(사구 사이 지하수 노출), 플라야(건조 염호 평원)
 
 ### 2.3 3D 정점 배치 및 법선 벡터 연산
 `Terrain3D.tsx`에서 R3F의 `PlaneGeometry(width, height, segmentsX, segmentsY)` 정점 버퍼에 접근하여, 각 그리드 좌표 $(x, y)$에 지형 수식을 적용하고 `computeVertexNormals()`를 호출하여 동적 라이팅(DirectionalLight + AmbientLight + HemisphereLight)이 입체적으로 반응하도록 구성합니다.
@@ -62,17 +63,19 @@
 
 ## 🗺️ 3. DEM 표고 그리드 & 등고선(Contour) 생성 아키텍처
 
+자세한 판독법과 수학적 배경은 [등고선 판독 및 단면 분석 가이드](CONTOUR_GUIDE.md)를 참조하십시오.
+
 ### 3.1 수치 표고 모델(DEM) 추출 (`terrainDEMGenerator.ts`)
 - 2D 등고선도 및 3D 슬라이스 평면의 일관성을 위해 $N \times N$ (기본 $80 \times 80$)의 정규화 표고 그리드 `TerrainElevationField`를 생성합니다.
 - 각 셀 $[i, j]$는 지형의 로컬 고도 $Z(i, j) \in [0, 1]$과 실제 매핑 고도(m)를 보관합니다.
 - 최고 고도(`maxElevation`), 최저 고도(`minElevation`), 고도차(`elevationRange`)를 자동 산출합니다.
 
 ### 3.2 Marching Squares 등고선 추출 (`marchingSquares.ts`)
-- **알고리즘**: 2차원 스칼라 필드에서 특정 등고선 레벨 $h_k$에 대한 윤곽선을 추적하는 Marching Squares 구현.
+- 2차원 스칼라 필드에서 특정 등고선 레벨 $h_k$에 대한 윤곽선을 추적하는 Marching Squares 알고리즘 구현.
 - 4개 정점의 이진 상태($2^4 = 16$가지 케이스)에 따른 셀 절단 에지를 선형 보간(Linear Interpolation)하여 부드러운 벡터 선분(`ContourPath`)을 생성합니다.
 - **등고선 계층**:
-  - `주곡선 (Index Contour)`: 굵은 선(2px, 강조 색상), 고도 라벨 표시
-  - `간곡선 (Intermediate Contour)`: 얇은 선(1px), 세밀한 경사 표현
+  - `주곡선 (Index Contour)`: 굵은 황금색 선(2.5px), 고도 라벨 표시
+  - `간곡선 (Intermediate Contour)`: 얇은 회색 선(1.0px), 세밀한 경사 표현
 - **고도 색채환 (Hypsometric Tinting)**:
   - 저지대(녹색/갈색)부터 고지대(황색, 적갈색, 백색 만년설)까지 점진적 색상 팔레트 매핑.
 
@@ -115,9 +118,9 @@
 
 ---
 
----
-
 ## 📊 5. 상태 관리 & 4단 슬라이드 데이터 흐름 (Data Flow)
+
+상세 슬라이드 스냅 및 옵서버 아키텍처는 [4단 슬라이드 아키텍처 가이드](SLIDE_ARCHITECTURE.md)를 참조하십시오.
 
 1. **지형 선택 및 슬라이드 전환 (`App.tsx`)**:
    - `HeroSlideshow (Slide 01)`에서 사용자가 지형 칩을 클릭하면 `handleExplore(terrain, categoryId)` 호출.
@@ -132,3 +135,11 @@
 4. **등고선 및 단면도 활성화**:
    - `generateTerrainElevationField(categoryId, subTerrain)`를 통해 80x80 DEM 그리드를 연산.
    - `ContourMapModal` 오픈 시 인터랙티브 캔버스로 전달되어 Marching Squares 등고선 벡터 및 A-B 단면선 고도 프로파일 생성.
+
+---
+
+## 🔗 연관 기술 문서
+- [4단 슬라이드 아키텍처](SLIDE_ARCHITECTURE.md): 스냅 스크롤 및 뷰포트 제어
+- [절차적 지형 수식 및 셰이더](PROCEDURAL_TERRAIN_MATH.md): 3D 수학 공식 및 GLSL
+- [데이터 스키마 규격](DATA_SCHEMA.md): TypeScript 인터페이스 및 타입 정의
+- [지질 명소 기여 가이드](CONTRIBUTING_TERRAIN.md): 신규 명소 및 알고리즘 추가

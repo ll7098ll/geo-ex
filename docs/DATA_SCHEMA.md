@@ -143,3 +143,11 @@ export const NEW_PLACES: PlaceInfo[] = [
 ```
 
 새로 추가된 데이터는 `constants/places.ts`에 자동 집계되며, 메인 슬라이더 탐색, 3D 디오라마, 위성 지도, 2D 등고선도 및 두 지형 비교 뷰 전반에 즉각 반영됩니다.
+
+---
+
+## 🔗 연관 기여 및 기술 문서
+- [지질 명소 기여 가이드](CONTRIBUTING_TERRAIN.md): 실제 기여 절차 5단계 및 자가 검증 체크리스트
+- [절차적 지형 수식 및 셰이더](PROCEDURAL_TERRAIN_MATH.md): 3D 수치 알고리즘 $z=f(x, y)$ 및 셰이더 규격
+- [시스템 아키텍처 개요](ARCHITECTURE.md): 전역 데이터 흐름 및 컴포넌트 계층도
+

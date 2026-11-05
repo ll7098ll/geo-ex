@@ -141,14 +141,17 @@
 ## 📁 6. 프로젝트 폴더 구조 (Project Structure)
 
 ```text
-├── docs/                                  # 📚 상세 기술 및 교육 문서 총람
-│   ├── ARCHITECTURE.md                    # 시스템 아키텍처 및 3D/DEM 수치 파이프라인
-│   ├── SLIDE_ARCHITECTURE.md              # 4단 풀스크린 스냅 슬라이드 및 컴포넌트 아키텍처
-│   ├── CURRICULUM_GUIDE.md                # 중·고교 지구과학 & 지리 교육과정 수업 활용 가이드
+├── docs/                                  # 📚 상세 기술 및 교육 문서 총람 (10종)
+│   ├── ARCHITECTURE.md                    # 시스템 아키텍처 및 렌더링 파이프라인
+│   ├── SLIDE_ARCHITECTURE.md              # 4단 풀스크린 스냅 슬라이드 및 상태 동기화
+│   ├── CURRICULUM_GUIDE.md                # 2022 개정 교육과정 연계 수업 가이드 & 차시 지도안
+│   ├── STUDENT_WORKSHEET.md               # [신설] 교실 수업용 학생 탐구 활동지 3종 & 수행평가 루브릭
 │   ├── USER_MANUAL.md                     # 사용자 및 교사 조작 매뉴얼 & FAQ
-│   ├── TERRAIN_GUIDE.md                   # 26개 지형학 총람 및 112개 명소 가이드
+│   ├── TERRAIN_GUIDE.md                   # 26개 지형학 총람 및 112개 국내외 명소 가이드
 │   ├── CONTOUR_GUIDE.md                   # 등고선 판독 및 단면 분석 활용 가이드
-│   └── DATA_SCHEMA.md                     # 데이터 모델 규격 및 신규 명소 추가 가이드
+│   ├── PROCEDURAL_TERRAIN_MATH.md         # [신설] 3D 절차적 지형 수식 및 커스텀 GLSL 셰이더
+│   ├── DATA_SCHEMA.md                     # 데이터 모델 규격 및 TypeScript 인터페이스
+│   └── CONTRIBUTING_TERRAIN.md            # [신설] 신규 지질 명소 프리셋 및 지형 추가 기여 가이드
 ├── src/
 │   ├── components/                        # UI 및 시뮬레이션 컴포넌트
 │   │   ├── Navigation.tsx                 # 권역 전환(전세계/대한민국) 및 메인 리셋 헤더
@@ -249,18 +252,25 @@ npm run preview
 
 ## 📚 8. 상세 기술 및 교육 문서 색인 (Documentation Index)
 
-프로젝트와 관련된 전문 문서는 `docs/` 디렉터리에 체계적으로 정리되어 있습니다:
+프로젝트와 관련된 10종의 전문 문서는 `docs/` 디렉터리에 체계적으로 정리되어 있습니다:
 
-- 🎓 **[교육과정 수업 활용 가이드 (docs/CURRICULUM_GUIDE.md)](docs/CURRICULUM_GUIDE.md)**: 2022/2015 개정 중·고교 과학 및 지리 단원 매핑표, 4단계 수업 모형, 학생 활동지 및 수행평가 루브릭.
-- 📐 **[4단 스냅 슬라이드 아키텍처 (docs/SLIDE_ARCHITECTURE.md)](docs/SLIDE_ARCHITECTURE.md)**: 4단 전체화면 스냅 스크롤 설계, IntersectionObserver 상태 추적, 4탭 교육 가이드 컴포넌트 구조.
+### 🎓 교육 및 수업 활용 트랙 (Educators & Students)
 - 📖 **[사용자 & 교사 매뉴얼 (docs/USER_MANUAL.md)](docs/USER_MANUAL.md)**: 화면별 조작법, 3D 카메라 제어, 등고선 단면선 긋기, 듀얼 비교 뷰 활용법, 단축키 및 FAQ.
-- 🏗️ **[시스템 아키텍처 (docs/ARCHITECTURE.md)](docs/ARCHITECTURE.md)**: 3D 절차적 렌더링 파이프라인, 수치 노이즈 함수, DEM 그리드 및 Marching Squares 알고리즘 수식 분석.
+- 🎓 **[교육과정 수업 활용 가이드 (docs/CURRICULUM_GUIDE.md)](docs/CURRICULUM_GUIDE.md)**: 2022/2015 개정 중·고교 과학 및 지리 단원 매핑표, 4단계 수업 모형, 차시별 수업 지도안 예시 2종.
+- 📝 **[학생 탐구 활동지 및 루브릭 (docs/STUDENT_WORKSHEET.md)](docs/STUDENT_WORKSHEET.md)**: `[신설]` 교실 출력용 학생 탐구 활동지 3종 및 12점 만점 과정 중심 수행평가 채점 기준표(Rubric).
 - 🌍 **[26개 지형학 총람 (docs/TERRAIN_GUIDE.md)](docs/TERRAIN_GUIDE.md)**: 6대 대분류 26종 세부 지형의 성인, 지질 기작, 112개 국내외 명소 총람.
-- 📐 **[등고선 및 단면 분석 가이드 (docs/CONTOUR_GUIDE.md)](docs/CONTOUR_GUIDE.md)**: 등고선 기초, 능선/계곡 판독법, 지형 단면도 작도 원리, 학교 수업 실습 활용안.
-- 📋 **[데이터 모델 및 기여 가이드 (docs/DATA_SCHEMA.md)](docs/DATA_SCHEMA.md)**: TypeScript 인터페이스 스키마 및 신규 지질 명소 데이터 추가 방법.
+- 📐 **[등고선 및 단면 분석 가이드 (docs/CONTOUR_GUIDE.md)](docs/CONTOUR_GUIDE.md)**: 등고선 기초 원리, 주곡선/간곡선, 능선/계곡 판독법, A-B 단면 고도 프로파일 차트 분석.
+
+### 💻 개발 및 시스템 아키텍처 트랙 (Developers & Contributors)
+- 🏗️ **[시스템 아키텍처 (docs/ARCHITECTURE.md)](docs/ARCHITECTURE.md)**: 3D 절차적 렌더링 파이프라인, DEM 표고 그리드, 컴포넌트 계층도 및 데이터 흐름.
+- 📐 **[4단 스냅 슬라이드 아키텍처 (docs/SLIDE_ARCHITECTURE.md)](docs/SLIDE_ARCHITECTURE.md)**: 4단 전체화면 스냅 스크롤 설계, IntersectionObserver 상태 추적, 4탭 교육 가이드 컴포넌트 구조.
+- 📐 **[절차적 지형 수식 및 셰이더 (docs/PROCEDURAL_TERRAIN_MATH.md)](docs/PROCEDURAL_TERRAIN_MATH.md)**: `[신설]` 26종 지형의 $z = f(x, y)$ 수학적 수식, fBm/Warping 노이즈, 커스텀 GLSL 등고선 셰이더.
+- 📋 **[데이터 모델 규격 (docs/DATA_SCHEMA.md)](docs/DATA_SCHEMA.md)**: PlaceInfo, GeologyMetadata, EvolutionStage, FieldGuide 등 TypeScript 인터페이스 정의.
+- 🤝 **[지질 명소 기여 가이드 (docs/CONTRIBUTING_TERRAIN.md)](docs/CONTRIBUTING_TERRAIN.md)**: `[신설]` 신규 국내외 지질 명소 데이터 추가 5단계 워크플로우 및 자가 검증 체크리스트.
 
 ---
 
 ## 📄 9. 라이선스 (License)
 
 본 프로젝트는 **[MIT 라이선스](LICENSE)**에 따라 오픈소스로 자유롭게 사용, 연구, 수정 및 배포할 수 있습니다.
+

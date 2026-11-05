@@ -1,6 +1,6 @@
 {
-  "summary": "National Geographic magazine editorial renewal plan across all slides: signature yellow borders, magazine feature spread for Map and 3D diorama viewports with dateline panels, and multi-column editorial layout with drop-caps and pull quotes for the geological guide.",
-  "updatedAt": "2026-11-04T06:53:07.991751528Z",
+  "summary": "지형 탐험가 플랫폼의 전면 문서 개편 및 신규 가이드 3종 신설 계획안:\n1. 기존 7종 핵심 문서 최신 코드베이스 정합화 및 전면 보강\n2. 신규 특화 문서 3종 신설 (학생 탐구 활동지/루브릭, 절차적 3D 수식 및 셰이더 가이드, 신규 명소 데이터 기여 가이드)\n3. 메인 README.md 및 문서 간 상호 교차 참조 인덱스 동기화",
+  "updatedAt": "2026-11-05T01:51:19.444071293Z",
   "requestFeedback": true,
   "userFacing": true
 }
