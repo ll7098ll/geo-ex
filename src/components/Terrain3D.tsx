@@ -496,6 +496,9 @@ export interface Terrain3DProps {
   hideHud?: boolean;
   autoRotate?: boolean;
   onAutoRotateChange?: (autoRotate: boolean) => void;
+  show3DContours?: boolean;
+  showStrata?: boolean;
+  reliefScale?: number;
 }
 
 const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
@@ -506,6 +509,9 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   hideHud = false,
   autoRotate: autoRotateProp,
   onAutoRotateChange,
+  show3DContours = false,
+  showStrata = true,
+  reliefScale = 1.0,
 }, ref) => {
   const [internalAutoRotate, setInternalAutoRotate] = useState(true);
   const autoRotate = autoRotateProp !== undefined ? autoRotateProp : internalAutoRotate;
@@ -536,8 +542,8 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   );
 
   const demField = useMemo(() => {
-    return generateTerrainElevationField(category, subTerrain, 1.0, 4);
-  }, [category, subTerrain]);
+    return generateTerrainElevationField(category, subTerrain, reliefScale, 4);
+  }, [category, subTerrain, reliefScale]);
 
   return (
     <div className="w-full h-full bg-radial from-slate-900 via-slate-950 to-black relative overflow-hidden select-none">
@@ -553,13 +559,13 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
             category={category}
             subTerrain={subTerrain}
             wireframe={false}
-            reliefScale={1.0}
+            reliefScale={reliefScale}
             showAnnotations={false}
-            showStrata={true}
+            showStrata={showStrata}
             evolutionStage={4}
             activeAnnotationIndex={null}
             onSelectAnnotation={() => {}}
-            show3DContours={false}
+            show3DContours={show3DContours}
             contourInterval={demField.contourSettings.intermediateInterval}
             indexInterval={demField.contourSettings.indexInterval}
             highlightElevation={null}

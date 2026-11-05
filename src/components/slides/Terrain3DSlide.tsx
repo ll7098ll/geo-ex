@@ -29,8 +29,20 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const [showContours, setShowContours] = useState(false);
+  const [showStrata, setShowStrata] = useState(true);
+  const [reliefScale, setReliefScale] = useState(1.0);
+
   const terrainRef = useRef<Terrain3DRef>(null);
   const fullscreenTerrainRef = useRef<Terrain3DRef>(null);
+
+  const cycleRelief = () => {
+    setReliefScale((prev) => {
+      if (prev < 1.2) return 1.3;
+      if (prev < 1.5) return 1.6;
+      return 1.0;
+    });
+  };
 
   const { placeInfo, alternativePlaces } = result;
   const geology = placeInfo?.geology;
@@ -69,9 +81,47 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
             {/* Modal Controls */}
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 p-1 bg-black/80 border border-white/15">
+                {/* 3D Contours Toggle */}
+                <button
+                  onClick={() => setShowContours((prev) => !prev)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer ${
+                    showContours
+                      ? 'text-[#FFCC00] bg-white/10'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  }`}
+                  title="3D 골드 등고선 셰이더 토글"
+                >
+                  <Layers className="w-3.5 h-3.5 text-[#FFCC00]" />
+                  <span>등고선 {showContours ? 'ON' : 'OFF'}</span>
+                </button>
+
+                {/* Strata Toggle */}
+                <button
+                  onClick={() => setShowStrata((prev) => !prev)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer border-l border-white/10 ${
+                    showStrata
+                      ? 'text-amber-300 bg-white/10'
+                      : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                  }`}
+                  title="지층 단면 표시 토글"
+                >
+                  <Box className="w-3.5 h-3.5" />
+                  <span>지층 {showStrata ? 'ON' : 'OFF'}</span>
+                </button>
+
+                {/* Relief Scale Cycling */}
+                <button
+                  onClick={cycleRelief}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-mono font-bold text-zinc-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer border-l border-white/10"
+                  title="고저차 과장 배율 변경"
+                >
+                  <span className="text-[#FFCC00]">고저차</span>
+                  <span>{reliefScale.toFixed(1)}x</span>
+                </button>
+
                 <button
                   onClick={() => fullscreenTerrainRef.current?.toggleAutoRotate()}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer border-l border-white/10 ${
                     isAutoRotating
                       ? 'text-[#FFCC00] bg-white/10'
                       : 'text-zinc-400 hover:text-white hover:bg-white/5'
@@ -84,6 +134,7 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
                   />
                   <span>{isAutoRotating ? '회전 중' : '회전'}</span>
                 </button>
+
                 <button
                   onClick={() => fullscreenTerrainRef.current?.resetCamera()}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold tracking-wider text-zinc-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer border-l border-white/10"
@@ -113,6 +164,9 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
               hideHud={true}
               autoRotate={isAutoRotating}
               onAutoRotateChange={setIsAutoRotating}
+              show3DContours={showContours}
+              showStrata={showStrata}
+              reliefScale={reliefScale}
             />
           </div>
         </div>
@@ -130,6 +184,9 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
           hideHud={true}
           autoRotate={isAutoRotating}
           onAutoRotateChange={setIsAutoRotating}
+          show3DContours={showContours}
+          showStrata={showStrata}
+          reliefScale={reliefScale}
         />
       </div>
 
@@ -155,7 +212,7 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
             <div className="hidden lg:flex items-center gap-1.5 bg-black/80 backdrop-blur-md border border-white/15 px-3 py-1">
               <span className="text-[11px] font-mono text-zinc-400 font-semibold pl-1 flex items-center gap-1 shrink-0 uppercase">
                 <Layers className="w-3 h-3 text-[#FFCC00]" />
-                연계 지형 표본:
+                연계 지형:
               </span>
               {alternativePlaces.map((alt) => (
                 <button
@@ -170,8 +227,54 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
           )}
         </div>
 
-        {/* Right: Unified 3D Controls Strip (회전 / 뷰 리셋 / 전체화면) */}
+        {/* Right: Unified 3D Controls Strip (시각화 토글 + 회전 / 리셋 / 전체화면) */}
         <div className="pointer-events-auto flex items-center gap-1 p-1 bg-black/85 backdrop-blur-md border border-white/15 shadow-xl">
+          {/* Visual Effects Control Group */}
+          <div className="flex items-center gap-0.5 border-r border-white/10 pr-1 mr-0.5">
+            {/* 3D Contours Toggle */}
+            <button
+              onClick={() => setShowContours((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer ${
+                showContours
+                  ? 'text-[#FFCC00] bg-white/15'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
+              }`}
+              title={showContours ? '3D 등고선 오버레이 끄기' : '3D 골드 등고선 오버레이 켜기'}
+            >
+              <Layers className={`w-3.5 h-3.5 ${showContours ? 'text-[#FFCC00]' : 'text-zinc-400'}`} />
+              <span className="hidden sm:inline">등고선</span>
+              <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${showContours ? 'bg-[#FFCC00] text-black font-black' : 'bg-white/10 text-zinc-400'}`}>
+                {showContours ? 'ON' : 'OFF'}
+              </span>
+            </button>
+
+            {/* Geological Strata Toggle */}
+            <button
+              onClick={() => setShowStrata((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer ${
+                showStrata
+                  ? 'text-amber-300 bg-white/10'
+                  : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+              }`}
+              title={showStrata ? '지층 단면 숨기기' : '지층 단면 표시'}
+            >
+              <Box className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">지층</span>
+            </button>
+
+            {/* Relief Scale Cycling */}
+            <button
+              onClick={cycleRelief}
+              className="flex items-center gap-1 px-2 py-1.5 text-xs font-mono font-bold text-zinc-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              title="지형 고저차 과장 배율 변경 (1.0x -> 1.3x -> 1.6x)"
+            >
+              <span className="text-[11px] text-[#FFCC00]">고저차</span>
+              <span className="px-1 py-0.2 bg-white/10 text-[10px] text-white font-mono rounded">
+                {reliefScale.toFixed(1)}x
+              </span>
+            </button>
+          </div>
+
           <button
             onClick={() => terrainRef.current?.toggleAutoRotate()}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold tracking-wider transition-all cursor-pointer ${
