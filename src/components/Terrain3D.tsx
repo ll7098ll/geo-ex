@@ -15,6 +15,7 @@ import {
   generateTerrainDioramaGeometry,
   resolveTerrainKey,
   generateTerrainElevationField,
+  getBaseWaterElevation,
   TerrainMaterialPreset,
 } from './terrain/terrainGenerators';
 import { getTerrainBumpTexture, TexturePatternKey } from './terrain/terrainTextures';
@@ -31,8 +32,8 @@ import {
 // ==========================================
 // Terrain Default Material Settings per Category & SubTerrain
 // ==========================================
-export function getDefaultMaterialSettings(category: string, subTerrain: string) {
-  const normSub = resolveTerrainKey(subTerrain);
+export function getDefaultMaterialSettings(category: string, subTerrain: string, placeContext?: string) {
+  const normSub = resolveTerrainKey(subTerrain, placeContext);
   let roughness = 0.75;
   let metalness = 0.05;
   let bumpScale = 0.035;
@@ -95,6 +96,7 @@ export function getDefaultMaterialSettings(category: string, subTerrain: string)
 interface DioramaMeshProps {
   category: string;
   subTerrain: string;
+  placeContext?: string;
   wireframe: boolean;
   reliefScale: number;
   showAnnotations: boolean;
@@ -129,6 +131,7 @@ interface DioramaMeshProps {
 const DioramaMesh: React.FC<DioramaMeshProps> = ({
   category,
   subTerrain,
+  placeContext,
   wireframe,
   reliefScale,
   showAnnotations,
@@ -159,7 +162,11 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
   showSlopeHeat = false,
   onSurfaceHover,
 }) => {
-  const normSub = resolveTerrainKey(subTerrain);
+  const normSub = resolveTerrainKey(subTerrain, placeContext);
+  const waterLevel = useMemo(
+    () => getBaseWaterElevation(normSub, reliefScale),
+    [normSub, reliefScale]
+  );
 
   // Generate solid diorama block geometry with terrain surface + geological strata skirts
   const geometry = useMemo(() => {
@@ -169,9 +176,10 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       reliefScale,
       showStrata,
       evolutionStage,
-      materialPreset
+      materialPreset,
+      placeContext
     );
-  }, [category, subTerrain, reliefScale, showStrata, evolutionStage, materialPreset]);
+  }, [category, subTerrain, reliefScale, showStrata, evolutionStage, materialPreset, placeContext]);
 
   const annotations: TerrainAnnotation[] = TERRAIN_ANNOTATIONS[normSub] || [];
   const bumpTexture = useMemo(
@@ -189,6 +197,7 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       theme: contour3DTheme,
       showValleyRidgeGuide,
       showSlopeHeat,
+      waterLevel,
     })
   );
 
@@ -202,8 +211,18 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       theme: contour3DTheme,
       showValleyRidgeGuide,
       showSlopeHeat,
+      waterLevel,
     });
-  }, [show3DContours, contourInterval, indexInterval, highlightElevation, contour3DTheme, showValleyRidgeGuide, showSlopeHeat]);
+  }, [
+    show3DContours,
+    contourInterval,
+    indexInterval,
+    highlightElevation,
+    contour3DTheme,
+    showValleyRidgeGuide,
+    showSlopeHeat,
+    waterLevel,
+  ]);
 
   // Hook into Three.js standard material shader pipeline
   const handleBeforeCompile = useCallback((shader: THREE.WebGLProgramParametersWithUniforms) => {
@@ -244,7 +263,7 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
           transparent={opacity < 0.99}
           opacity={opacity}
           onBeforeCompile={handleBeforeCompile}
-          customProgramCacheKey={() => `terrain_mat_v6_${materialPreset}`}
+          customProgramCacheKey={() => `terrain_mat_v7_${materialPreset}`}
         />
       </mesh>
 
@@ -468,7 +487,15 @@ const TerrainEnvironmentRig: React.FC<TerrainAtmosphereProps> = ({ category }) =
         intensity={config.keyIntensity}
         color={config.keyColor}
         castShadow
-        shadow-bias={-0.0005}
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-left={-13}
+        shadow-camera-right={13}
+        shadow-camera-top={13}
+        shadow-camera-bottom={-13}
+        shadow-camera-near={1}
+        shadow-camera-far={45}
+        shadow-bias={-0.0004}
+        shadow-normalBias={0.02}
       />
       <directionalLight
         position={[-12, 10, -10]}
@@ -491,6 +518,7 @@ export interface Terrain3DRef {
 export interface Terrain3DProps {
   category: string;
   subTerrain: string;
+  placeContext?: string;
   onToggleFullscreen?: () => void;
   isFullscreen?: boolean;
   hideHud?: boolean;
@@ -504,6 +532,7 @@ export interface Terrain3DProps {
 const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   category,
   subTerrain,
+  placeContext,
   onToggleFullscreen,
   isFullscreen,
   hideHud = false,
@@ -537,18 +566,27 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   }), [autoRotate]);
 
   const matDefaults = useMemo(
-    () => getDefaultMaterialSettings(category, subTerrain),
-    [category, subTerrain]
+    () => getDefaultMaterialSettings(category, subTerrain, placeContext),
+    [category, subTerrain, placeContext]
   );
 
   const demField = useMemo(() => {
-    return generateTerrainElevationField(category, subTerrain, reliefScale, 4);
-  }, [category, subTerrain, reliefScale]);
+    return generateTerrainElevationField(
+      category,
+      subTerrain,
+      reliefScale,
+      4,
+      240,
+      20,
+      placeContext
+    );
+  }, [category, subTerrain, reliefScale, placeContext]);
 
   return (
     <div className="w-full h-full bg-radial from-slate-900 via-slate-950 to-black relative overflow-hidden select-none">
       {/* 3D Canvas */}
       <Canvas
+        shadows
         camera={{ position: [0, 10, 16], fov: 45 }}
         gl={{ antialias: true, alpha: false }}
       >
@@ -558,6 +596,7 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
           <DioramaMesh
             category={category}
             subTerrain={subTerrain}
+            placeContext={placeContext}
             wireframe={false}
             reliefScale={reliefScale}
             showAnnotations={false}

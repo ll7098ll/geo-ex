@@ -52,6 +52,10 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
       ? selectedTerrain
       : placeInfo?.terrain || '';
 
+  const placeContext = placeInfo
+    ? `${placeInfo.placeName} ${placeInfo.terrain} ${placeInfo.tagline}`
+    : result.placeName;
+
   return (
     <section
       id="section-3d"
@@ -160,6 +164,7 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
               ref={fullscreenTerrainRef}
               category={result.categoryId}
               subTerrain={resolvedSubTerrain}
+              placeContext={placeContext}
               isFullscreen={true}
               hideHud={true}
               autoRotate={isAutoRotating}
@@ -180,6 +185,7 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
           ref={terrainRef}
           category={result.categoryId}
           subTerrain={resolvedSubTerrain}
+          placeContext={placeContext}
           isFullscreen={false}
           hideHud={true}
           autoRotate={isAutoRotating}

@@ -529,6 +529,72 @@ export const TERRAIN_CONTOUR_METADATA: Record<string, TerrainContourMeta> = {
     crossSectionPresets: [
       { id: 'mesa_profile', name: '메사 테이블 지형 횡단 단면 (A-B)', p1: [-8, 0], p2: [8, 0], description: '기저 평원 → 테일러스 완사면 → 수직 캡록 절벽 → 메사 상부 수평 평탄면' }
     ]
+  },
+  '순상화산': {
+    contourSettings: { indexInterval: 0.8, intermediateInterval: 0.2 },
+    features: [
+      { id: 'shield_caldera', name: '정상 함몰 화구(할레마우마우형)', type: 'crater', points: [[0, 0]], hasHachures: true },
+      { id: 'rift_flow', name: '열곡대 파호이호이 용암류', type: 'channel', points: [[0, 0], [4, -7]] }
+    ],
+    contourReadingTips: [
+      '점성이 낮은 현무암질 용암이 넓게 퍼져 전체 등고선 간격이 매우 넓고 완만한 방패형을 이룹니다.',
+      '정상부에는 2단 함몰 화구(칼데라 피트)를 나타내는 밀집 폐곡선이 나타납니다.'
+    ],
+    crossSectionPresets: [
+      { id: 'shield_profile', name: '순상화산 방패형 사면-정상 화구 단면 (A-B)', p1: [-9, 0], p2: [9, 0], description: '완경사 현무암 방패 사면 → 정상 함몰 화구 단구 → 중앙 화구 피트' }
+    ]
+  },
+  '종상화산': {
+    contourSettings: { indexInterval: 1.5, intermediateInterval: 0.3 },
+    features: [
+      { id: 'lava_dome', name: '조면암 압출 용암돔', type: 'peak', points: [[0, 0.6]] }
+    ],
+    contourReadingTips: [
+      '점성이 매우 높은 용암이 솟구쳐 측면 등고선이 절벽처럼 촘촘하게 밀집합니다.',
+      '분화구 함몰 없이 정상부가 둥근 종(Bell) 모양 볼록 폐곡선을 그립니다.'
+    ],
+    crossSectionPresets: [
+      { id: 'dome_profile', name: '종상화산 압출 돔 단면 (A-B)', p1: [-8, 0.6], p2: [8, 0.6], description: '기저 애추 사면 → 수직 주상절리 조면암 절벽 → 둥근 용암돔 정상' }
+    ]
+  },
+  '용암대지': {
+    contourSettings: { indexInterval: 1.0, intermediateInterval: 0.25 },
+    features: [
+      { id: 'basalt_gorge', name: '한탄강 현무암 주상절리 협곡', type: 'channel', points: [[0, -9], [0, 9]] }
+    ],
+    contourReadingTips: [
+      '대지 상부는 등고선이 거의 없는 광활한 수평 평원을 이룹니다.',
+      '하천이 파고든 협곡 경계에서만 등고선이 수직 단애로 초밀집합니다.'
+    ],
+    crossSectionPresets: [
+      { id: 'plateau_gorge', name: '용암대지 평원-수직 협곡 횡단 (A-B)', p1: [-8, 0], p2: [8, 0], description: '평탄 현무암 대지 → 주상절리 수직 협곡 절벽 → 협곡 하상' }
+    ]
+  },
+  '수성화산': {
+    contourSettings: { indexInterval: 1.0, intermediateInterval: 0.25 },
+    features: [
+      { id: 'tuff_crown', name: '성곽형 응회구 화구륜', type: 'crater', points: [[0.8, 0.5]], hasHachures: true }
+    ],
+    contourReadingTips: [
+      '넓고 얕은 사발 모양 분화구를 톱니형 암봉 화구륜이 왕관처럼 감싸고 있습니다.',
+      '바다에 면한 외벽은 파식 작용으로 잘려 나가 등고선이 수직 해식애로 겹칩니다.'
+    ],
+    crossSectionPresets: [
+      { id: 'tuff_cone_cut', name: '육계사주-응회구 분화구-해식절벽 단면 (A-B)', p1: [-8, 0.5], p2: [8, 0.5], description: '육계사주 → 응회구 사면 → 화구륜 → 넓은 사발형 화구 바닥 → 수직 해식절벽' }
+    ]
+  },
+  '감입곡류천': {
+    contourSettings: { indexInterval: 1.2, intermediateInterval: 0.3 },
+    features: [
+      { id: 'incised_omega', name: '감입곡류 오메가(Ω) 협곡', type: 'channel', points: [[-2, 5], [-5, -1.5], [0, -5.4], [5, -1.5], [2, 5]] }
+    ],
+    contourReadingTips: [
+      '융기된 고원 산지 사이를 오메가(Ω) 모양의 깊은 협곡이 감싸며 휘돌아 나갑니다.',
+      '곡류 외측 공격사면은 수직 기반암 단애로 등고선이 겹치고, 내측 반도 구릉(활주사면)은 완만하게 하강합니다.'
+    ],
+    crossSectionPresets: [
+      { id: 'incised_cut', name: '외측 수직 단애-반도 활주사면 종단 (A-B)', p1: [0, 4], p2: [0, -8], description: '곡류 목 능선 → 내측 활주사면 완경사 구릉 & 포인트바 → 협곡 하상 → 외측 수직 절벽' }
+    ]
   }
 };
 
@@ -544,6 +610,7 @@ const KEY_ALIASES: Record<string, string> = {
   '오름': '기생화산',
   '메사': '메사·뷰트',
   '뷰트': '메사·뷰트',
+  '감입곡류': '감입곡류천',
 };
 
 export function getTerrainContourMeta(key: string): TerrainContourMeta {

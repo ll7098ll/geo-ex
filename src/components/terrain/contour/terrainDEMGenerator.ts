@@ -5,22 +5,23 @@ import {
 } from '../terrainGenerators';
 import { getTerrainContourMeta } from './terrainContourMetadata';
 
-// Cache to prevent re-allocating 25,600 floats on every render frame
+// Cache to prevent re-allocating DEM arrays on every render frame
 const DEM_CACHE: Map<string, TerrainElevationField> = new Map();
 
 /**
  * 표준 수치표고모델(DEM) 표고 필드 생성기
- * 160x160 해상도의 고도 행렬 및 버텍스 색상, 등고선 메타데이터를 정규화하여 반환
+ * 고해상도(기본 240x240) 고도 행렬 및 버텍스 색상, 등고선 메타데이터를 정규화하여 반환
  */
 export function generateTerrainElevationField(
   category: string,
   subTerrain: string,
   reliefScale = 1.0,
   evolutionStage = 4,
-  segments = 160,
-  worldSize = 20
+  segments = 240,
+  worldSize = 20,
+  placeContext?: string
 ): TerrainElevationField {
-  const normSub = resolveTerrainKey(subTerrain);
+  const normSub = resolveTerrainKey(subTerrain, placeContext);
   const cacheKey = `${category}-${normSub}-${reliefScale.toFixed(2)}-stage:${evolutionStage}-seg:${segments}`;
 
   const cached = DEM_CACHE.get(cacheKey);
@@ -32,8 +33,8 @@ export function generateTerrainElevationField(
   const step = worldSize / segments;
   const numGridVerts = (segments + 1) * (segments + 1);
 
-  // Evolution morphological factor
-  const stageMorph = evolutionStage === 1 ? 0.45 : evolutionStage === 2 ? 0.7 : evolutionStage === 3 ? 0.88 : 1.0;
+  const stageMorph =
+    evolutionStage === 1 ? 0.45 : evolutionStage === 2 ? 0.7 : evolutionStage === 3 ? 0.88 : 1.0;
   const effectiveRelief = reliefScale * stageMorph;
 
   const elevations = new Float32Array(numGridVerts);
@@ -64,8 +65,6 @@ export function generateTerrainElevationField(
   }
 
   const reliefRange = maxElevation - minElevation;
-
-  // Retrieve curated contour metadata, or fallback to auto-scaled
   const meta = getTerrainContourMeta(normSub);
 
   const field: TerrainElevationField = {
@@ -85,8 +84,7 @@ export function generateTerrainElevationField(
     crossSectionPresets: meta.crossSectionPresets || [],
   };
 
-  // Limit cache size to 16 recent fields
-  if (DEM_CACHE.size > 16) {
+  if (DEM_CACHE.size > 20) {
     const firstKey = DEM_CACHE.keys().next().value;
     if (firstKey) DEM_CACHE.delete(firstKey);
   }
