@@ -8,7 +8,7 @@ import { GLACIAL_PLACES } from './places/glacial';
 import { ARID_PLACES } from './places/arid';
 
 /**
- * 112 curated world and Korean geographic landmark sites.
+ * 165 curated world and Korean geographic landmark sites (86 World, 79 Korea).
  * Pre-generated with comprehensive scientific formation processes,
  * exploration highlights, observation points, and high-precision search metadata.
  */
