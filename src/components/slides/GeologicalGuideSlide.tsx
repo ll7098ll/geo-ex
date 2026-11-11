@@ -21,8 +21,10 @@ import {
   FileText,
   LucideIcon,
   Sparkles,
+  Plus,
+  Check,
 } from 'lucide-react';
-import { SearchResult as SearchResultType, Region } from '../../types';
+import { SearchResult as SearchResultType, Region, PlaceInfo } from '../../types';
 import {
   EducationLevel,
   EDUCATION_LEVELS,
@@ -34,6 +36,8 @@ interface GeologicalGuideSlideProps {
   region: Region;
   selectedTerrain: string | null;
   onNavigateSlide: (index: number) => void;
+  onAddSpecimen?: (place: PlaceInfo) => void;
+  isCollected?: boolean;
 }
 
 type TabKey = 'evolution' | 'concepts' | 'field' | 'archive';
@@ -43,9 +47,12 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   region,
   selectedTerrain,
   onNavigateSlide,
+  onAddSpecimen,
+  isCollected = false,
 }) => {
   const [level, setLevel] = useState<EducationLevel>('high');
   const [activeTab, setActiveTab] = useState<TabKey>('evolution');
+  const [expandedBlade, setExpandedBlade] = useState<number>(0);
 
   const { placeInfo } = result;
 
@@ -53,9 +60,9 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
     return (
       <section
         id="section-guide"
-        className="h-full w-full relative overflow-y-auto bg-[#07070a] text-zinc-100 p-8 flex items-center justify-center font-serif"
+        className="h-full w-full relative overflow-y-auto bg-[#08080A] text-zinc-100 p-8 flex items-center justify-center font-mono"
       >
-        <p className="text-zinc-400">지형 해설 정보를 불러오는 중입니다...</p>
+        <p className="text-zinc-400">[ GEOLOGICAL DOSSIER LOADING... ]</p>
       </section>
     );
   }
@@ -73,43 +80,66 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   return (
     <section
       id="section-guide"
-      className="h-full w-full relative overflow-y-auto bg-[#07070a] text-zinc-100 selection:bg-[#FFCC00] selection:text-black pt-3 sm:pt-5 pb-24"
+      className="h-full w-full relative overflow-y-auto bg-[#08080A] text-zinc-100 selection:bg-[#FFCC00] selection:text-black pt-4 sm:pt-6 pb-28 no-scrollbar"
       aria-label="04 상세 지형 해설"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 space-y-5">
         {/* ========================================================
-            1. Level Switcher Bar & Publication Header
+            1. Level Switcher Bar & Technical Publication Header
            ======================================================== */}
-        <div className="bg-[#0b0b10] border border-white/10 rounded-xl p-4 sm:p-5 shadow-2xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/10">
+        <div className="bg-[#131418] hairline-border p-5 sm:p-6 shadow-2xl corner-ticks">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 hairline-border-b">
             {/* Left: Location & Terrain Breadcrumb */}
             <div>
               <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider text-[#FFCC00] uppercase mb-1">
-                <span className="bg-[#FFCC00] text-black px-1.5 py-0.5 text-[10px] font-black">CH.04</span>
-                <span>GEOLOGICAL INVESTIGATION</span>
+                <span className="bg-[#1F34FF] text-white px-1.5 py-0.5 text-[10px] font-black font-mono">
+                  ACT 04
+                </span>
+                <span>[ GEOLOGICAL INVESTIGATION ]</span>
                 <span className="text-white/30">·</span>
-                <span className="text-zinc-300">{region === 'world' ? 'GLOBAL ARCHIVE' : 'KOREA ARCHIVE'}</span>
+                <span className="text-zinc-300">
+                  {region === 'world' ? 'GLOBAL ARCHIVE' : 'KOREA ARCHIVE'}
+                </span>
                 <span className="text-white/30">·</span>
                 <span className="text-white">{selectedTerrain || placeInfo.terrain}</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-black text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-sans font-black text-white tracking-tighter uppercase">
                 {placeInfo.placeName}
-                <span className="text-sm sm:text-base font-sans font-normal text-zinc-400 ml-3">
-                  {placeInfo.countryOrArea}
+                <span className="text-sm sm:text-base font-mono font-normal text-zinc-400 ml-3">
+                  [ {placeInfo.countryOrArea} ]
                 </span>
               </h1>
             </div>
 
-            {/* Right: Education Level Switcher (초/중/고/일반) */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <span className="text-[11px] font-mono text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#FFCC00]" />
-                <span>해설 난이도 선택:</span>
-              </span>
+            {/* Right: Specimen Action Button & Education Level Switcher */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              {onAddSpecimen && (
+                <button
+                  onClick={() => onAddSpecimen(placeInfo)}
+                  className={`px-3 py-1.5 font-mono text-xs font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer hairline-border corner-ticks ${
+                    isCollected
+                      ? 'bg-[#1F34FF] text-white border-[#1F34FF]'
+                      : 'bg-black text-[#FFCC00] hover:bg-[#FFCC00] hover:text-black'
+                  }`}
+                >
+                  {isCollected ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>[ 수집 완료 ]</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>[ + 표본 수집 ]</span>
+                    </>
+                  )}
+                </button>
+              )}
+
               <div
                 role="group"
                 aria-label="해설 수준 선택"
-                className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-black/80 border border-white/15 rounded-lg"
+                className="grid grid-cols-2 sm:flex items-center gap-1 p-1 bg-black hairline-border"
               >
                 {EDUCATION_LEVELS.map((lvl) => {
                   const isSelected = level === lvl.id;
@@ -125,14 +155,18 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
                     <button
                       key={lvl.id}
                       onClick={() => setLevel(lvl.id)}
-                      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold rounded transition-all cursor-pointer ${
+                      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-mono font-bold transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-[#FFCC00] text-black shadow-md'
+                          ? 'bg-[#FFCC00] text-black font-black'
                           : 'text-zinc-400 hover:text-white hover:bg-white/5'
                       }`}
                       title={lvl.subLabel}
                     >
-                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-black' : 'text-[#FFCC00]'}`} />
+                      <Icon
+                        className={`w-3.5 h-3.5 ${
+                          isSelected ? 'text-black' : 'text-[#FFCC00]'
+                        }`}
+                      />
                       <span className="hidden md:inline">{lvl.label}</span>
                       <span className="inline md:hidden">{lvl.shortLabel}</span>
                     </button>
@@ -146,11 +180,14 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
           <div className="mt-4 pt-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1.5 max-w-4xl">
               <div className="flex items-center gap-2">
-                <span className="inline-block px-2 py-0.5 text-[11px] font-mono font-bold border rounded bg-white/5 border-white/20 text-[#FFCC00]">
+                <span className="inline-block px-2 py-0.5 text-[11px] font-mono font-bold bg-white/5 hairline-border text-[#FFCC00]">
                   {content.badge}
                 </span>
                 <span className="text-xs font-mono text-zinc-400">
-                  {content.coreQuestionOrTopic.label}: <strong className="text-zinc-200">{content.coreQuestionOrTopic.text}</strong>
+                  {content.coreQuestionOrTopic.label}:{' '}
+                  <strong className="text-zinc-200">
+                    {content.coreQuestionOrTopic.text}
+                  </strong>
                 </span>
               </div>
               <h2 className="text-base sm:text-lg font-serif font-bold text-white">
@@ -161,10 +198,12 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
               </p>
             </div>
 
-            {/* Quick Spec Badge Pill */}
+            {/* Quick Spec Badge */}
             {content.factSheet.scale && (
-              <div className="shrink-0 p-3 bg-black/60 border border-white/10 rounded-lg text-right hidden lg:block">
-                <span className="text-[10px] font-mono text-zinc-400 uppercase block mb-0.5">지형 규모 (SCALE)</span>
+              <div className="shrink-0 p-3 bg-black hairline-border text-right hidden lg:block">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase block mb-0.5">
+                  [ SCALE // 지형 규모 ]
+                </span>
                 <span className="text-xs font-mono font-bold text-[#FFCC00]">
                   {content.factSheet.scale}
                 </span>
@@ -179,7 +218,7 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
         <div
           role="tablist"
           aria-label="지형 리포트 세부 탭"
-          className="w-full grid grid-cols-2 md:grid-cols-4 gap-1.5 p-1 bg-black/90 border border-white/15 rounded-lg"
+          className="w-full grid grid-cols-2 md:grid-cols-4 gap-1 p-1 bg-[#131418] hairline-border corner-ticks"
         >
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -192,239 +231,218 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
                 aria-controls={`panel-${tab.key}`}
                 id={`tab-${tab.key}`}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-mono tracking-tight transition-all rounded cursor-pointer ${
+                className={`flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm font-mono tracking-tight transition-all cursor-pointer ${
                   isActive
-                    ? 'bg-[#FFCC00] text-black font-black shadow-md'
+                    ? 'bg-[#FFCC00] text-black font-black shadow-lg'
                     : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-black' : 'text-[#FFCC00]'}`} />
-                <span className="hidden sm:inline font-bold">{tab.label}</span>
-                <span className="inline sm:hidden font-bold">{tab.shortLabel}</span>
+                <Icon
+                  className={`w-4 h-4 shrink-0 ${
+                    isActive ? 'text-black' : 'text-[#FFCC00]'
+                  }`}
+                />
+                <span className="hidden sm:inline font-bold">[ {tab.label} ]</span>
+                <span className="inline sm:hidden font-bold">[ {tab.shortLabel} ]</span>
               </button>
             );
           })}
         </div>
 
         {/* ========================================================
-            TAB 1: 4단계 형성 원리 (EVOLUTION TIMELINE)
+            TAB 1: 4단 아코디언 블레이드 (4-BLADE ACCORDION BLADE)
            ======================================================== */}
         {activeTab === 'evolution' && (
           <div
             id="panel-evolution"
             role="tabpanel"
             aria-labelledby="tab-evolution"
-            className="space-y-4 animate-in fade-in duration-200"
+            className="space-y-4"
           >
-            <div className="bg-[#0b0b10] p-5 sm:p-7 border border-white/10 rounded-xl shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-white/10 gap-2">
+            <div className="bg-[#131418] p-5 sm:p-7 hairline-border shadow-2xl corner-ticks">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 hairline-border-b gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border border-[#FFCC00] bg-black rounded flex items-center justify-center text-[#FFCC00]">
+                  <div className="w-8 h-8 hairline-border bg-black flex items-center justify-center text-[#FFCC00]">
                     <Activity className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-black text-white text-lg">
-                      {placeInfo.placeName} 지형 진화 4단계 타임라인
+                    <h3 className="font-sans font-black text-white text-lg tracking-tight uppercase">
+                      {placeInfo.placeName} 4단 아코디언 지형 진화 블레이드
                     </h3>
                     <p className="text-xs text-zinc-400 font-mono">
-                      {level === 'elementary'
-                        ? '자연이 오랜 시간 바위를 깎고 쌓아 지형을 만든 순서입니다.'
-                        : 'CHRONOLOGICAL EVOLUTION PROCESS // 기저 지반 형성부터 현대 지형까지'}
+                      [ CHRONOLOGICAL 4-BLADE KINETIC ACCORDION // 클릭하거나 마우스를 올려 단계를 확장하세요 ]
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-mono text-[#FFCC00] font-bold self-start sm:self-auto bg-white/5 px-2.5 py-1 border border-white/10 rounded">
+                <span className="text-xs font-mono text-[#96D0FF] font-bold self-start sm:self-auto bg-black px-2.5 py-1 hairline-border">
                   {content.badge}
                 </span>
               </div>
 
-              {/* 4 Stages Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {content.stages.map((stage) => (
-                  <div
-                    key={stage.stageNumber}
-                    className="p-5 bg-white/5 border border-white/10 hover:border-[#FFCC00] rounded-lg transition-all flex flex-col justify-between group"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between text-xs mb-3">
-                        <span className="font-bold text-black bg-[#FFCC00] px-2 py-0.5 rounded font-mono text-[11px]">
-                          STEP 0{stage.stageNumber}
-                        </span>
-                        {stage.timeframe && (
-                          <span className="font-mono text-[11px] text-zinc-400">{stage.timeframe}</span>
-                        )}
+              {/* 4-Blade Accordion Container */}
+              <div className="flex flex-col lg:flex-row gap-3 min-h-[380px] w-full">
+                {content.stages.map((stage, idx) => {
+                  const isExpanded = expandedBlade === idx;
+                  return (
+                    <div
+                      key={stage.stageNumber}
+                      onMouseEnter={() => setExpandedBlade(idx)}
+                      onClick={() => setExpandedBlade(idx)}
+                      className={`hairline-border p-5 transition-all duration-300 flex flex-col justify-between cursor-pointer relative overflow-hidden group corner-ticks ${
+                        isExpanded
+                          ? 'lg:flex-[2.8] bg-[#08080A] border-[#FFCC00]'
+                          : 'lg:flex-1 bg-black/60 hover:bg-[#08080A]/80 opacity-80 hover:opacity-100'
+                      }`}
+                    >
+                      {/* Top Header */}
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-3 border-b border-white/10 pb-2">
+                          <span
+                            className={`px-2 py-0.5 font-mono text-[11px] font-black uppercase ${
+                              isExpanded
+                                ? 'bg-[#FFCC00] text-black'
+                                : 'bg-white/10 text-white'
+                            }`}
+                          >
+                            PHASE 0{stage.stageNumber}
+                          </span>
+                          <span className="font-mono text-[10px] text-zinc-400">
+                            {stage.timeframe}
+                          </span>
+                        </div>
+
+                        {/* Stage Title */}
+                        <h4
+                          className={`font-sans font-black text-base sm:text-lg mb-2 uppercase tracking-tight transition-colors ${
+                            isExpanded ? 'text-white' : 'text-zinc-300'
+                          }`}
+                        >
+                          {stage.title}
+                        </h4>
+
+                        {/* Detailed Description */}
+                        <p
+                          className={`text-xs sm:text-sm font-serif leading-relaxed ${
+                            isExpanded
+                              ? 'text-zinc-200 line-clamp-none'
+                              : 'text-zinc-400 line-clamp-3 lg:line-clamp-6'
+                          }`}
+                        >
+                          {stage.process}
+                        </p>
                       </div>
-                      <h4 className="font-serif font-bold text-white text-base mb-2 group-hover:text-[#FFCC00] transition-colors leading-snug">
-                        {stage.title}
-                      </h4>
-                      <p className="text-xs text-zinc-300 leading-relaxed mb-4 font-serif">
-                        {stage.process}
-                      </p>
-                    </div>
 
-                    <div className="pt-3 border-t border-white/10 flex items-start gap-2 text-xs">
-                      <Eye className="w-3.5 h-3.5 text-[#FFCC00] shrink-0 mt-0.5" />
-                      <span className="font-mono text-[11px] leading-relaxed text-[#FFCC00]">
-                        <strong className="text-zinc-300">
-                          {level === 'elementary' ? '[눈여겨볼 점] ' : '[관찰 지표] '}
-                        </strong>
-                        {stage.visualKeyFeature}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                      {/* Mechanism Tag & Giant Stage Number Watermark */}
+                      <div className="mt-4 pt-3 hairline-border-t flex items-center justify-between relative z-10">
+                        <span className="text-[10px] font-mono text-[#96D0FF] font-semibold truncate block max-w-[200px]">
+                          // {stage.visualKeyFeature}
+                        </span>
+                        <span className="text-xs font-mono text-zinc-500 font-bold">
+                          [0{stage.stageNumber}]
+                        </span>
+                      </div>
 
-              {/* Navigation Action Footer */}
-              <div className="mt-6 p-4 bg-black/60 border border-white/10 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-                <span className="text-zinc-300 flex items-center gap-2">
-                  <Info className="w-4 h-4 text-[#FFCC00] shrink-0" />
-                  <span>
-                    {level === 'elementary'
-                      ? '3D 입체 화면에서 이 지형의 높낮이와 단면을 직접 회전하며 관찰해 보세요.'
-                      : '3D 디오라마에서 등고선과 지층 단면 스커트를 통해 입체적인 형태를 확인할 수 있습니다.'}
-                  </span>
-                </span>
-                <button
-                  onClick={() => onNavigateSlide(2)}
-                  className="text-[#FFCC00] hover:underline font-bold cursor-pointer shrink-0"
-                >
-                  3D 디오라마로 입체 관찰 →
-                </button>
+                      {/* Giant Background Watermark Number */}
+                      <div className="absolute -bottom-6 -right-2 text-7xl font-sans font-black text-white/[0.03] pointer-events-none select-none">
+                        0{stage.stageNumber}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
         )}
 
         {/* ========================================================
-            TAB 2: 핵심 개념 & 지질 팩트 (CONCEPTS & FACTS)
+            TAB 2: 핵심 개념 & 지질 팩트 (CONCEPTS & FACTSHEET)
            ======================================================== */}
         {activeTab === 'concepts' && (
           <div
             id="panel-concepts"
             role="tabpanel"
             aria-labelledby="tab-concepts"
-            className="space-y-5 animate-in fade-in duration-200"
+            className="space-y-5"
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              {/* Left Column: Core Concepts Tailored by Level */}
-              <div className="lg:col-span-7 bg-[#0b0b10] p-5 sm:p-6 border border-white/10 rounded-xl shadow-xl flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/10">
-                    <div className="flex items-center gap-2.5">
-                      <BookOpen className="w-5 h-5 text-[#FFCC00]" />
-                      <h3 className="font-serif font-black text-white text-base sm:text-lg">
-                        {level === 'elementary'
-                          ? '꼭 알아두어야 할 기초 지형 개념'
-                          : level === 'middle'
-                          ? '중등 과학·지리 핵심 원리 개념'
-                          : level === 'high'
-                          ? '2022 개정 교과 핵심 용어 및 성취기준'
-                          : '지리 교양 및 경관 이해를 위한 핵심 포인트'}
-                      </h3>
-                    </div>
-                    <span className="text-[11px] font-mono text-[#FFCC00] bg-white/5 px-2 py-0.5 border border-white/10 rounded">
-                      {content.badge}
-                    </span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {content.coreConcepts.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="p-4 bg-white/5 border border-white/10 rounded-lg hover:border-[#FFCC00]/50 transition-colors space-y-1.5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-serif font-bold text-white text-sm text-[#FFCC00]">
-                            {item.term}
-                          </h4>
-                          <span className="text-[10px] font-mono text-zinc-500">POINT 0{idx + 1}</span>
-                        </div>
-                        <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-serif">
-                          {item.description}
-                        </p>
-                        {item.curriculumPoint && (
-                          <div className="pt-2 border-t border-white/5 text-[11px] font-mono text-zinc-400">
-                            <span className="text-[#FFCC00] font-bold">
-                              {level === 'elementary' ? '교과서 단원: ' : '교과 연계: '}
-                            </span>
-                            {item.curriculumPoint}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+              {/* Left: Core Concepts */}
+              <div className="lg:col-span-7 bg-[#131418] p-5 sm:p-6 hairline-border shadow-2xl corner-ticks space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 hairline-border-b">
+                  <Layers className="w-5 h-5 text-[#FFCC00]" />
+                  <div>
+                    <h4 className="font-sans font-black text-white text-base tracking-tight uppercase">
+                      {level === 'elementary'
+                        ? '꼭 알아야 할 3가지 지형 비밀'
+                        : '핵심 지형학적 개념 3선 (KEY CONCEPTS)'}
+                    </h4>
+                    <p className="text-xs text-zinc-400 font-mono">
+                      [ CURATED SCIENTIFIC PRINCIPLES ]
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-white/5 text-xs font-mono text-zinc-400 flex items-center justify-between">
-                  <span>상단에서 [난이도]를 바꾸면 어휘와 개념이 즉시 변환됩니다.</span>
-                  <span className="text-[#FFCC00]">4개 난이도 지원</span>
+                <div className="space-y-3">
+                  {content.coreConcepts.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 bg-[#08080A] hairline-border space-y-1.5"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-black text-black bg-[#FFCC00] px-1.5 py-0.2">
+                          0{idx + 1}
+                        </span>
+                        <h5 className="font-sans font-bold text-white text-sm">
+                          {item.term}
+                        </h5>
+                      </div>
+                      <p className="text-xs sm:text-sm text-zinc-300 font-serif leading-relaxed pl-6">
+                        {item.description}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Right Column: Geological Fact Sheet */}
-              <div className="lg:col-span-5 bg-[#0b0b10] p-5 sm:p-6 border border-white/10 rounded-xl shadow-xl flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-white/10">
-                    <Layers className="w-5 h-5 text-[#FFCC00]" />
-                    <h3 className="font-serif font-black text-white text-base sm:text-lg">
-                      {level === 'elementary' ? '지형 관찰 명세표' : '지질학적 핵심 프로필 명세서'}
-                    </h3>
+              {/* Right: Specimen Factsheet */}
+              <div className="lg:col-span-5 bg-[#131418] p-5 sm:p-6 hairline-border shadow-2xl corner-ticks space-y-4">
+                <div className="flex items-center gap-2.5 pb-3 hairline-border-b">
+                  <CheckCircle2 className="w-5 h-5 text-[#1F34FF]" />
+                  <div>
+                    <h4 className="font-sans font-black text-white text-base tracking-tight uppercase">
+                      지질 프로필 팩트시트
+                    </h4>
+                    <p className="text-xs text-zinc-400 font-mono">
+                      [ SPECIMEN GEOLOGICAL FACTSHEET ]
+                    </p>
                   </div>
-
-                  <dl className="space-y-2.5 font-mono text-xs">
-                    <div className="p-3 bg-white/5 border border-white/5 rounded">
-                      <dt className="text-zinc-400 text-[10px] uppercase mb-0.5">
-                        {level === 'elementary' ? '이루고 있는 암석' : '구성 암석 (ROCK TYPE)'}
-                      </dt>
-                      <dd className="font-serif text-white font-bold text-sm">
-                        {content.factSheet.rockType}
-                      </dd>
-                    </div>
-
-                    <div className="p-3 bg-white/5 border border-white/5 rounded">
-                      <dt className="text-zinc-400 text-[10px] uppercase mb-0.5">
-                        {level === 'elementary' ? '만들어진 시대' : '형성 지질시대 (GEOLOGICAL AGE)'}
-                      </dt>
-                      <dd className="font-serif text-white font-bold text-sm">
-                        {content.factSheet.geologicalAge}
-                      </dd>
-                    </div>
-
-                    <div className="p-3 bg-white/5 border border-white/5 rounded">
-                      <dt className="text-zinc-400 text-[10px] uppercase mb-0.5">
-                        {level === 'elementary' ? '지구 내부 환경' : '지구조 환경 (TECTONIC SETTING)'}
-                      </dt>
-                      <dd className="font-serif text-white font-bold text-sm">
-                        {content.factSheet.tectonicSetting}
-                      </dd>
-                    </div>
-
-                    <div className="p-3 bg-white/5 border border-white/5 rounded">
-                      <dt className="text-zinc-400 text-[10px] uppercase mb-0.5">
-                        {level === 'elementary' ? '지형을 만든 힘' : '주요 작용력 (GEOMORPHIC AGENT)'}
-                      </dt>
-                      <dd className="font-serif text-white font-bold text-sm">
-                        {content.factSheet.geomorphicAgent}
-                      </dd>
-                    </div>
-
-                    {content.factSheet.scale && (
-                      <div className="p-3 bg-white/5 border border-white/5 rounded flex items-center justify-between">
-                        <span className="text-zinc-400 text-[10px] uppercase">
-                          {level === 'elementary' ? '크기와 높이' : '지형 규모 (SCALE)'}:
-                        </span>
-                        <span className="text-[#FFCC00] font-mono font-bold text-xs">
-                          {content.factSheet.scale}
-                        </span>
-                      </div>
-                    )}
-                  </dl>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-zinc-500 font-mono">
-                  * 지구과학 교과서 및 국립 지질 도폭 공인 관측 데이터 기반
-                </div>
+                <dl className="space-y-2.5 text-xs font-mono">
+                  <div className="p-3 bg-[#08080A] hairline-border flex items-center justify-between">
+                    <dt className="text-zinc-500 uppercase">[ (a) 지질 시대 ]</dt>
+                    <dd className="font-sans text-white font-bold text-sm">
+                      {content.factSheet.geologicalAge}
+                    </dd>
+                  </div>
+                  <div className="p-3 bg-[#08080A] hairline-border flex items-center justify-between">
+                    <dt className="text-zinc-500 uppercase">[ (b) 암석 분류 ]</dt>
+                    <dd className="font-sans text-white font-bold text-sm">
+                      {content.factSheet.rockType}
+                    </dd>
+                  </div>
+                  <div className="p-3 bg-[#08080A] hairline-border flex items-center justify-between">
+                    <dt className="text-zinc-500 uppercase">[ (c) 지체 구조 ]</dt>
+                    <dd className="font-sans text-white font-bold text-sm truncate max-w-[180px]">
+                      {content.factSheet.tectonicSetting}
+                    </dd>
+                  </div>
+                  <div className="p-3 bg-[#08080A] hairline-border flex items-center justify-between">
+                    <dt className="text-zinc-500 uppercase">[ (d) 형성 인자 ]</dt>
+                    <dd className="font-sans text-white font-bold text-sm truncate max-w-[180px]">
+                      {content.factSheet.geomorphicAgent}
+                    </dd>
+                  </div>
+                </dl>
               </div>
             </div>
           </div>
@@ -438,19 +456,21 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
             id="panel-field"
             role="tabpanel"
             aria-labelledby="tab-field"
-            className="space-y-5 animate-in fade-in duration-200"
+            className="space-y-5"
           >
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              {/* Field Observation & Ethics */}
+              {/* Field Points */}
               <div className="lg:col-span-6 space-y-5">
-                <div className="bg-[#0b0b10] p-5 sm:p-6 border border-white/10 rounded-xl shadow-xl">
-                  <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-white/10">
+                <div className="bg-[#131418] p-5 sm:p-6 hairline-border shadow-2xl corner-ticks">
+                  <div className="flex items-center gap-2.5 pb-3 mb-4 hairline-border-b">
                     <Compass className="w-5 h-5 text-[#FFCC00]" />
                     <div>
-                      <h4 className="font-serif font-black text-white text-base">
-                        {level === 'elementary' ? '현장 탐험 시 관찰 포인트' : '현장 탐험 시 핵심 관찰 포인트'}
+                      <h4 className="font-sans font-black text-white text-base tracking-tight uppercase">
+                        현장 탐험 시 핵심 관찰 포인트
                       </h4>
-                      <p className="text-xs text-zinc-400 font-mono">FIELD OBSERVATION CHECKPOINTS</p>
+                      <p className="text-xs text-zinc-400 font-mono">
+                        [ FIELD OBSERVATION CHECKPOINTS ]
+                      </p>
                     </div>
                   </div>
 
@@ -458,59 +478,30 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
                     {content.fieldNotes.observationPoints.map((pt, i) => (
                       <li
                         key={i}
-                        className="flex items-start gap-3 p-3 bg-white/5 border border-white/5 rounded text-xs sm:text-sm text-zinc-200 leading-relaxed"
+                        className="flex items-start gap-3 p-3 bg-[#08080A] hairline-border text-xs sm:text-sm text-zinc-200 leading-relaxed"
                       >
                         <span className="font-mono text-xs font-bold text-[#FFCC00] shrink-0 mt-0.5">
-                          0{i + 1}.
+                          [0{i + 1}]
                         </span>
                         <span>{pt}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
-
-                {/* Season & Conservation */}
-                <div className="bg-[#0b0b10] p-5 sm:p-6 border border-white/10 rounded-xl shadow-xl space-y-3.5">
-                  <div className="flex items-center gap-2.5 pb-3 border-b border-white/10">
-                    <Calendar className="w-5 h-5 text-[#FFCC00]" />
-                    <h4 className="font-serif font-black text-white text-base">
-                      탐방 추천 시기 및 자연 보전
-                    </h4>
-                  </div>
-
-                  {content.fieldNotes.bestSeason && (
-                    <div className="p-3 bg-white/5 border border-white/5 rounded text-xs sm:text-sm">
-                      <span className="font-mono font-bold text-[#FFCC00] block mb-1 uppercase text-xs">
-                        [최적 방문 시기]
-                      </span>
-                      <p className="text-zinc-200 leading-relaxed font-serif">
-                        {content.fieldNotes.bestSeason}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="p-3 bg-black/60 border border-white/10 rounded text-xs sm:text-sm">
-                    <span className="font-mono font-bold text-[#FFCC00] flex items-center gap-1.5 mb-1 uppercase">
-                      <AlertTriangle className="w-4 h-4 text-[#FFCC00]" />
-                      <span>{level === 'elementary' ? '탐험 안전 및 보전 수칙' : '안전 유의사항 및 지형 보전'}</span>
-                    </span>
-                    <p className="text-zinc-200 leading-relaxed font-serif">
-                      {content.fieldNotes.cautionNote}
-                    </p>
-                  </div>
-                </div>
               </div>
 
-              {/* Satellite Checkpoints & Direct Maps */}
+              {/* Satellite Checkpoints */}
               <div className="lg:col-span-6 space-y-5">
-                <div className="bg-[#0b0b10] p-5 sm:p-6 border border-white/10 rounded-xl shadow-xl">
-                  <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-white/10">
-                    <Globe className="w-5 h-5 text-[#FFCC00]" />
+                <div className="bg-[#131418] p-5 sm:p-6 hairline-border shadow-2xl corner-ticks">
+                  <div className="flex items-center gap-2.5 pb-3 mb-4 hairline-border-b">
+                    <Globe className="w-5 h-5 text-[#1F34FF]" />
                     <div>
-                      <h4 className="font-serif font-black text-white text-base">
+                      <h4 className="font-sans font-black text-white text-base tracking-tight uppercase">
                         위성사진 판독 핵심 지표 3선
                       </h4>
-                      <p className="text-xs text-zinc-400 font-mono">ORBITAL RECONNAISSANCE SIGNATURES</p>
+                      <p className="text-xs text-zinc-400 font-mono">
+                        [ ORBITAL RECONNAISSANCE SIGNATURES ]
+                      </p>
                     </div>
                   </div>
 
@@ -518,68 +509,15 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
                     {content.fieldNotes.satellitePoints.map((chk, i) => (
                       <li
                         key={i}
-                        className="flex items-start gap-3 p-3 bg-white/5 border border-white/5 rounded text-xs sm:text-sm text-zinc-200 leading-relaxed"
+                        className="flex items-start gap-3 p-3 bg-[#08080A] hairline-border text-xs sm:text-sm text-zinc-200 leading-relaxed"
                       >
-                        <span className="font-mono text-xs font-bold text-black bg-[#FFCC00] w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="font-mono text-xs font-bold text-white bg-[#1F34FF] px-1.5 py-0.5 shrink-0 mt-0.5">
                           {i + 1}
                         </span>
                         <span>{chk}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
-
-                {/* Satellite Maps Direct Links */}
-                <div className="bg-[#0b0b10] p-5 sm:p-6 border border-white/10 rounded-xl shadow-xl">
-                  <div className="flex items-center gap-2.5 pb-3 mb-4 border-b border-white/10">
-                    <MapPin className="w-5 h-5 text-[#FFCC00]" />
-                    <h4 className="font-serif font-black text-white text-base">
-                      외부 고해상도 위성 지도 바로가기
-                    </h4>
-                  </div>
-
-                  <div className="space-y-2 font-mono text-xs">
-                    <a
-                      href={`https://maps.google.com/?q=${encodeURIComponent(mapQuery)}&t=k`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 border border-white/10 bg-white/5 hover:bg-[#FFCC00] hover:text-black rounded transition-colors font-bold text-zinc-200"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <Globe className="w-4 h-4 text-sky-400 group-hover:text-black" />
-                        <span>Google 지도 고해상도 위성뷰 열기</span>
-                      </span>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                    </a>
-
-                    <a
-                      href={`https://earth.google.com/web/search/${encodeURIComponent(mapQuery)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 border border-white/10 bg-white/5 hover:bg-[#FFCC00] hover:text-black rounded transition-colors font-bold text-zinc-200"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <Box className="w-4 h-4 text-[#FFCC00] group-hover:text-black" />
-                        <span>Google Earth 3D 웹 입체 탐색</span>
-                      </span>
-                      <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                    </a>
-
-                    {region === 'korea' && (
-                      <a
-                        href={`https://map.naver.com/p/search/${encodeURIComponent(mapQuery)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-3 border border-white/10 bg-white/5 hover:bg-[#FFCC00] hover:text-black rounded transition-colors font-bold text-zinc-200"
-                      >
-                        <span className="flex items-center gap-2.5">
-                          <MapPin className="w-4 h-4 text-teal-400 group-hover:text-black" />
-                          <span>네이버 지도 항공뷰 열기</span>
-                        </span>
-                        <ExternalLink className="w-3.5 h-3.5 opacity-60" />
-                      </a>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -594,49 +532,16 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
             id="panel-archive"
             role="tabpanel"
             aria-labelledby="tab-archive"
-            className="space-y-5 animate-in fade-in duration-200"
+            className="space-y-5"
           >
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-              <div className="lg:col-span-8 bg-[#0b0b10] p-6 sm:p-8 border border-white/10 rounded-xl shadow-xl prose prose-invert prose-headings:font-serif prose-headings:text-white prose-p:text-zinc-300 prose-p:leading-relaxed prose-a:text-[#FFCC00] max-w-none">
-                <div className="flex items-center gap-3 pb-3 mb-4 border-b border-white/10 not-prose text-white font-serif font-black text-lg">
-                  <FileText className="w-5 h-5 text-[#FFCC00]" />
-                  <span>심층 지형학적 형성 보고서 전문</span>
-                </div>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.description}</ReactMarkdown>
+            <div className="bg-[#131418] p-6 sm:p-8 hairline-border shadow-2xl corner-ticks prose prose-invert prose-headings:font-sans prose-headings:font-black prose-p:text-zinc-300 prose-p:leading-relaxed prose-a:text-[#FFCC00] max-w-none">
+              <div className="flex items-center gap-3 pb-3 mb-4 hairline-border-b not-prose text-white font-sans font-black text-lg uppercase">
+                <FileText className="w-5 h-5 text-[#FFCC00]" />
+                <span>심층 지형학적 형성 보고서 전문 [ FULL ARCHIVE ]</span>
               </div>
-
-              <div className="lg:col-span-4 space-y-5">
-                {result.searchSources.length > 0 && (
-                  <div className="bg-[#0b0b10] p-5 border border-white/10 rounded-xl shadow-xl">
-                    <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-white/10 font-serif font-bold text-white text-sm">
-                      <FileText className="w-4 h-4 text-[#FFCC00]" />
-                      <span>학술 및 지리 참고 문헌</span>
-                    </div>
-                    <ul className="space-y-2 text-xs font-mono">
-                      {result.searchSources.map((source, idx) => (
-                        <li key={idx}>
-                          <a
-                            href={source.uri}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-zinc-300 hover:text-[#FFCC00] flex items-center justify-between gap-2 py-1 transition-colors border-b border-white/5 pb-1"
-                          >
-                            <span className="break-words leading-snug">{source.title}</span>
-                            <ExternalLink className="w-3 h-3 text-zinc-500 shrink-0" />
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="p-4 bg-white/5 border border-white/10 rounded-lg text-xs font-mono text-zinc-400 space-y-2">
-                  <p className="font-bold text-white uppercase text-[#FFCC00]">학습 활용 안내</p>
-                  <p className="leading-relaxed">
-                    상단 난이도 스위처(초등/중등/고등/일반)를 통해 교과서 단계별 핵심 개념을 학습하고, 본 전문 보고서를 통해 심화 지식을 확장할 수 있습니다.
-                  </p>
-                </div>
-              </div>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {result.description}
+              </ReactMarkdown>
             </div>
           </div>
         )}
@@ -644,30 +549,30 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
         {/* ========================================================
             3. Bottom Slide Quick Jump Navigation Bar
            ======================================================== */}
-        <div className="pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 font-mono">
+        <div className="pt-6 hairline-border-t flex flex-wrap items-center justify-between gap-3 font-mono">
           <div className="flex items-center gap-2">
             <button
               onClick={() => onNavigateSlide(1)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white/5 hover:bg-[#FFCC00] hover:text-black rounded text-xs font-bold text-zinc-200 transition-all cursor-pointer border border-white/15"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#131418] hover:bg-[#1F34FF] text-white text-xs font-bold transition-all cursor-pointer hairline-border corner-ticks"
             >
-              <MapPin className="w-4 h-4 text-[#FFCC00]" />
-              <span>CH.02 위성 지도로</span>
+              <MapPin className="w-4 h-4 text-[#96D0FF]" />
+              <span>[ CH.02 위성 텔레메트리 ]</span>
             </button>
             <button
               onClick={() => onNavigateSlide(2)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white/5 hover:bg-[#FFCC00] hover:text-black rounded text-xs font-bold text-zinc-200 transition-all cursor-pointer border border-white/15"
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#131418] hover:bg-[#1F34FF] text-white text-xs font-bold transition-all cursor-pointer hairline-border corner-ticks"
             >
-              <Box className="w-4 h-4 text-[#FFCC00]" />
-              <span>CH.03 3D 디오라마로</span>
+              <Box className="w-4 h-4 text-[#96D0FF]" />
+              <span>[ CH.03 3D 디오라마 ]</span>
             </button>
           </div>
 
           <button
             onClick={() => onNavigateSlide(0)}
-            className="flex items-center gap-2 px-5 py-2 bg-[#FFCC00] text-black hover:bg-amber-400 rounded font-black text-xs uppercase tracking-wider transition-all shadow-xl cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2 bg-[#FFCC00] text-black hover:bg-amber-400 font-mono font-black text-xs uppercase tracking-wider transition-all shadow-xl cursor-pointer"
           >
             <ArrowUp className="w-4 h-4" />
-            <span>CH.01 홈으로 돌아가기</span>
+            <span>[ ACT 01 홈으로 돌아가기 ]</span>
           </button>
         </div>
       </div>
