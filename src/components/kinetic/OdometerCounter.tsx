@@ -50,15 +50,13 @@ export const OdometerCounter: React.FC<OdometerCounterProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center font-mono text-xs tracking-wider uppercase select-none ${className}`}
+      className={`inline-flex items-center gap-1.5 font-sans text-xs font-semibold tracking-wide select-none ${className}`}
     >
-      {prefix && <span className="mr-1.5 opacity-80">{prefix}</span>}
-      <span className="text-[#FFCC00] font-black">[</span>
-      <span className="inline-flex items-center mx-0.5 text-white">
+      {prefix && <span className="text-zinc-200">{prefix}</span>}
+      <span className="inline-flex items-center px-1.5 py-0.5 bg-[#FFCC00] text-black font-mono font-bold text-[11px]">
         <SingleDigitWheel digit={tens} />
         <SingleDigitWheel digit={ones} />
       </span>
-      <span className="text-[#FFCC00] font-black">]</span>
     </span>
   );
 };

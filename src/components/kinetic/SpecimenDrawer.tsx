@@ -55,18 +55,18 @@ export const SpecimenDrawer: React.FC<SpecimenDrawerProps> = ({
             {/* Header */}
             <div className="p-6 border-b border-white/10 flex items-center justify-between bg-[#131418]">
               <div>
-                <div className="flex items-center gap-2 text-[10px] font-mono tracking-widest text-[#FFCC00] uppercase font-bold">
+                <div className="flex items-center gap-2 text-[11px] font-sans tracking-[0.18em] text-[#FFCC00] uppercase font-bold">
                   <Box className="w-3.5 h-3.5 text-[#FFCC00]" />
-                  <span>FIELD DISPATCH ARCHIVE</span>
+                  <span>FIELD ARCHIVE</span>
                 </div>
-                <h3 className="text-lg font-black font-mono tracking-tight uppercase mt-1">
-                  SPECIMEN [ {String(specimens.length).padStart(2, '0')} ]
+                <h3 className="text-lg font-black font-sans tracking-tight mt-1">
+                  수집된 지형 표본 <span className="text-[#FFCC00] font-mono">{String(specimens.length).padStart(2, '0')}</span>
                 </h3>
               </div>
               <button
                 onClick={onClose}
                 aria-label="닫기"
-                className="w-8 h-8 border border-white/20 bg-black hover:bg-[#FFCC00] hover:text-black hover:border-[#FFCC00] flex items-center justify-center transition-colors cursor-pointer"
+                className="w-8 h-8 border border-white/20 bg-black hover:bg-[#FFCC00] hover:text-black hover:border-[#FFCC00] flex items-center justify-center transition-colors duration-200 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -77,46 +77,46 @@ export const SpecimenDrawer: React.FC<SpecimenDrawerProps> = ({
               {specimens.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 border border-dashed border-white/15">
                   <Layers className="w-10 h-10 text-white/30 mb-3" />
-                  <p className="font-mono text-xs uppercase tracking-wider text-zinc-400 font-bold mb-1">
-                    [ NO SPECIMENS COLLECTED ]
+                  <p className="font-sans text-sm font-bold text-zinc-300 mb-1.5">
+                    수집된 표본이 없습니다
                   </p>
                   <p className="text-xs text-zinc-500 font-serif leading-relaxed">
-                    지형 탐험 중 각 슬라이드의 [ + COLLECT SPECIMEN ] 버튼을 눌러 표본을 수집하세요.
+                    지형 탐험 중 각 화면의 표본 수집 버튼을 눌러 나만의 아카이브를 채워보세요.
                   </p>
                 </div>
               ) : (
                 specimens.map((item, idx) => (
                   <div
                     key={`${item.placeName}-${idx}`}
-                    className="border border-white/15 bg-[#131418] p-4 relative group hover:border-[#FFCC00] transition-colors corner-ticks"
+                    className="border border-white/15 bg-[#131418] p-4 relative group hover:border-[#FFCC00] transition-colors duration-200"
                   >
                     {/* Item Department & Index */}
-                    <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 mb-2 border-b border-white/5 pb-2">
-                      <span className="text-[#FFCC00] font-bold">
-                        SPECIMEN #{String(idx + 1).padStart(2, '0')}
+                    <div className="flex items-center justify-between text-[11px] font-sans text-zinc-400 mb-2 border-b border-white/5 pb-2">
+                      <span className="text-[#FFCC00] font-mono font-bold">
+                        {String(idx + 1).padStart(2, '0')}
                       </span>
-                      <span>[ {item.terrain} ]</span>
+                      <span>{item.terrain}</span>
                     </div>
 
                     {/* Title & Location */}
-                    <h4 className="text-base font-bold font-serif text-white group-hover:text-[#FFCC00] transition-colors">
+                    <h4 className="text-base font-bold font-serif text-white group-hover:text-[#FFCC00] transition-colors duration-200">
                       {item.placeName}
                     </h4>
-                    <p className="text-xs text-zinc-400 font-mono mt-0.5">
+                    <p className="text-xs text-zinc-400 font-sans mt-0.5">
                       {item.countryOrArea}
                     </p>
 
                     {/* Geological Specs Snippet */}
                     {item.geology && (
-                      <div className="mt-3 pt-2 border-t border-white/5 grid grid-cols-2 gap-2 text-[10px] font-mono text-zinc-400">
+                      <div className="mt-3 pt-2 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] font-sans text-zinc-400">
                         <div>
-                          <span className="text-white/40 block">암석 분류</span>
+                          <span className="text-white/40 block text-[10px]">암석 분류</span>
                           <span className="text-zinc-200 truncate block">
                             {item.geology.rockType || '미분류'}
                           </span>
                         </div>
                         <div>
-                          <span className="text-white/40 block">지질 시대</span>
+                          <span className="text-white/40 block text-[10px]">지질 시대</span>
                           <span className="text-zinc-200 truncate block">
                             {item.geology.geologicalAge || '제4기'}
                           </span>
@@ -131,10 +131,10 @@ export const SpecimenDrawer: React.FC<SpecimenDrawerProps> = ({
                           onSelectSpecimen(item);
                           onClose();
                         }}
-                        className="px-3 py-1 bg-black border border-white/20 hover:bg-[#FFCC00] hover:text-black hover:border-[#FFCC00] text-[11px] font-mono font-bold tracking-wider uppercase transition-colors flex items-center gap-1 cursor-pointer"
+                        className="px-3 py-1 bg-black border border-white/20 hover:bg-[#FFCC00] hover:text-black hover:border-[#FFCC00] text-xs font-sans font-bold transition-colors duration-200 flex items-center gap-1 cursor-pointer"
                       >
                         <span>탐색 바로가기</span>
-                        <ArrowUpRight className="w-3 h-3" />
+                        <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
 
                       <button
@@ -153,14 +153,14 @@ export const SpecimenDrawer: React.FC<SpecimenDrawerProps> = ({
             {/* Footer Actions */}
             {specimens.length > 0 && (
               <div className="p-4 border-t border-white/10 bg-[#08080A] flex items-center justify-between">
-                <span className="text-[11px] font-mono text-zinc-400">
-                  TOTAL SPECIMENS: <strong className="text-white">{specimens.length}</strong>
+                <span className="text-xs font-sans text-zinc-400">
+                  총 표본 <strong className="text-white font-mono">{specimens.length}</strong>개
                 </span>
                 <button
                   onClick={onClearAll}
-                  className="px-3 py-1.5 border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-mono font-bold tracking-wider uppercase transition-colors cursor-pointer"
+                  className="px-3 py-1.5 border border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs font-sans font-semibold transition-colors cursor-pointer"
                 >
-                  [ CLEAR ARCHIVE ]
+                  전체 비우기
                 </button>
               </div>
             )}

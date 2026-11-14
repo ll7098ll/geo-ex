@@ -17,10 +17,10 @@ import { SpecimenDrawer } from './components/kinetic/SpecimenDrawer';
 import { Compass, Sparkles } from 'lucide-react';
 
 const CHAPTER_METAS = [
-  { number: '01', title: 'HERO ARCHIVE', subtitle: '6대 지형 카탈로그 & 4단 셔터' },
-  { number: '02', title: 'SATELLITE TELEMETRY', subtitle: '100% 뷰포트 WGS84 위성 관측' },
-  { number: '03', title: '3D DIORAMA STUDIO', subtitle: '240×240 메쉬 & 180° Y축 3D 플립' },
-  { number: '04', title: 'GEOLOGICAL INVESTIGATION', subtitle: '4단 아코디언 & 학술 해설' },
+  { number: '01', title: 'HERO ARCHIVE', subtitle: '6대 지형 카탈로그 탐색' },
+  { number: '02', title: 'SATELLITE VIEW', subtitle: '실제 위성 지형 관측' },
+  { number: '03', title: '3D DIORAMA', subtitle: '입체 지형 및 지층 단면 분석' },
+  { number: '04', title: 'FIELD MAGAZINE', subtitle: '형성 원리 및 심층 해설' },
 ];
 
 export default function App() {
@@ -31,7 +31,7 @@ export default function App() {
   const [currentCategoryId, setCurrentCategoryId] = useState<string>('volcanic');
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
 
-  // Kinetic Polarity Cut State
+  // Smooth NatGeo Editorial Transition Curtain State (used only when launching an expedition)
   const [polarityGate, setPolarityGate] = useState<{
     isVisible: boolean;
     chapterNumber: string;
@@ -58,7 +58,6 @@ export default function App() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<(HTMLElement | null)[]>([]);
-  const isInitialLoad = useRef(true);
   const activeSlideIndexRef = useRef(0);
   const polarityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -87,8 +86,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isAutoPlaying, loading, activeSlideIndex]);
 
-  // 3. Trigger 1-Frame Polarity Cut Gate on Chapter Transitions
-  const triggerPolarityCut = useCallback((chapterIndex: number) => {
+  // 3. Smooth NatGeo Yellow Editorial Cut (triggered intentionally on cover explore)
+  const triggerEditorialCut = useCallback((chapterIndex: number) => {
     if (polarityTimeoutRef.current) {
       clearTimeout(polarityTimeoutRef.current);
     }
@@ -103,7 +102,7 @@ export default function App() {
     polarityTimeoutRef.current = setTimeout(() => {
       setPolarityGate((prev) => ({ ...prev, isVisible: false }));
       polarityTimeoutRef.current = null;
-    }, 380);
+    }, 340);
   }, []);
 
   useEffect(() => {
@@ -114,7 +113,7 @@ export default function App() {
     };
   }, []);
 
-  // 4. Scroll tracking using IntersectionObserver to update activeSlideIndex (mounted once)
+  // 4. Scroll tracking using IntersectionObserver to update activeSlideIndex cleanly without flashes
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -126,12 +125,8 @@ export default function App() {
             const indexStr = entry.target.getAttribute('data-slide-index');
             if (indexStr !== null) {
               const newIndex = Number(indexStr);
-              if (newIndex !== activeSlideIndexRef.current && !isInitialLoad.current) {
-                triggerPolarityCut(newIndex);
-              }
               activeSlideIndexRef.current = newIndex;
               setActiveSlideIndex(newIndex);
-              isInitialLoad.current = false;
             }
           }
         });
@@ -147,13 +142,12 @@ export default function App() {
     });
 
     return () => observer.disconnect();
-  }, [triggerPolarityCut]);
+  }, []);
 
   // 5. Smooth slide transition handler
   const scrollToSlide = (index: number) => {
     const target = slideRefs.current[index];
     if (target) {
-      triggerPolarityCut(index);
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
@@ -163,15 +157,14 @@ export default function App() {
     setCurrentCategoryId(categoryId);
     setIsAutoPlaying(false);
 
-    // Trigger Polarity Cut on explore
-    triggerPolarityCut(1);
+    triggerEditorialCut(1);
 
     await searchTerrain(terrain, region, categoryId);
 
-    // Smoothly scroll down to Page 2 (Google Map)
+    // Smoothly scroll down to Page 2 (Google Map) while the editorial curtain settles
     setTimeout(() => {
       scrollToSlide(1);
-    }, 200);
+    }, 140);
   };
 
   const handleRegionChange = async (newRegion: Region) => {
@@ -230,10 +223,10 @@ export default function App() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden bg-[#08080A] text-white font-sans selection:bg-[#FFCC00] selection:text-black flex flex-col">
-      {/* 3% Subtle Film Grain & Viewport Corner Ticks */}
+      {/* Subtle Film Grain Overlay */}
       <FilmGrainOverlay />
 
-      {/* 1-Frame Polarity Cut Gate (#1F34FF Electric Cobalt Flash) */}
+      {/* NatGeo Yellow Editorial Transition Curtain */}
       <PolarityCutGate
         isVisible={polarityGate.isVisible}
         chapterNumber={polarityGate.chapterNumber}
@@ -329,10 +322,10 @@ export default function App() {
           ) : (
             <div className="h-full w-full flex flex-col items-center justify-center bg-[#08080A] p-6 text-center">
               <Compass className="w-12 h-12 text-[#FFCC00] animate-spin mb-4" />
-              <h3 className="text-xl font-bold font-sans tracking-tight uppercase mb-2">
-                [ SATELLITE TELEMETRY INITIALIZING... ]
+              <h3 className="text-lg font-bold font-serif tracking-tight mb-2">
+                위성 지도를 불러오는 중입니다
               </h3>
-              <p className="text-xs text-zinc-400 font-mono">
+              <p className="text-xs text-zinc-400 font-sans">
                 잠시 후 대형 위성 관측 지도가 표시됩니다.
               </p>
             </div>
@@ -340,7 +333,7 @@ export default function App() {
         </section>
 
         {/* ========================================================
-            SLIDE 03: 3D 입체 지형 (ACT 03: 3D DIORAMA STUDIO & 3D FLIP)
+            SLIDE 03: 3D 입체 지형
            ======================================================== */}
         <section
           id="section-3d"
@@ -348,7 +341,7 @@ export default function App() {
           ref={(el) => {
             slideRefs.current[2] = el;
           }}
-          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
+          className="h-[calc(100vh-56px)] w-full snap-start relative overflow-hidden"
           aria-label="03 3D 입체 지형"
         >
           {result ? (
@@ -365,18 +358,18 @@ export default function App() {
           ) : (
             <div className="h-full w-full flex flex-col items-center justify-center bg-[#08080A] p-6 text-center">
               <Sparkles className="w-12 h-12 text-[#FFCC00] animate-pulse mb-4" />
-              <h3 className="text-xl font-bold font-sans tracking-tight uppercase mb-2">
-                [ 3D DIORAMA MESH GENERATING... ]
+              <h3 className="text-lg font-bold font-serif tracking-tight mb-2">
+                3D 지형 디오라마를 생성하고 있습니다
               </h3>
-              <p className="text-xs text-zinc-400 font-mono">
-                자연 지형 시뮬레이션을 생성하고 있습니다.
+              <p className="text-xs text-zinc-400 font-sans">
+                자연 지형 시뮬레이션을 준비 중입니다.
               </p>
             </div>
           )}
         </section>
 
         {/* ========================================================
-            SLIDE 04: 상세 지형 해설 (ACT 04: GEOLOGICAL INVESTIGATION)
+            SLIDE 04: 지형 매거진
            ======================================================== */}
         <section
           id="section-guide"
@@ -384,8 +377,8 @@ export default function App() {
           ref={(el) => {
             slideRefs.current[3] = el;
           }}
-          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
-          aria-label="04 상세 지형 해설"
+          className="h-[calc(100vh-56px)] w-full snap-start relative overflow-hidden"
+          aria-label="04 지형 매거진"
         >
           {result ? (
             <GeologicalGuideSlide
@@ -398,11 +391,11 @@ export default function App() {
             />
           ) : (
             <div className="h-full w-full flex flex-col items-center justify-center bg-[#08080A] p-6 text-center">
-              <h3 className="text-xl font-bold font-sans tracking-tight uppercase mb-2">
-                [ GEOLOGICAL DOSSIER COMPILING... ]
+              <h3 className="text-lg font-bold font-serif tracking-tight mb-2">
+                지형 매거진 기사를 불러오고 있습니다
               </h3>
-              <p className="text-xs text-zinc-400 font-mono">
-                지구과학적 형성 단계 데이터를 불러오고 있습니다.
+              <p className="text-xs text-zinc-400 font-sans">
+                지구과학적 형성 단계 데이터를 준비 중입니다.
               </p>
             </div>
           )}

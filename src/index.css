@@ -7,12 +7,15 @@
   --font-serif: "Noto Serif KR", ui-serif, Georgia, serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  /* Strict Swiss-Brutalist Architectural Palette */
+  /* National Geographic Editorial Dark Palette */
   --color-obsidian: #08080A;
   --color-slate-surface: #131418;
-  --color-cobalt: #1F34FF;
-  --color-cyan-ice: #96D0FF;
+  --color-natgeo-yellow: #FFCC00;
+  --color-natgeo-amber: #E5B800;
+  --color-warm-ivory: #EDE9E0;
   --color-editorial-gold: #FFCC00;
+  --color-editorial-paper: #F6F3EC;
+  --color-editorial-ink: #181715;
   
   --color-hairline: rgba(255, 255, 255, 0.12);
   --color-hairline-bright: rgba(255, 255, 255, 0.28);
@@ -34,6 +37,7 @@ html, body, #root {
   color: #ffffff;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Hide scrollbar for clean fullscreen snap experience */
@@ -83,7 +87,7 @@ html, body, #root {
   border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Corner Crosshair Ticks (+ marks at component corners) */
+/* Subtle Corner Crosshair Ticks */
 .corner-ticks {
   position: relative;
 }
@@ -109,14 +113,14 @@ html, body, #root {
   border-right: 2px solid #FFCC00;
 }
 
-.corner-ticks-cobalt::before {
-  border-color: #1F34FF;
+.corner-ticks-gold::before {
+  border-color: #FFCC00;
 }
-.corner-ticks-cobalt::after {
-  border-color: #1F34FF;
+.corner-ticks-gold::after {
+  border-color: #FFCC00;
 }
 
-/* 28-degree Technical Diagonal Hatching */
+/* 28-degree Editorial Diagonal Hatching */
 .diagonal-hatch {
   background-image: repeating-linear-gradient(
     -28deg,
@@ -127,11 +131,11 @@ html, body, #root {
   );
 }
 
-.diagonal-hatch-cobalt {
+.diagonal-hatch-gold {
   background-image: repeating-linear-gradient(
     -28deg,
-    rgba(31, 52, 255, 0.2),
-    rgba(31, 52, 255, 0.2) 1px,
+    rgba(255, 204, 0, 0.22),
+    rgba(255, 204, 0, 0.22) 1px,
     transparent 1px,
     transparent 8px
   );
@@ -141,7 +145,7 @@ html, body, #root {
    3D Flip Card Utilities for Specimen Cards
    ======================================================== */
 .perspective-1000 {
-  perspective: 1000px;
+  perspective: 1200px;
 }
 
 .transform-style-3d {
@@ -158,25 +162,38 @@ html, body, #root {
 }
 
 /* ========================================================
-   Editorial Typography & Drop Caps
+   Editorial Typography, Drop Caps & NatGeo Frame
    ======================================================== */
 .magazine-drop-cap::first-letter {
   float: left;
   font-family: var(--font-serif);
-  font-size: 3.5rem;
-  line-height: 0.85;
+  font-size: 3.4rem;
+  line-height: 0.88;
   font-weight: 900;
   padding-right: 0.75rem;
-  padding-top: 0.25rem;
+  padding-top: 0.2rem;
   color: #FFCC00;
+}
+
+.magazine-drop-cap-paper::first-letter {
+  float: left;
+  font-family: var(--font-serif);
+  font-size: 3.4rem;
+  line-height: 0.88;
+  font-weight: 900;
+  padding-right: 0.75rem;
+  padding-top: 0.2rem;
+  color: #181715;
+  border-bottom: 3px solid #FFCC00;
+  margin-right: 0.2rem;
 }
 
 .magazine-pullquote {
   font-family: var(--font-serif);
-  font-style: italic;
   position: relative;
 }
 
 .magazine-frame {
-  box-shadow: 0 0 0 1px rgba(255, 204, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  border: 3px solid #FFCC00;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
 }

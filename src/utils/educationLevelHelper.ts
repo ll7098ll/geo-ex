@@ -31,7 +31,7 @@ export const EDUCATION_LEVELS: LevelConfig[] = [
     subLabel: '중학교 과학·지리',
     iconName: 'BookOpen',
     badge: '중등 과학·지리 표준',
-    badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+    badgeColor: 'bg-amber-500/15 text-amber-300 border-amber-500/35',
   },
   {
     id: 'high',

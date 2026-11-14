@@ -17,9 +17,6 @@ export const useTerrainSearch = () => {
     setLoading(true);
     setError(null);
 
-    // Provide a subtle realistic transition delay for smooth UX
-    await new Promise((resolve) => setTimeout(resolve, 180));
-
     try {
       let chosenPlace: PlaceInfo;
       let allCandidates: PlaceInfo[];

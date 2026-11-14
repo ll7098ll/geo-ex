@@ -14,8 +14,18 @@ export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive
     if (!ctx) return;
 
     let animationFrameId = 0;
-    let width = (canvas.width = canvas.parentElement?.clientWidth || window.innerWidth);
-    let height = (canvas.height = canvas.parentElement?.clientHeight || window.innerHeight);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let width = canvas.parentElement?.clientWidth || window.innerWidth;
+    let height = canvas.parentElement?.clientHeight || window.innerHeight;
+
+    const setupSize = () => {
+      width = canvas.parentElement?.clientWidth || window.innerWidth;
+      height = canvas.parentElement?.clientHeight || window.innerHeight;
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    setupSize();
 
     let mouseX = width / 2;
     let mouseY = height / 2;
@@ -28,8 +38,8 @@ export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive
     const drawFrame = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Draw Subtle Crosshair Lines across whole screen through target
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+      // 1. Subtle Hairline Crosshair Guides
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(0, mouseY);
@@ -38,19 +48,19 @@ export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive
       ctx.lineTo(mouseX, height);
       ctx.stroke();
 
-      // 2. Concentric Aperture Rings around mouse focus
+      // 2. Concentric NatGeo Yellow & Warm White Aperture Rings
       const rings = [60, 110, 170, 240];
       rings.forEach((radius, i) => {
         ctx.save();
         ctx.translate(mouseX, mouseY);
-        ctx.rotate(angle * (i % 2 === 0 ? 1 : -1) * (0.8 + i * 0.2));
+        ctx.rotate(angle * (i % 2 === 0 ? 1 : -1) * (0.7 + i * 0.15));
 
         ctx.strokeStyle =
           i === 1
-            ? 'rgba(31, 52, 255, 0.35)' // Cobalt accent ring
-            : 'rgba(255, 204, 0, 0.2)'; // Gold ring
-        ctx.lineWidth = 1;
-        ctx.setLineDash(i % 2 === 0 ? [4, 6] : [1, 4]);
+            ? 'rgba(255, 204, 0, 0.36)'
+            : 'rgba(255, 204, 0, 0.14)';
+        ctx.lineWidth = i === 1 ? 1.25 : 1;
+        ctx.setLineDash(i % 2 === 0 ? [4, 7] : [2, 5]);
 
         ctx.beginPath();
         ctx.arc(0, 0, radius, 0, Math.PI * 2);
@@ -59,13 +69,13 @@ export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive
         // Radial Tick Marks on the 2nd ring
         if (i === 1) {
           ctx.setLineDash([]);
-          ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
           for (let deg = 0; deg < 360; deg += 30) {
             const rad = (deg * Math.PI) / 180;
-            const x1 = Math.cos(rad) * (radius - 5);
-            const y1 = Math.sin(rad) * (radius - 5);
-            const x2 = Math.cos(rad) * (radius + 5);
-            const y2 = Math.sin(rad) * (radius + 5);
+            const x1 = Math.cos(rad) * (radius - 4);
+            const y1 = Math.sin(rad) * (radius - 4);
+            const x2 = Math.cos(rad) * (radius + 4);
+            const y2 = Math.sin(rad) * (radius + 4);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
@@ -75,30 +85,15 @@ export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive
         ctx.restore();
       });
 
-      // 3. Central Target Crosshair
-      ctx.strokeStyle = '#FFCC00';
+      // 3. Central Target Crosshair (NatGeo Yellow)
+      ctx.strokeStyle = 'rgba(255, 204, 0, 0.85)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(mouseX - 8, mouseY);
-      ctx.lineTo(mouseX + 8, mouseY);
-      ctx.moveTo(mouseX, mouseY - 8);
-      ctx.lineTo(mouseX, mouseY + 8);
+      ctx.moveTo(mouseX - 7, mouseY);
+      ctx.lineTo(mouseX + 7, mouseY);
+      ctx.moveTo(mouseX, mouseY - 7);
+      ctx.lineTo(mouseX, mouseY + 7);
       ctx.stroke();
-
-      // 4. Technical Telemetry Text beside target
-      ctx.font = '10px "JetBrains Mono", monospace';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-      ctx.fillText(
-        `[ APERTURE : F/2.8 · AZ : ${Math.floor((angle * 50) % 360)}° ]`,
-        mouseX + 24,
-        mouseY - 18
-      );
-      ctx.fillStyle = 'rgba(150, 208, 255, 0.7)';
-      ctx.fillText(
-        `[ TARGET // X:${Math.round(mouseX)} Y:${Math.round(mouseY)} ]`,
-        mouseX + 24,
-        mouseY - 4
-      );
     };
 
     if (!isActive || prefersReducedMotion) {
@@ -108,8 +103,7 @@ export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive
 
     const handleResize = () => {
       if (!canvas.parentElement) return;
-      width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = canvas.parentElement.clientHeight;
+      setupSize();
     };
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -119,12 +113,12 @@ export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive
     };
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     const render = () => {
-      mouseX += (targetX - mouseX) * 0.06;
-      mouseY += (targetY - mouseY) * 0.06;
-      angle += 0.005;
+      mouseX += (targetX - mouseX) * 0.085;
+      mouseY += (targetY - mouseY) * 0.085;
+      angle += 0.004;
 
       drawFrame();
       animationFrameId = requestAnimationFrame(render);
