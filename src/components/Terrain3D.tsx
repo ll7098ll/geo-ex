@@ -205,6 +205,20 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
 // ==========================================
 // Terrain Atmospheric Lighting & Environment Rig
 // ==========================================
+class EnvironmentErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) return null;
+    return this.props.children;
+  }
+}
+
 interface TerrainAtmosphereProps {
   category: string;
 }
@@ -324,7 +338,11 @@ const TerrainEnvironmentRig: React.FC<TerrainAtmosphereProps> = ({ category }) =
   return (
     <>
       <Sky sunPosition={config.sunPos} turbidity={config.turbidity} rayleigh={config.rayleigh} />
-      <Environment preset={config.preset} />
+      <EnvironmentErrorBoundary>
+        <React.Suspense fallback={null}>
+          <Environment preset={config.preset} />
+        </React.Suspense>
+      </EnvironmentErrorBoundary>
       <hemisphereLight
         color={config.hemiSky}
         groundColor={config.hemiGround}

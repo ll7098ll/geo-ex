@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TERRAIN_CATEGORIES } from './constants/terrains';
 import { getCategoryIdForPlace } from './constants/places';
 import { Region, PlaceInfo } from './types';
@@ -12,16 +12,8 @@ import { GoogleMapSlide } from './components/slides/GoogleMapSlide';
 import { Terrain3DSlide } from './components/slides/Terrain3DSlide';
 import { GeologicalGuideSlide } from './components/slides/GeologicalGuideSlide';
 import { FilmGrainOverlay } from './components/kinetic/FilmGrainOverlay';
-import { PolarityCutGate } from './components/kinetic/PolarityCutGate';
 import { SpecimenDrawer } from './components/kinetic/SpecimenDrawer';
 import { Compass, Sparkles } from 'lucide-react';
-
-const CHAPTER_METAS = [
-  { number: '01', title: 'HERO ARCHIVE', subtitle: '6대 지형 카탈로그 탐색' },
-  { number: '02', title: 'SATELLITE VIEW', subtitle: '실제 위성 지형 관측' },
-  { number: '03', title: '3D DIORAMA', subtitle: '입체 지형 및 지층 단면 분석' },
-  { number: '04', title: 'FIELD MAGAZINE', subtitle: '형성 원리 및 심층 해설' },
-];
 
 export default function App() {
   const [region, setRegion] = useState<Region>('world');
@@ -30,18 +22,6 @@ export default function App() {
   const [selectedTerrain, setSelectedTerrain] = useState<string | null>('화산');
   const [currentCategoryId, setCurrentCategoryId] = useState<string>('volcanic');
   const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
-
-  // Smooth NatGeo Editorial Transition Curtain State (used only when launching an expedition)
-  const [polarityGate, setPolarityGate] = useState<{
-    isVisible: boolean;
-    chapterNumber: string;
-    chapterTitle: string;
-    subtitle?: string;
-  }>({
-    isVisible: false,
-    chapterNumber: '01',
-    chapterTitle: 'HERO ARCHIVE',
-  });
 
   // Specimen Bag State (Persisted in localStorage)
   const [specimens, setSpecimens] = useState<PlaceInfo[]>(() => {
@@ -59,7 +39,30 @@ export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<(HTMLElement | null)[]>([]);
   const activeSlideIndexRef = useRef(0);
-  const polarityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollAnimRef = useRef<number | null>(null);
+
+  const cancelScrollAnim = () => {
+    if (scrollAnimRef.current !== null) {
+      cancelAnimationFrame(scrollAnimRef.current);
+      scrollAnimRef.current = null;
+    }
+    if (containerRef.current) {
+      containerRef.current.style.scrollSnapType = '';
+    }
+  };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const onUserInterrupt = () => cancelScrollAnim();
+    container.addEventListener('wheel', onUserInterrupt, { passive: true });
+    container.addEventListener('touchstart', onUserInterrupt, { passive: true });
+    return () => {
+      cancelScrollAnim();
+      container.removeEventListener('wheel', onUserInterrupt);
+      container.removeEventListener('touchstart', onUserInterrupt);
+    };
+  }, []);
 
   // Sync specimens to localStorage
   useEffect(() => {
@@ -86,34 +89,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isAutoPlaying, loading, activeSlideIndex]);
 
-  // 3. Smooth NatGeo Yellow Editorial Cut (triggered intentionally on cover explore)
-  const triggerEditorialCut = useCallback((chapterIndex: number) => {
-    if (polarityTimeoutRef.current) {
-      clearTimeout(polarityTimeoutRef.current);
-    }
-    const meta = CHAPTER_METAS[chapterIndex] || CHAPTER_METAS[0];
-    setPolarityGate({
-      isVisible: true,
-      chapterNumber: meta.number,
-      chapterTitle: meta.title,
-      subtitle: meta.subtitle,
-    });
-
-    polarityTimeoutRef.current = setTimeout(() => {
-      setPolarityGate((prev) => ({ ...prev, isVisible: false }));
-      polarityTimeoutRef.current = null;
-    }, 340);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (polarityTimeoutRef.current) {
-        clearTimeout(polarityTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // 4. Scroll tracking using IntersectionObserver to update activeSlideIndex cleanly without flashes
+  // 3. Scroll tracking using IntersectionObserver to update activeSlideIndex cleanly
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -144,12 +120,42 @@ export default function App() {
     return () => observer.disconnect();
   }, []);
 
-  // 5. Smooth slide transition handler
+  // 4. Smooth slide transition handler (suspends CSS scroll-snap while animating so jumps never stall)
   const scrollToSlide = (index: number) => {
+    const container = containerRef.current;
     const target = slideRefs.current[index];
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!container || !target) return;
+
+    cancelScrollAnim();
+
+    const startTop = container.scrollTop;
+    const targetTop = target.offsetTop;
+    const delta = targetTop - startTop;
+    if (Math.abs(delta) < 1) {
+      container.scrollTop = targetTop;
+      return;
     }
+
+    container.style.scrollSnapType = 'none';
+    const duration = Math.min(680, Math.max(380, Math.abs(delta) * 0.42));
+    const startTime = performance.now();
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const t = Math.min(1, elapsed / duration);
+      const eased = 1 - Math.pow(1 - t, 4);
+      container.scrollTop = startTop + delta * eased;
+
+      if (t < 1) {
+        scrollAnimRef.current = requestAnimationFrame(step);
+      } else {
+        container.scrollTop = targetTop;
+        container.style.scrollSnapType = '';
+        scrollAnimRef.current = null;
+      }
+    };
+
+    scrollAnimRef.current = requestAnimationFrame(step);
   };
 
   const handleExplore = async (terrain: string, categoryId: string) => {
@@ -157,14 +163,11 @@ export default function App() {
     setCurrentCategoryId(categoryId);
     setIsAutoPlaying(false);
 
-    triggerEditorialCut(1);
-
     await searchTerrain(terrain, region, categoryId);
 
-    // Smoothly scroll down to Page 2 (Google Map) while the editorial curtain settles
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       scrollToSlide(1);
-    }, 140);
+    });
   };
 
   const handleRegionChange = async (newRegion: Region) => {
@@ -226,14 +229,6 @@ export default function App() {
       {/* Subtle Film Grain Overlay */}
       <FilmGrainOverlay />
 
-      {/* NatGeo Yellow Editorial Transition Curtain */}
-      <PolarityCutGate
-        isVisible={polarityGate.isVisible}
-        chapterNumber={polarityGate.chapterNumber}
-        chapterTitle={polarityGate.chapterTitle}
-        subtitle={polarityGate.subtitle}
-      />
-
       {/* Global Loading Overlay */}
       <LoadingOverlay loading={loading} region={region} selectedTerrain={selectedTerrain} />
 
@@ -270,7 +265,7 @@ export default function App() {
          ======================================================== */}
       <main
         ref={containerRef}
-        className="w-full flex-1 overflow-y-scroll overflow-x-hidden snap-y snap-mandatory scroll-smooth no-scrollbar relative"
+        className="w-full flex-1 overflow-y-scroll overflow-x-hidden snap-y snap-mandatory no-scrollbar relative"
         tabIndex={0}
       >
         {/* ========================================================
@@ -282,7 +277,7 @@ export default function App() {
           ref={(el) => {
             slideRefs.current[0] = el;
           }}
-          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
+          className="h-[calc(100vh-56px)] w-full snap-start relative overflow-hidden"
           aria-label="01 메인 화면"
         >
           <HeroSlideshow
@@ -306,7 +301,7 @@ export default function App() {
           ref={(el) => {
             slideRefs.current[1] = el;
           }}
-          className="h-[calc(100vh-56px)] w-full snap-start snap-always relative overflow-hidden"
+          className="h-[calc(100vh-56px)] w-full snap-start relative overflow-hidden"
           aria-label="02 구글 위성지도"
         >
           {result ? (
@@ -388,6 +383,7 @@ export default function App() {
               onNavigateSlide={scrollToSlide}
               onAddSpecimen={handleAddSpecimen}
               isCollected={isCurrentCollected}
+              isActive={activeSlideIndex === 3}
             />
           ) : (
             <div className="h-full w-full flex flex-col items-center justify-center bg-[#08080A] p-6 text-center">

@@ -30,51 +30,23 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#08080A] select-none">
-      {/* 1. Kinetic Background: 4-Blade Shutter Slits with smooth cubic-bezier easing */}
-      <div className="absolute inset-0 w-full h-full">
-        <AnimatePresence mode="popLayout">
+      {/* 1. Smooth Cinematic Crossfade & Gentle Scale Slide Transition */}
+      <div className="absolute inset-0 w-full h-full bg-[#08080A]">
+        <AnimatePresence initial={false}>
           <motion.div
             key={activeIndex}
-            className="absolute inset-0 w-full h-full grid grid-cols-4"
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
+            className="absolute inset-0 w-full h-full overflow-hidden will-change-transform"
+            initial={{ opacity: 0, scale: 1.04 }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
-            {[0, 1, 2, 3].map((blade) => (
-              <motion.div
-                key={`blade-${blade}`}
-                className="relative h-full overflow-hidden will-change-transform"
-                initial={{ y: blade % 2 === 0 ? '-100%' : '100%', opacity: 0.4 }}
-                animate={{ y: '0%', opacity: 1 }}
-                exit={{ y: blade % 2 === 0 ? '100%' : '-100%', opacity: 0 }}
-                transition={{
-                  duration: 0.88,
-                  delay: blade * 0.055,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-              >
-                <motion.div
-                  className="absolute inset-0 h-full will-change-transform"
-                  initial={{ scale: 1.06 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-                  style={{
-                    width: '400%',
-                    left: `-${blade * 100}%`,
-                  }}
-                >
-                  <img
-                    src={activeCategory.image}
-                    alt={activeCategory.name}
-                    className="w-full h-full object-cover filter contrast-105 brightness-90"
-                    referrerPolicy="no-referrer"
-                  />
-                </motion.div>
-                {/* 1px Vertical Blade Divider */}
-                <div className="absolute inset-y-0 right-0 w-[1px] bg-white/10" />
-              </motion.div>
-            ))}
+            <img
+              src={activeCategory.image}
+              alt={activeCategory.name}
+              className="w-full h-full object-cover filter contrast-105 brightness-90"
+              referrerPolicy="no-referrer"
+            />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -94,13 +66,13 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
 
       {/* 5. Main Editorial Typography & Action Tags */}
       <div className="absolute inset-0 flex flex-col justify-end pb-36 sm:pb-40 md:pb-44 lg:pb-48 px-6 sm:px-12 md:px-16 max-w-7xl mx-auto w-full z-30 pointer-events-none">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={`content-${activeIndex}`}
-            initial={{ opacity: 0, y: 22 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             className="pointer-events-auto"
           >
             {/* Category Kicker */}

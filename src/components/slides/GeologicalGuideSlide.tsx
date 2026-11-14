@@ -35,6 +35,7 @@ interface GeologicalGuideSlideProps {
   onNavigateSlide: (index: number) => void;
   onAddSpecimen?: (place: PlaceInfo) => void;
   isCollected?: boolean;
+  isActive?: boolean;
 }
 
 export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
@@ -44,14 +45,16 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   onNavigateSlide,
   onAddSpecimen,
   isCollected = false,
+  isActive = false,
 }) => {
   const [level, setLevel] = useState<EducationLevel>('high');
   const [expandedStage, setExpandedStage] = useState<number>(0);
   const [isPaperMode, setIsPaperMode] = useState<boolean>(false);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [imgError, setImgError] = useState<boolean>(false);
+  const [canScrollInternal, setCanScrollInternal] = useState<boolean>(false);
 
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
   const essayRef = useRef<HTMLDivElement>(null);
@@ -60,18 +63,48 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   const { placeInfo } = result;
   const placeImageEntry = placeInfo ? PLACE_IMAGES[placeInfo.id] : undefined;
 
+  const resetToTop = () => {
+    const el = sectionRef.current;
+    if (el) {
+      el.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+      el.scrollTop = 0;
+    }
+    setScrollProgress(0);
+  };
+
   useEffect(() => {
     setImgError(false);
+    setExpandedStage(0);
+    resetToTop();
   }, [placeInfo?.id]);
+
+  useEffect(() => {
+    if (!isActive) {
+      setCanScrollInternal(false);
+      resetToTop();
+      return;
+    }
+
+    resetToTop();
+    const rafId = requestAnimationFrame(() => {
+      resetToTop();
+    });
+    const timerId = setTimeout(() => {
+      resetToTop();
+      setCanScrollInternal(true);
+    }, 260);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timerId);
+    };
+  }, [isActive]);
 
   if (!placeInfo) {
     return (
-      <section
-        id="section-guide"
-        className="h-full w-full relative overflow-y-auto bg-[#0A0A0C] text-zinc-100 p-8 flex items-center justify-center font-serif"
-      >
+      <div className="h-full w-full relative overflow-hidden bg-[#0A0A0C] text-zinc-100 p-8 flex items-center justify-center font-serif">
         <p className="text-zinc-400">지형 매거진 기사를 불러오는 중입니다...</p>
-      </section>
+      </div>
     );
   }
 
@@ -80,7 +113,7 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   const displayImageUrl =
     (!imgError && placeImageEntry?.url) || category?.image || '';
 
-  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
     const maxScroll = el.scrollHeight - el.clientHeight;
     if (maxScroll <= 0) {
@@ -91,7 +124,10 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   };
 
   const scrollToRef = (ref: React.RefObject<HTMLDivElement | null>) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setCanScrollInternal(true);
+    requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   // Theme tokens: Dark Editorial vs Warm Print Paper
@@ -126,12 +162,13 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
       };
 
   return (
-    <section
+    <div
       ref={sectionRef}
-      id="section-guide"
       onScroll={handleScroll}
-      className={`h-full w-full relative overflow-y-auto scroll-smooth transition-colors duration-500 ${theme.bg} ${theme.text} selection:bg-[#FFCC00] selection:text-black pb-24 no-scrollbar`}
-      aria-label="04 지형 매거진"
+      style={{ overflowAnchor: 'none' }}
+      className={`h-full w-full relative ${
+        canScrollInternal ? 'overflow-y-auto' : 'overflow-y-hidden'
+      } transition-colors duration-500 ${theme.bg} ${theme.text} selection:bg-[#FFCC00] selection:text-black pb-24 no-scrollbar`}
     >
       {/* Top Reading Progress Bar */}
       <div className="sticky top-0 left-0 right-0 z-40 h-[2px] bg-transparent pointer-events-none">
@@ -416,13 +453,11 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
             {content.stages.map((stage, idx) => {
               const isExpanded = expandedStage === idx;
               return (
-                <motion.div
+                <div
                   key={stage.stageNumber}
-                  layout
-                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                   onMouseEnter={() => setExpandedStage(idx)}
                   onClick={() => setExpandedStage(idx)}
-                  className={`border p-5 sm:p-6 flex flex-col justify-between cursor-pointer transition-colors duration-300 ${
+                  className={`border p-5 sm:p-6 flex flex-col justify-between cursor-pointer transition-[flex-grow,background-color,border-color,opacity] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                     isExpanded
                       ? `lg:flex-[2.4] ${theme.card} border-[#FFCC00]`
                       : `lg:flex-1 ${theme.surface} ${theme.border} opacity-85 hover:opacity-100`
@@ -464,7 +499,7 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
                       핵심 특징 · {stage.visualKeyFeature}
                     </span>
                   </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
@@ -661,6 +696,6 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
           </button>
         </footer>
       </article>
-    </section>
+    </div>
   );
 };
