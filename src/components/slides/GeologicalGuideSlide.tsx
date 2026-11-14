@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { motion } from 'motion/react';
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { SearchResult as SearchResultType, Region, PlaceInfo } from '../../types';
 import { TERRAIN_CATEGORIES } from '../../constants/terrains';
+import { PLACE_IMAGES } from '../../constants/placeImages';
 import {
   EducationLevel,
   EDUCATION_LEVELS,
@@ -48,6 +49,7 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   const [expandedStage, setExpandedStage] = useState<number>(0);
   const [isPaperMode, setIsPaperMode] = useState<boolean>(false);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [imgError, setImgError] = useState<boolean>(false);
 
   const sectionRef = useRef<HTMLElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
@@ -56,6 +58,11 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   const dossierRef = useRef<HTMLDivElement>(null);
 
   const { placeInfo } = result;
+  const placeImageEntry = placeInfo ? PLACE_IMAGES[placeInfo.id] : undefined;
+
+  useEffect(() => {
+    setImgError(false);
+  }, [placeInfo?.id]);
 
   if (!placeInfo) {
     return (
@@ -70,6 +77,8 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
 
   const content = getLevelContent(placeInfo, level);
   const category = TERRAIN_CATEGORIES.find((c) => c.id === result.categoryId);
+  const displayImageUrl =
+    (!imgError && placeImageEntry?.url) || category?.image || '';
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
     const el = e.currentTarget;
@@ -326,12 +335,15 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
           {/* 2-Column Opening Feature: Yellow-Framed Plate + Lead Essay with Drop Cap */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start pt-2">
             {/* Left: NatGeo Yellow-Framed Photo Plate */}
-            {category?.image && (
+            {displayImageUrl && (
               <figure className="lg:col-span-5 space-y-3">
                 <div className="magazine-frame overflow-hidden bg-black aspect-[4/3] relative group">
                   <img
-                    src={category.image}
-                    alt={`${placeInfo.placeName} - ${category.name}`}
+                    src={displayImageUrl}
+                    alt={`${placeInfo.placeName} - ${placeImageEntry?.title || category?.name || ''}`}
+                    onError={() => {
+                      if (!imgError) setImgError(true);
+                    }}
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                     referrerPolicy="no-referrer"
                   />
@@ -342,15 +354,14 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
                     FIG. 01
                   </span>
                   <span>
-                    {placeInfo.placeName}({placeInfo.countryOrArea})의 대표적{' '}
-                    {selectedTerrain || placeInfo.terrain} 경관. &ldquo;{placeInfo.tagline}&rdquo;
+                    {placeInfo.placeName}({placeInfo.countryOrArea})의 실제 경관. &ldquo;{placeInfo.tagline}&rdquo;
                   </span>
                 </figcaption>
               </figure>
             )}
 
             {/* Right: Opening Lead Essay & Pull Quote */}
-            <div className={category?.image ? 'lg:col-span-7 space-y-6' : 'lg:col-span-12 space-y-6'}>
+            <div className={displayImageUrl ? 'lg:col-span-7 space-y-6' : 'lg:col-span-12 space-y-6'}>
               <div className="flex items-center gap-2 text-xs font-sans font-bold">
                 <span className="px-2 py-0.5 bg-[#FFCC00] text-black">
                   {content.badge}

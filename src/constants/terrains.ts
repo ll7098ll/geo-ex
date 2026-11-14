@@ -8,7 +8,7 @@ export const TERRAIN_CATEGORIES: TerrainCategory[] = [
     icon: Mountain,
     description: '지각 변동과 마그마의 활동으로 만들어진 웅장한 지형',
     items: ['화산', '칼데라', '주상절리', '용암동굴', '단층 산맥'],
-    image: 'https://images.unsplash.com/photo-1508804185872-d7badad00f7d?auto=format&fit=crop&q=80&w=2070'
+    image: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/4/40/Episode_4_of_Kilauea%27s_December_2024_eruption_2025-01-16.jpg/1920px-Episode_4_of_Kilauea%27s_December_2024_eruption_2025-01-16.jpg'
   },
   {
     id: 'coastal',
