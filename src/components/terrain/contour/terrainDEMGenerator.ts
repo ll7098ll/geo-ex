@@ -5,8 +5,9 @@ import {
 } from '../terrainGenerators';
 import { getTerrainContourMeta } from './terrainContourMetadata';
 
-// Cache to prevent re-allocating DEM arrays on every render frame
-const DEM_CACHE: Map<string, TerrainElevationField> = new Map();
+// Bounded LRU cache to prevent re-allocating DEM arrays across explorations
+const DEM_CACHE = new Map<string, TerrainElevationField>();
+const MAX_DEM_CACHE_SIZE = 20;
 
 /**
  * 표준 수치표고모델(DEM) 표고 필드 생성기
@@ -26,6 +27,9 @@ export function generateTerrainElevationField(
 
   const cached = DEM_CACHE.get(cacheKey);
   if (cached) {
+    // Refresh LRU order
+    DEM_CACHE.delete(cacheKey);
+    DEM_CACHE.set(cacheKey, cached);
     return cached;
   }
 
@@ -79,14 +83,11 @@ export function generateTerrainElevationField(
     maxElevation,
     reliefRange,
     contourSettings: meta.contourSettings,
-    features: meta.features,
-    contourReadingTips: meta.contourReadingTips,
-    crossSectionPresets: meta.crossSectionPresets || [],
   };
 
-  if (DEM_CACHE.size > 20) {
-    const firstKey = DEM_CACHE.keys().next().value;
-    if (firstKey) DEM_CACHE.delete(firstKey);
+  if (DEM_CACHE.size >= MAX_DEM_CACHE_SIZE) {
+    const oldestKey = DEM_CACHE.keys().next().value;
+    if (oldestKey) DEM_CACHE.delete(oldestKey);
   }
   DEM_CACHE.set(cacheKey, field);
 

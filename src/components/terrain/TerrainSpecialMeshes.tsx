@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import {
@@ -20,6 +20,14 @@ import {
 } from './generators/coastal';
 import { getWaterfallLipY } from './generators/fluvial';
 import { MUSHROOM_PEDESTAL_SPECS } from './generators/arid';
+
+function useDisposeGeometry(geo: THREE.BufferGeometry | null | undefined) {
+  useEffect(() => {
+    return () => {
+      geo?.dispose();
+    };
+  }, [geo]);
+}
 
 // ============================================================================
 // 0. Utility: Merge Indexed/Non-Indexed BufferGeometries (position, normal, color)
@@ -130,8 +138,6 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
   segments = 128,
   roughness = 0.08,
 }) => {
-  const geoRef = useRef<THREE.BufferGeometry | null>(null);
-
   const waterData = useMemo(() => {
     const size = 20;
     const half = size / 2;
@@ -331,10 +337,12 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
     posAttr.needsUpdate = true;
   });
 
+  useDisposeGeometry(waterData.geometry);
+
   if (waterData.topVertCount === 0) return null;
 
   return (
-    <mesh ref={(m) => { if (m) geoRef.current = m.geometry; }} geometry={waterData.geometry} receiveShadow>
+    <mesh geometry={waterData.geometry} receiveShadow>
       <meshStandardMaterial
         vertexColors
         roughness={roughness}
@@ -344,34 +352,6 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
         side={THREE.DoubleSide}
         depthWrite={false}
       />
-    </mesh>
-  );
-};
-
-// Keep legacy AnimatedWaterSurface export for full API compatibility
-export const AnimatedWaterSurface: React.FC<{
-  color?: string;
-  opacity?: number;
-  elevation?: number;
-  size?: [number, number];
-  position?: [number, number, number];
-  circular?: boolean;
-  radius?: number;
-  waveScale?: number;
-}> = ({
-  color = '#1b5e7d',
-  opacity = 0.85,
-  elevation = 0.5,
-  size = [20, 20],
-  position,
-  circular = false,
-  radius = 6,
-}) => {
-  const pos: [number, number, number] = position || [0, 0, elevation];
-  return (
-    <mesh position={pos}>
-      {circular ? <circleGeometry args={[radius, 36]} /> : <planeGeometry args={[size[0], size[1], 16, 16]} />}
-      <meshStandardMaterial color={color} roughness={0.08} metalness={0.25} transparent opacity={opacity} side={THREE.DoubleSide} />
     </mesh>
   );
 };
@@ -411,6 +391,7 @@ const GroundedPineTrees: React.FC<{
     }
     return parts.length > 0 ? mergeColorGeometries(parts) : null;
   }, [normSub, category, reliefScale, coords, foliageColor]);
+  useDisposeGeometry(geo);
 
   if (!geo) return null;
   return (
@@ -631,6 +612,7 @@ export const ColumnarJointingColumns: React.FC<{ reliefScale?: number }> = ({ re
     geo.setIndex(idxList);
     return geo;
   }, [reliefScale]);
+  useDisposeGeometry(columnsGeo);
 
   const seaFn = useMemo(
     () => (x: number, y: number) => {
@@ -910,6 +892,7 @@ export const CavePortalFeatures: React.FC<{ reliefScale?: number; isLavaTube?: b
 
       return mergeColorGeometries(parts);
     }, [reliefScale]);
+    useDisposeGeometry(lavaTubeGeo);
 
     // Horizontal residual thermal cooling cracks along the tube floor (properly flat in XY!)
     const floorGlowSegments = useMemo(() => {
@@ -1094,6 +1077,7 @@ export const CavePortalFeatures: React.FC<{ reliefScale?: number; isLavaTube?: b
 
     return mergeColorGeometries(parts);
   }, [reliefScale]);
+  useDisposeGeometry(karstCavernGeo);
 
   // Stepped Rimstone Pool (휴석소) & Subterranean Stream Water
   const caveWaterFn = useMemo(
@@ -1235,6 +1219,7 @@ export const SeaArchAndStack: React.FC<{ reliefScale?: number }> = ({ reliefScal
 
     return mergeColorGeometries(parts);
   }, [reliefScale]);
+  useDisposeGeometry(seaArchGeo);
 
   const seaFn = useMemo(() => () => 0.50 * reliefScale, [reliefScale]);
 
@@ -1323,6 +1308,7 @@ const SeaCliffFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale }) =>
 
     return mergeColorGeometries(parts);
   }, [reliefScale]);
+  useDisposeGeometry(notchOverhangGeo);
 
   const seaFn = useMemo(() => () => 0.50 * reliefScale, [reliefScale]);
 
@@ -1668,6 +1654,7 @@ export const FloodplainFeatures: React.FC<{ reliefScale?: number }> = ({ reliefS
     }
     return mergeColorGeometries(parts);
   }, [reliefScale]);
+  useDisposeGeometry(leveeHousesGeo);
 
   return (
     <group>
@@ -1770,6 +1757,7 @@ export const WaterfallCascades: React.FC<{ reliefScale?: number }> = ({ reliefSc
       }
     );
   }, [reliefScale]);
+  useDisposeGeometry(caprockLedgeGeo);
 
   // 2. True Parabolic Free-Falling Horseshoe Water Curtain!
   const waterfallSheetGeo = useMemo(() => {
@@ -1824,6 +1812,7 @@ export const WaterfallCascades: React.FC<{ reliefScale?: number }> = ({ reliefSc
     geo.computeVertexNormals();
     return geo;
   }, [reliefScale]);
+  useDisposeGeometry(waterfallSheetGeo);
 
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
@@ -2051,6 +2040,7 @@ export const GlacialValleyFeatures: React.FC<{ reliefScale?: number }> = ({ reli
     g.computeVertexNormals();
     return g;
   }, [reliefScale]);
+  useDisposeGeometry(hangingFallGeo);
 
   return (
     <group>
@@ -2230,6 +2220,7 @@ const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
 
     return mergeColorGeometries(parts);
   }, [reliefScale]);
+  useDisposeGeometry(glacierTongueGeo);
 
   // Moraine-dammed Proglacial Lake (enclosed inside y in [-2.75 + 0.21*x^2, +2.35], |x| < 3.05!)
   const proglacialWaterFn = useMemo(
@@ -2444,6 +2435,7 @@ export const UndercutMushroomRock: React.FC<{ reliefScale?: number }> = ({ relie
 
     return mergeColorGeometries(parts);
   }, [reliefScale]);
+  useDisposeGeometry(geo);
 
   return (
     <mesh geometry={geo} castShadow receiveShadow>
@@ -2503,6 +2495,7 @@ export const OasisPalms: React.FC<{ reliefScale?: number }> = ({ reliefScale = 1
 
     return mergeColorGeometries(parts);
   }, [reliefScale]);
+  useDisposeGeometry(oasisPropsGeo);
 
   return (
     <group>

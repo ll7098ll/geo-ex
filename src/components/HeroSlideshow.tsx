@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight, Play, Pause, ChevronDown, Compass } from 'lucide-react';
+import { ArrowRight, Play, Pause, ChevronDown } from 'lucide-react';
 import { TerrainCategory } from '../types';
 import { HeroApertureCanvas } from './kinetic/HeroApertureCanvas';
 
@@ -12,6 +12,7 @@ interface HeroSlideshowProps {
   setIsAutoPlaying: (playing: boolean) => void;
   onExplore: (terrain: string, categoryId: string) => void;
   onScrollNext?: () => void;
+  isActive?: boolean;
 }
 
 export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
@@ -22,6 +23,7 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
   setIsAutoPlaying,
   onExplore,
   onScrollNext,
+  isActive = true,
 }) => {
   const activeCategory = categories[activeIndex];
   const ActiveIcon = activeCategory.icon;
@@ -75,7 +77,7 @@ export const HeroSlideshow: React.FC<HeroSlideshowProps> = ({
       </div>
 
       {/* 2. WebGL/Canvas Interactive Topological Aperture Overlay */}
-      <HeroApertureCanvas />
+      <HeroApertureCanvas isActive={isActive} />
 
       {/* 3. Architectural Vignette Gradients */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#08080A]/80 via-transparent to-transparent h-36 pointer-events-none z-20" />

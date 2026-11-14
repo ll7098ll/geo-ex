@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Maximize2,
@@ -22,16 +22,18 @@ interface Terrain3DSlideProps {
   onScrollNext?: () => void;
   onAddSpecimen?: (place: PlaceInfo) => void;
   isCollected?: boolean;
+  isActive?: boolean;
 }
 
 export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
   result,
-  region,
+  region: _region,
   selectedTerrain,
   onSelectAlternativePlace,
   onScrollNext,
   onAddSpecimen,
   isCollected = false,
+  isActive = true,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
@@ -41,7 +43,17 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
   const [isFlipped, setIsFlipped] = useState(false);
 
   const terrainRef = useRef<Terrain3DRef>(null);
-  const fullscreenTerrainRef = useRef<Terrain3DRef>(null);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
 
   const cycleRelief = () => {
     setReliefScale((prev) => {
@@ -70,11 +82,17 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
       aria-label="03 3D 입체 지형"
     >
       {/* ========================================================
-          Fullscreen 3D Viewer Modal (ESC or Minimize to exit)
+          1. Single Persistent 3D Canvas Stage Layer (Inline & Fullscreen)
          ======================================================== */}
-      {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-[#08080A] flex flex-col">
-          <div className="flex items-center justify-between px-6 py-3 bg-[#131418] hairline-border-b">
+      <div
+        className={
+          isFullscreen
+            ? 'fixed inset-0 z-50 bg-[#08080A] flex flex-col'
+            : 'absolute inset-0 w-full h-full'
+        }
+      >
+        {isFullscreen && (
+          <div className="flex items-center justify-between px-6 py-3 bg-[#131418] hairline-border-b shrink-0">
             <div className="flex items-center gap-3">
               <div className="px-2.5 py-1 bg-[#1F34FF] text-white text-xs font-mono font-black">
                 ACT 03
@@ -128,38 +146,25 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
               </button>
             </div>
           </div>
+        )}
 
-          <div className="flex-1 w-full relative">
-            <Terrain3D
-              ref={fullscreenTerrainRef}
-              category={result.categoryId}
-              subTerrain={resolvedSubTerrain}
-              placeContext={placeContext}
-              autoRotate={isAutoRotating}
-              onAutoRotateChange={setIsAutoRotating}
-              show3DContours={showContours}
-              showStrata={showStrata}
-              reliefScale={reliefScale}
-            />
-          </div>
+        <div
+          key="terrain-3d-stage"
+          className={isFullscreen ? 'flex-1 w-full relative' : 'w-full h-full relative'}
+        >
+          <Terrain3D
+            ref={terrainRef}
+            category={result.categoryId}
+            subTerrain={resolvedSubTerrain}
+            placeContext={placeContext}
+            autoRotate={isAutoRotating}
+            onAutoRotateChange={setIsAutoRotating}
+            show3DContours={showContours}
+            showStrata={showStrata}
+            reliefScale={reliefScale}
+            isActive={isActive || isFullscreen}
+          />
         </div>
-      )}
-
-      {/* ========================================================
-          1. Main 3D Canvas Stage Layer
-         ======================================================== */}
-      <div className="absolute inset-0 w-full h-full">
-        <Terrain3D
-          ref={terrainRef}
-          category={result.categoryId}
-          subTerrain={resolvedSubTerrain}
-          placeContext={placeContext}
-          autoRotate={isAutoRotating}
-          onAutoRotateChange={setIsAutoRotating}
-          show3DContours={showContours}
-          showStrata={showStrata}
-          reliefScale={reliefScale}
-        />
       </div>
 
       {/* Atmospheric scrim */}

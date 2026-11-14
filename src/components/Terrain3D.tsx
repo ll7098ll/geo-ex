@@ -1,32 +1,21 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Sky, Environment, Html } from '@react-three/drei';
+import { OrbitControls, Sky, Environment } from '@react-three/drei';
 import * as THREE from 'three';
-import {
-  RotateCw,
-  RotateCcw,
-  Maximize2,
-  Minimize2,
-  Sparkles,
-  X,
-} from 'lucide-react';
-import { TerrainAnnotation } from '../types';
 import {
   generateTerrainDioramaGeometry,
   resolveTerrainKey,
-  generateTerrainElevationField,
   getBaseWaterElevation,
+  getTerrainContourMeta,
   TerrainMaterialPreset,
 } from './terrain/terrainGenerators';
 import { getTerrainBumpTexture, TexturePatternKey } from './terrain/terrainTextures';
-import { TERRAIN_ANNOTATIONS } from './terrain/TerrainAnnotationsData';
 import { TerrainSpecialMeshes } from './terrain/TerrainSpecialMeshes';
 import {
   createContourShaderUniforms,
   updateContourShaderUniforms,
   injectContourShader,
   TerrainShaderUniforms,
-  Contour3DTheme,
 } from './terrain/contour/terrainContourShader';
 
 // ==========================================
@@ -97,70 +86,32 @@ interface DioramaMeshProps {
   category: string;
   subTerrain: string;
   placeContext?: string;
-  wireframe: boolean;
   reliefScale: number;
-  showAnnotations: boolean;
   showStrata: boolean;
-  evolutionStage: number;
-  activeAnnotationIndex: number | null;
-  onSelectAnnotation: (idx: number | null) => void;
   show3DContours: boolean;
   contourInterval: number;
   indexInterval: number;
-  highlightElevation: number | null;
-  contour3DTheme: Contour3DTheme;
-  showSlicePlane: boolean;
-  sliceElevation: number;
-  demMinElevation: number;
-  demMaxElevation: number;
-  demField?: any;
-  crossSectionLine?: { p1: [number, number]; p2: [number, number] } | null;
-  crossSectionHoverPoint?: { x: number; y: number; z: number } | null;
-  isCrossSection3DVisible?: boolean;
   materialPreset: TerrainMaterialPreset;
   texturePattern: TexturePatternKey;
   roughness: number;
   metalness: number;
   bumpScale: number;
-  opacity: number;
-  showValleyRidgeGuide?: boolean;
-  showSlopeHeat?: boolean;
-  onSurfaceHover?: (probe: { x: number; y: number; elevation: number; slopeDeg: number } | null) => void;
 }
 
 const DioramaMesh: React.FC<DioramaMeshProps> = ({
   category,
   subTerrain,
   placeContext,
-  wireframe,
   reliefScale,
-  showAnnotations,
   showStrata,
-  evolutionStage,
-  activeAnnotationIndex,
-  onSelectAnnotation,
   show3DContours,
   contourInterval,
   indexInterval,
-  highlightElevation,
-  contour3DTheme,
-  showSlicePlane,
-  sliceElevation,
-  demMinElevation,
-  demMaxElevation,
-  demField,
-  crossSectionLine,
-  crossSectionHoverPoint,
-  isCrossSection3DVisible = true,
   materialPreset,
   texturePattern,
   roughness,
   metalness,
   bumpScale,
-  opacity,
-  showValleyRidgeGuide = false,
-  showSlopeHeat = false,
-  onSurfaceHover,
 }) => {
   const normSub = resolveTerrainKey(subTerrain, placeContext);
   const waterLevel = useMemo(
@@ -175,13 +126,12 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       subTerrain,
       reliefScale,
       showStrata,
-      evolutionStage,
+      4,
       materialPreset,
       placeContext
     );
-  }, [category, subTerrain, reliefScale, showStrata, evolutionStage, materialPreset, placeContext]);
+  }, [category, subTerrain, reliefScale, showStrata, materialPreset, placeContext]);
 
-  const annotations: TerrainAnnotation[] = TERRAIN_ANNOTATIONS[normSub] || [];
   const bumpTexture = useMemo(
     () => getTerrainBumpTexture(texturePattern, category),
     [texturePattern, category]
@@ -193,10 +143,10 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       showContours: show3DContours,
       contourInterval,
       indexInterval,
-      highlightElevation,
-      theme: contour3DTheme,
-      showValleyRidgeGuide,
-      showSlopeHeat,
+      highlightElevation: null,
+      theme: 'gold',
+      showValleyRidgeGuide: false,
+      showSlopeHeat: false,
       waterLevel,
     })
   );
@@ -207,22 +157,13 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       showContours: show3DContours,
       contourInterval,
       indexInterval,
-      highlightElevation,
-      theme: contour3DTheme,
-      showValleyRidgeGuide,
-      showSlopeHeat,
+      highlightElevation: null,
+      theme: 'gold',
+      showValleyRidgeGuide: false,
+      showSlopeHeat: false,
       waterLevel,
     });
-  }, [
-    show3DContours,
-    contourInterval,
-    indexInterval,
-    highlightElevation,
-    contour3DTheme,
-    showValleyRidgeGuide,
-    showSlopeHeat,
-    waterLevel,
-  ]);
+  }, [show3DContours, contourInterval, indexInterval, waterLevel]);
 
   // Hook into Three.js standard material shader pipeline
   const handleBeforeCompile = useCallback((shader: THREE.WebGLProgramParametersWithUniforms) => {
@@ -232,42 +173,18 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
   return (
     <group rotation={[-Math.PI / 2, 0, 0]}>
       {/* 1. Solid Diorama Mesh (Terrain Surface + 4 Side Strata Skirts + Bottom Plate) */}
-      <mesh
-        geometry={geometry}
-        castShadow
-        receiveShadow
-        onPointerMove={(e) => {
-          e.stopPropagation();
-          if (!onSurfaceHover || !e.point || !e.normal) return;
-          const nz = Math.abs(e.normal.y);
-          const slopeDeg = Math.acos(Math.min(1.0, Math.max(0.0, nz))) * 57.29578;
-          onSurfaceHover({
-            x: e.point.x,
-            y: -e.point.z,
-            elevation: e.point.y,
-            slopeDeg,
-          });
-        }}
-        onPointerLeave={() => {
-          onSurfaceHover?.(null);
-        }}
-      >
+      <mesh geometry={geometry} castShadow receiveShadow>
         <meshStandardMaterial
           vertexColors
           side={THREE.DoubleSide}
-          wireframe={wireframe}
-          bumpMap={wireframe ? undefined : bumpTexture}
+          bumpMap={bumpTexture}
           bumpScale={bumpScale}
           roughness={roughness}
           metalness={metalness}
-          transparent={opacity < 0.99}
-          opacity={opacity}
           onBeforeCompile={handleBeforeCompile}
           customProgramCacheKey={() => `terrain_mat_v7_${materialPreset}`}
         />
       </mesh>
-
-
 
       {/* 2. Beveled Dark Obsidian Base Pedestal Rim */}
       <mesh position={[0, 0, -1.35]}>
@@ -281,75 +198,6 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
         category={category}
         reliefScale={reliefScale}
       />
-
-      {/* 4. Interactive Geomorphic Feature Annotation Pins */}
-      {showAnnotations &&
-        annotations.map((anno, idx) => {
-          const isSelected = activeAnnotationIndex === idx;
-          // In group space (rotated -90 deg on X), coordinate mapping:
-          // X -> X, Y -> Z (elevation), Z -> -Y
-          const adjustedPos: [number, number, number] = [
-            anno.position[0],
-            anno.position[2],
-            anno.position[1] * reliefScale + 0.5,
-          ];
-
-          return (
-            <group key={idx} position={adjustedPos}>
-              <Html distanceFactor={13} center>
-                <div
-                  className="group relative flex flex-col items-center pointer-events-auto cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectAnnotation(isSelected ? null : idx);
-                  }}
-                >
-                  {/* Pin Circle Marker */}
-                  <div
-                    className={`w-7 h-7 rounded-full font-bold flex items-center justify-center text-xs shadow-xl border-2 transition-all transform hover:scale-110 ${
-                      isSelected
-                        ? 'bg-amber-400 text-slate-950 border-white scale-110 ring-4 ring-amber-400/40'
-                        : 'bg-[#FFCC00] text-slate-950 border-white/90 animate-bounce'
-                    }`}
-                  >
-                    {idx + 1}
-                  </div>
-
-                  {/* Hover / Selected Callout Card */}
-                  <div
-                    className={`absolute bottom-8 bg-slate-950/95 text-white text-[11px] px-3 py-2 rounded-md shadow-2xl border border-white/20 whitespace-nowrap z-50 transition-all pointer-events-auto flex flex-col items-center min-w-[150px] max-w-[220px] ${
-                      isSelected
-                        ? 'opacity-100 scale-100'
-                        : 'opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 pointer-events-none'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between w-full gap-2 mb-0.5">
-                      <span className="font-bold text-[#FFCC00] text-xs flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-400" />
-                        {anno.name}
-                      </span>
-                      {isSelected && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectAnnotation(null);
-                          }}
-                          className="text-gray-400 hover:text-white"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-gray-300 text-center leading-tight whitespace-normal font-sans">
-                      {anno.description}
-                    </p>
-                    <div className="absolute -bottom-1 w-2 h-2 bg-slate-950 rotate-45 border-r border-b border-white/20" />
-                  </div>
-                </div>
-              </Html>
-            </group>
-          );
-        })}
     </group>
   );
 };
@@ -519,74 +367,72 @@ export interface Terrain3DProps {
   category: string;
   subTerrain: string;
   placeContext?: string;
-  onToggleFullscreen?: () => void;
-  isFullscreen?: boolean;
-  hideHud?: boolean;
   autoRotate?: boolean;
   onAutoRotateChange?: (autoRotate: boolean) => void;
   show3DContours?: boolean;
   showStrata?: boolean;
   reliefScale?: number;
+  isActive?: boolean;
 }
 
 const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   category,
   subTerrain,
   placeContext,
-  onToggleFullscreen,
-  isFullscreen,
-  hideHud = false,
   autoRotate: autoRotateProp,
   onAutoRotateChange,
   show3DContours = false,
   showStrata = true,
   reliefScale = 1.0,
+  isActive = true,
 }, ref) => {
   const [internalAutoRotate, setInternalAutoRotate] = useState(true);
   const autoRotate = autoRotateProp !== undefined ? autoRotateProp : internalAutoRotate;
   const controlsRef = useRef<any>(null);
 
-  const setAutoRotateState = (val: boolean | ((prev: boolean) => boolean)) => {
-    const nextVal = typeof val === 'function' ? val(autoRotate) : val;
-    setInternalAutoRotate(nextVal);
-    onAutoRotateChange?.(nextVal);
-  };
+  const setAutoRotateState = useCallback(
+    (val: boolean | ((prev: boolean) => boolean)) => {
+      const nextVal = typeof val === 'function' ? val(autoRotate) : val;
+      setInternalAutoRotate(nextVal);
+      onAutoRotateChange?.(nextVal);
+    },
+    [autoRotate, onAutoRotateChange]
+  );
 
-  const handleResetCamera = () => {
+  const handleResetCamera = useCallback(() => {
     if (!controlsRef.current) return;
     setAutoRotateState(false);
     controlsRef.current.object.position.set(0, 10, 16);
     controlsRef.current.target.set(0, 0.5, 0);
     controlsRef.current.update();
-  };
+  }, [setAutoRotateState]);
 
-  React.useImperativeHandle(ref, () => ({
-    resetCamera: handleResetCamera,
-    toggleAutoRotate: () => setAutoRotateState((prev) => !prev),
-  }), [autoRotate]);
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      resetCamera: handleResetCamera,
+      toggleAutoRotate: () => setAutoRotateState((prev) => !prev),
+    }),
+    [handleResetCamera, setAutoRotateState]
+  );
 
   const matDefaults = useMemo(
     () => getDefaultMaterialSettings(category, subTerrain, placeContext),
     [category, subTerrain, placeContext]
   );
 
-  const demField = useMemo(() => {
-    return generateTerrainElevationField(
-      category,
-      subTerrain,
-      reliefScale,
-      4,
-      240,
-      20,
-      placeContext
-    );
-  }, [category, subTerrain, reliefScale, placeContext]);
+  const contourSettings = useMemo(() => {
+    const normSub = resolveTerrainKey(subTerrain, placeContext);
+    return getTerrainContourMeta(normSub).contourSettings;
+  }, [subTerrain, placeContext]);
 
   return (
     <div className="w-full h-full bg-radial from-slate-900 via-slate-950 to-black relative overflow-hidden select-none">
       {/* 3D Canvas */}
       <Canvas
         shadows
+        dpr={[1, 2]}
+        frameloop={isActive ? 'always' : 'demand'}
         camera={{ position: [0, 10, 16], fov: 45 }}
         gl={{ antialias: true, alpha: false }}
       >
@@ -597,29 +443,16 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
             category={category}
             subTerrain={subTerrain}
             placeContext={placeContext}
-            wireframe={false}
             reliefScale={reliefScale}
-            showAnnotations={false}
             showStrata={showStrata}
-            evolutionStage={4}
-            activeAnnotationIndex={null}
-            onSelectAnnotation={() => {}}
             show3DContours={show3DContours}
-            contourInterval={demField.contourSettings.intermediateInterval}
-            indexInterval={demField.contourSettings.indexInterval}
-            highlightElevation={null}
-            contour3DTheme="gold"
-            showSlicePlane={false}
-            sliceElevation={0}
-            demMinElevation={demField.minElevation}
-            demMaxElevation={demField.maxElevation}
-            demField={demField}
+            contourInterval={contourSettings.intermediateInterval}
+            indexInterval={contourSettings.indexInterval}
             materialPreset={matDefaults.materialPreset}
             texturePattern={matDefaults.texturePattern}
             roughness={matDefaults.roughness}
             metalness={matDefaults.metalness}
             bumpScale={matDefaults.bumpScale}
-            opacity={matDefaults.opacity}
           />
         </React.Suspense>
 
@@ -631,80 +464,10 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
           maxPolarAngle={Math.PI / 2 + 0.05}
           minDistance={4}
           maxDistance={36}
-          autoRotate={autoRotate}
+          autoRotate={isActive && autoRotate}
           autoRotateSpeed={0.4}
         />
       </Canvas>
-
-      {/* Top Left: SubTerrain Label (Only shown if !hideHud) */}
-      {!hideHud && (
-        <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none z-20">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white shadow-lg pointer-events-auto">
-            <span className="w-2 h-2 rounded-full bg-[#FFCC00]" />
-            <span className="font-serif font-bold text-sm text-white">{subTerrain}</span>
-            <span className="text-xs text-slate-400 font-light hidden sm:inline">· 3D 입체 디오라마</span>
-          </div>
-        </div>
-      )}
-
-      {/* Top Right: Minimalist Action Controls (Only shown if !hideHud) */}
-      {!hideHud && (
-        <div className="absolute top-4 right-4 flex items-center gap-2 pointer-events-none z-20">
-          <div className="flex items-center gap-1.5 p-1 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 text-white shadow-lg pointer-events-auto">
-            <button
-              onClick={handleResetCamera}
-              className="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
-              title="카메라 각도 기본값으로 리셋"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-[#FFCC00]" />
-              <span className="hidden sm:inline">뷰 리셋</span>
-            </button>
-
-            <button
-              onClick={() => setAutoRotateState(!autoRotate)}
-              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
-                autoRotate
-                  ? 'text-[#FFCC00] bg-white/10 font-semibold'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`}
-              title={autoRotate ? '자동 회전 일시정지' : '자동 360° 회전 시작'}
-            >
-              <RotateCw
-                className={`w-3.5 h-3.5 ${autoRotate ? 'animate-spin' : ''}`}
-                style={{ animationDuration: '10s' }}
-              />
-              <span className="hidden sm:inline">{autoRotate ? '회전 중' : '회전'}</span>
-            </button>
-
-            {onToggleFullscreen && (
-              <button
-                onClick={onToggleFullscreen}
-                className="px-2.5 py-1 text-xs font-medium text-slate-300 hover:text-white hover:bg-white/10 rounded-md transition-colors flex items-center gap-1.5 cursor-pointer border-l border-white/10 ml-0.5"
-                title={isFullscreen ? '전체화면 종료' : '전체화면으로 보기'}
-              >
-                {isFullscreen ? (
-                  <>
-                    <Minimize2 className="w-3.5 h-3.5 text-[#FFCC00]" />
-                    <span className="hidden sm:inline">축소</span>
-                  </>
-                ) : (
-                  <>
-                    <Maximize2 className="w-3.5 h-3.5 text-[#FFCC00]" />
-                    <span className="hidden sm:inline">전체화면</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Right: Clean Subtle Guidance (Only shown if !hideHud) */}
-      {!hideHud && (
-        <div className="absolute bottom-3 right-4 pointer-events-none z-10 text-[11px] text-slate-400 font-light bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-md border border-white/5 hidden sm:block">
-          드래그하여 360° 회전 · 스크롤하여 확대/축소
-        </div>
-      )}
     </div>
   );
 });

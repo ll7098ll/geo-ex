@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 
-export const HeroApertureCanvas: React.FC = () => {
+interface HeroApertureCanvasProps {
+  isActive?: boolean;
+}
+
+export const HeroApertureCanvas: React.FC<HeroApertureCanvasProps> = ({ isActive = true }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -9,7 +13,7 @@ export const HeroApertureCanvas: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animationFrameId = 0;
     let width = (canvas.width = canvas.parentElement?.clientWidth || window.innerWidth);
     let height = (canvas.height = canvas.parentElement?.clientHeight || window.innerHeight);
 
@@ -19,27 +23,9 @@ export const HeroApertureCanvas: React.FC = () => {
     let targetY = mouseY;
     let angle = 0;
 
-    const handleResize = () => {
-      if (!canvas.parentElement) return;
-      width = canvas.width = canvas.parentElement.clientWidth;
-      height = canvas.height = canvas.parentElement.clientHeight;
-    };
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      targetX = e.clientX - rect.left;
-      targetY = e.clientY - rect.top;
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('mousemove', handleMouseMove);
-
-    const render = () => {
-      // Smooth lerp towards mouse
-      mouseX += (targetX - mouseX) * 0.06;
-      mouseY += (targetY - mouseY) * 0.06;
-      angle += 0.005;
-
+    const drawFrame = () => {
       ctx.clearRect(0, 0, width, height);
 
       // 1. Draw Subtle Crosshair Lines across whole screen through target
@@ -93,7 +79,6 @@ export const HeroApertureCanvas: React.FC = () => {
       ctx.strokeStyle = '#FFCC00';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      // small center cross
       ctx.moveTo(mouseX - 8, mouseY);
       ctx.lineTo(mouseX + 8, mouseY);
       ctx.moveTo(mouseX, mouseY - 8);
@@ -114,7 +99,34 @@ export const HeroApertureCanvas: React.FC = () => {
         mouseX + 24,
         mouseY - 4
       );
+    };
 
+    if (!isActive || prefersReducedMotion) {
+      drawFrame();
+      return;
+    }
+
+    const handleResize = () => {
+      if (!canvas.parentElement) return;
+      width = canvas.width = canvas.parentElement.clientWidth;
+      height = canvas.height = canvas.parentElement.clientHeight;
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      targetX = e.clientX - rect.left;
+      targetY = e.clientY - rect.top;
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const render = () => {
+      mouseX += (targetX - mouseX) * 0.06;
+      mouseY += (targetY - mouseY) * 0.06;
+      angle += 0.005;
+
+      drawFrame();
       animationFrameId = requestAnimationFrame(render);
     };
 
@@ -123,9 +135,9 @@ export const HeroApertureCanvas: React.FC = () => {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [isActive]);
 
   return (
     <canvas

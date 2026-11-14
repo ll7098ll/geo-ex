@@ -192,7 +192,8 @@ export function evaluateTerrainPoint(
 // Builds the 240x240 adaptive-triangulated terrain surface
 // PLUS 4 multi-layered vertical geological strata cross-sections!
 // ==========================================
-const GEOMETRY_CACHE: Record<string, THREE.BufferGeometry> = {};
+const GEOMETRY_CACHE = new Map<string, THREE.BufferGeometry>();
+const MAX_GEOMETRY_CACHE_SIZE = 24;
 
 export type TerrainMaterialPreset =
   | 'natural'
@@ -212,7 +213,12 @@ export function generateTerrainDioramaGeometry(
 ): THREE.BufferGeometry {
   const normSub = resolveTerrainKey(subTerrain, placeContext);
   const cacheKey = `${category}-${normSub}-${reliefScale.toFixed(2)}-strata:${showStrata}-stage:${evolutionStage}-mat:${materialPreset}`;
-  if (GEOMETRY_CACHE[cacheKey]) return GEOMETRY_CACHE[cacheKey];
+  const cachedGeo = GEOMETRY_CACHE.get(cacheKey);
+  if (cachedGeo) {
+    GEOMETRY_CACHE.delete(cacheKey);
+    GEOMETRY_CACHE.set(cacheKey, cachedGeo);
+    return cachedGeo;
+  }
 
   const size = 20;
   const segments = 240; // 240x240 high-resolution grid (0.083m cell spacing)
@@ -609,13 +615,14 @@ export function generateTerrainDioramaGeometry(
   geo.computeVertexNormals();
 
   // Bound cache size to avoid memory bloat across rapid explorations
-  const keys = Object.keys(GEOMETRY_CACHE);
-  if (keys.length > 24) {
-    const oldest = keys[0];
-    GEOMETRY_CACHE[oldest]?.dispose();
-    delete GEOMETRY_CACHE[oldest];
+  if (GEOMETRY_CACHE.size >= MAX_GEOMETRY_CACHE_SIZE) {
+    const oldest = GEOMETRY_CACHE.keys().next().value;
+    if (oldest) {
+      GEOMETRY_CACHE.get(oldest)?.dispose();
+      GEOMETRY_CACHE.delete(oldest);
+    }
   }
 
-  GEOMETRY_CACHE[cacheKey] = geo;
+  GEOMETRY_CACHE.set(cacheKey, geo);
   return geo;
 }
