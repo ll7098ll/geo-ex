@@ -5,71 +5,70 @@
 
 ---
 
+## [1.3.0] - 2026-11-14
+
+### 🎨 Added (Swiss-Brutalist Design DNA & Kinetic Showcase)
+- **스위스 브루탈리스트 아키텍처 디자인 시스템 (`src/index.css`)**:
+  - 전 요소 `0px` 직각 보더 규율(`border-radius: 0px !important`), `1px` 헤어라인 그리드(`.hairline-border`), 코너 십자 표식(`.corner-ticks`), 28° 코발트 사선 해칭(`.diagonal-hatch-cobalt`) 적용.
+  - 5대 고대비 텔레메트리 팔레트(`#08080A` Obsidian, `#131418` Slate, `#FFCC00` Editorial Gold, `#1F34FF` Electric Cobalt, `#96D0FF` Cyan Ice) 정립.
+- **키네틱 UI 컴포넌트 모듈 도입 (`src/components/kinetic/`)**:
+  - `PolarityCutGate`: 액트 전환 시 0.38초 1프레임 일렉트릭 코발트 챕터 커튼 전환 효과.
+  - `HeroApertureCanvas`: 마우스 좌표를 부드럽게 추적하는 위상 조리개 레티클 2D 캔버스.
+  - `OdometerCounter`: 상단 헤더에 배치된 스프링 물리 기반 두 자리 숫자 롤링 카운터.
+  - `SpecimenDrawer`: `localStorage`(`geo_specimens_v1`)와 연동되는 우측 슬라이드아웃 표본 아카이브 서랍(`ESC` 닫기 및 표본별 3D 디오라마 바로가기 지원).
+  - `FilmGrainOverlay`: 3% 필름 그레인 질감과 뷰포트 모서리 크로스헤어 좌표 마크.
+- **액트별 인터랙션 고도화**:
+  - **ACT 01 (`HeroSlideshow`)**: 4분할 수직 셔터 블레이드(`grid-cols-4`) 커버 전환.
+  - **ACT 03 (`Terrain3DSlide`)**: 하단 **180° Y축 3D 플립 카드** 도입(앞면 지질 스펙 ↔ 뒷면 3대 판독 매뉴얼) 및 전 액트 통합 표본 수집 액션.
+  - **ACT 04 (`GeologicalGuideSlide`)**: Tab 01 **4단 키네틱 아코디언 블레이드(4-Blade Accordion)** 도입.
+
+### ⚡ Performance & Refactoring (코드 최적화 및 정리)
+- **WebGL & Canvas 런타임 최적화**:
+  - `Terrain3DSlide`에서 인라인/전체화면 전환 시 중복 마운트되던 2개의 `<Terrain3D>` 캔버스를 단일 영속 인스턴스로 통합하고 `ESC` 키 종료 지원 추가.
+  - 비활성 슬라이드 상태일 때 3D `<Canvas>`의 `frameloop`을 `'demand'`로 전환하고 `dpr={[1, 2]}`로 클램핑.
+  - `HeroApertureCanvas`에 `isActive` 및 `prefers-reduced-motion` 감지를 적용해 비활성 슬라이드 또는 모션 감소 환경에서 `requestAnimationFrame` 루프 중단.
+  - `FilmGrainOverlay`의 라이브 `<feTurbulence>` 필터 SVG를 정적 CSS 타일 노이즈(`data:image/svg+xml`) 배경으로 대체해 스크롤·WebGL 합성 부하 제거.
+- **메모리 및 캐시 관리 강화**:
+  - `terrainGenerators.ts`의 `GEOMETRY_CACHE`(최대 24)와 `terrainDEMGenerator.ts`의 `DEM_CACHE`(최대 20)를 `Map` 기반 **진성 LRU 캐시**로 업그레이드하고, 지오메트리 축출 시 `.dispose()` 호출 보장.
+  - `TerrainSpecialMeshes.tsx` 내 모든 절차적 `BufferGeometry` 생성부에 `useDisposeGeometry` 클린업 훅 적용 및 미사용 `AnimatedWaterSurface` 제거.
+  - `Terrain3D.tsx`에서 중복 호출되던 `generateTerrainElevationField`를 경량 메타 조회 `getTerrainContourMeta`로 대체.
+- **번들 및 데드 코드 정리**:
+  - 미사용 의존성(`@google/genai`, `express`, `dotenv`, `@types/express`, `tsx`, `autoprefixer`), AI Studio 잔여 파일(`.aistudio/`, `metadata.json`, `.env.example`), 미사용 3D 주해 핀 시스템(`TerrainAnnotationsData.ts`, `DioramaMesh` 데드 프롭) 삭제.
+  - `vite.config.ts`에 `three-vendor`, `motion-vendor`, `markdown-vendor`, `places-data` Rollup `manualChunks` 적용.
+
+### 🐛 Fixed (버그 수정)
+- `src/constants/places/*.ts` 5개 파일에 존재하던 8건의 중복 장소 `id`를 모두 고유 ID로 교정(165개소 100% 고유 ID 확보).
+- `SpecimenDrawer`에서 수집한 표본 클릭 시 현재 카테고리/지역으로 랜덤 탐색되던 버그 수정 (`getCategoryIdForPlace` + `specimen.region` + `specimen.id` 직접 로드).
+- `App.tsx`의 `IntersectionObserver`가 슬라이드 전환마다 재생성되던 의존성 문제 해결 및 `PolarityCutGate` 타이머 정리 보강.
+- `GoogleMapSlide` 연계 명소 버튼의 누락된 `group` hover 클래스 복구 및 `ErrorMessage` 스위스 브루탈리스트 스타일 통일.
+
+---
+
 ## [1.2.0] - 2026-11-10
 
 ### 🌋 Added (주요 신규 기능)
 - **3D 절차적 디오라마 지형 엔진 전면 개편**:
-  - **240×240 고해상도 그리드**: 0.083m 셀 간격의 적응형 대각선 분할 삼각망을 적용하여 약 115,000 폴리곤 규모의 정밀 지표면을 절차적으로 생성.
-  - **상면 와인딩 및 법선 정상화**: 지표면 버텍스 와인딩을 반시계 방향(+Z 법선)으로 표준화하여 셰이더 조명 및 반사광 계산 왜곡 완전 해결.
-  - **28층 세분화 지질 단면(Strata Skirt)**: 디오라마 4개 수직 벽면에 28개 층위의 퇴적 층리 및 화성암 횡단면 구조를 세밀하게 분할 렌더링하고, 지질 시대별 고유 암석 텍스처 채색 적용.
-  - **일체화 수조 메쉬(`ConformantWaterMesh`)**: 복잡한 해안선 및 하천 곡류를 따라 지형 메쉬 외벽과 빈틈없이 완벽하게 맞물리는 일체형 수조 수면 메쉬 도입.
-  - **수면 하부 등고선 마스킹(`aboveWater`)**: 해저면 및 하상 등 침수 구역의 등고선 투영을 자동으로 차단하여 육상 지형 기복만을 선명하게 시각화.
-- **39종 지오메트리 세부 아키타입 라우팅 (`resolveTerrainKey`)**:
-  - 기존 26개 기본 지형 분류를 넘어, 장소별 지질 맥락(`placeContext`)에 따라 39종의 고유 지형 모델링 함수로 정밀 분기 (예: 곡류천 ➔ 감입곡류천/자유곡류천, 화산 ➔ 순상화산/종상화산/용암대지/수성화산/기생화산 등).
-- **26종 특수 지질 메쉬 컴포넌트 (`TerrainSpecialMeshes`)**:
-  - **주상절리**: 약 270여 개의 결합형 육각 현무암 기둥 클러스터 실체화.
-  - **전면 절개형 석회/용암동굴**: 종유석·석순 및 용암 관 구조를 내부 횡단면으로 노출하는 특수 메쉬.
-  - **기타 특수 지질 피처**: 3D 버섯바위(삭박 기둥 및 상부 갓), 해식아치 및 시스택 결합체, 폭포 캡록(Caprock)과 폭호(Plunge pool), 활성 칼데라 용암호 및 화산 증기 플룸 구현.
-- **GLSL 등고선 인젝션 셰이더 고도화 (`injectContourShader`)**:
-  - **Triplanar 절벽 안티스트레칭**: 수직에 가까운 단애면에서 텍스처 늘어남을 방지하고 미세 균열 및 암석 층리를 실시간 절차 생성.
-  - **캐비티 앰비언트 오클루전(AO)**: 깊은 협곡 및 분화구 내부에 자연스러운 음영 감쇄 효과 주입.
-  - **경사도 히트맵(`uShowSlopeHeat`)**: 15° 미만(녹색), 15°~32°(황색), 32° 이상(적색)으로 사면 경사를 실시간 시각화.
-  - **계곡·능선 판독 가이드(`uShowValleyRidge`)**: 법선 벡터 발산(divN) 연산을 통해 계곡선(청록)과 능선(주황)을 실시간 합성.
-  - **3대 등고선 테마**: 골드(`gold`), 잉크(`ink`), 사이언(`cyan`) 및 특정 고도 하이라이트 기능.
-  - **0ms 무지연 업데이트**: 셰이더 재컴파일 없이 Three.js Uniform 캐시를 통해 즉각 상태 반영.
-- **165개 전수 지질 명소 풀 데이터베이스 구축**:
-  - 전 세계 86개소, 대한민국 79개소로 총 165개 지질 명소 데이터 탑재.
-  - 화산 33개소, 해안 25개소, 하천 25개소, 카르스트 31개소, 빙하 18개소, 건조 33개소.
-- **Slide 04 맞춤 교육 대시보드 & 4단계 난이도 스위처 (`educationLevelHelper`)**:
-  - **4단계 난이도 모드**: `초등 (기초 탐구)` ➔ `중등 (원리 이해)` ➔ `고등 (교과 심층)` ➔ `일반 (지리 교양)` 원클릭 전환.
-  - **초등 수준 어휘 순화기**: 유치한 비유 없이 담백하고 쉬운 교과 어휘로 풀어쓴 4단계 형성 원리 제공.
-  - **26종 지형 큐레이션 지식 베이스 (`terrainConceptData`)**: 핵심 탐구 질문, 3대 핵심 개념, 지질 메커니즘 구축.
-  - **정리된 4대 탭**: `01. 4단계 형성 원리`, `02. 핵심 개념 & 지질 팩트`, `03. 현장·위성 탐방 가이드`, `04. 심층 리포트 전문`.
-- **내셔널지오그래픽 탐사 저널(Field Expedition Journal) 에디토리얼 매거진 테마**:
-  - 시그니처 옐로우(#FFCC00) 보더 프레임, 드롭캡(`magazine-drop-cap`), 인용구(`magazine-pullquote`), 세리프 헤딩 + 모노스페이스 데이터 캡션 도입.
-  - Slide 02 구글 위성지도 조작 돋보기 모드 (휠 스크롤 충돌 방지 스크롤 락 토글) 탑재.
-
-### 🔧 Changed (변경 사항)
-- Slide 03 하단 지질 프로필 리본을 매거진 플래카드 스타일로 리뉴얼 (지질 시대 EPOCH, 암석 LITHOLOGY, 지체 구조 TECTONICS, 형성 인자 AGENT, 규모 SCALE).
-- 슬라이드 네비게이션 독 및 화면 전환 반응 속도 최적화.
+  - **240×240 고해상도 그리드**: 0.083m 셀 간격의 적응형 대각선 분할 삼각망을 적용하여 정밀 지표면을 절차적으로 생성.
+  - **상면 와인딩 및 법선 정상화**: 반시계 방향(+Z 법선) 표준화로 셰이더 조명 및 반사광 계산 왜곡 해결.
+  - **28층 세분화 지질 단면(Strata Skirt)**: 디오라마 4개 수직 벽면에 28단계 지질 층리 구조 렌더링.
+  - **일체화 수조 메쉬(`ConformantWaterMesh`)** 및 **수면 하부 등고선 마스킹(`aboveWater`)** 도입.
+- **39종 지오메트리 세부 아키타입 라우팅 (`resolveTerrainKey`)** 및 **특수 지질 메쉬 (`TerrainSpecialMeshes`)** 구축.
+- **GLSL 등고선 인젝션 셰이더 (`injectContourShader`)**: Triplanar 절벽 안티스트레칭, Cavity AO, 경사도 히트맵, 능선/계곡 가이드 지원.
+- **165개 전수 지질 명소 데이터베이스 구축** (전 세계 86개소, 대한민국 79개소).
+- **Slide 04 맞춤 교육 대시보드 (`educationLevelHelper`, `terrainConceptData`)**: 초등/중등/고등/일반 4단계 난이도 스위처 및 4대 탭 도입.
 
 ---
 
 ## [1.1.0] - 2026-11-09
 
 ### 🌋 Added
-- **4단 풀스크린 스냅 스크롤 아키텍처**:
-  - `calc(100vh - 56px)` 규격의 4개 슬라이드 뷰포트 레이아웃.
-  - `IntersectionObserver`(임계값 55%) 기반 활성 슬라이드 자동 감지.
-  - 우측 고정 슬라이드 퀵 점프 플로팅 독 (`SlideNavigationDock`).
-- **실시간 GLSL 골드 등고선(Isoline) 셰이더**:
-  - `MeshStandardMaterial.onBeforeCompile` 후킹을 통한 하드웨어 가속 3D 등고선 투영.
-  - 주곡선 및 계곡선 간격 실시간 계산.
-- **3D 시각화 HUD 컨트롤러**:
-  - 고저차 과장 배율 조절 (1.0x ➔ 1.3x ➔ 1.6x 원터치 순환).
-  - 지층 단면 노출 토글 (ON/OFF).
-  - 360° 자동 턴테이블 회전 및 표준 45° 시점 리셋.
-  - 브라우저 전체화면 몰입 모드 (단축키 `ESC` 지원).
+- **4단 풀스크린 스냅 스크롤 아키텍처**: `calc(100vh - 56px)` 뷰포트, `IntersectionObserver` 동기화, 우측 플로팅 `SlideNavigationDock`.
+- **실시간 GLSL 골드 등고선(Isoline) 셰이더** 및 3D 시각화 HUD 컨트롤러(고저차 1.0x~1.6x, 지층 ON/OFF, 360° 회전, 뷰 리셋, 전체화면).
 
 ---
 
 ## [1.0.0] - 2026-11-09
 
 ### 🌋 Added
-- **지형 탐험가(Geography Explorer) 코어 플랫폼 최초 공개**:
-  - React 19, TypeScript 5.8, Three.js, React Three Fiber, Tailwind CSS v4, Vite 6.2 기반.
-  - 6대 대분류(화산, 해안, 하천, 카르스트, 빙하, 건조) 히어로 슬라이드쇼.
-  - 26종 기본 지형 태그 및 원클릭 탐색 점프 기능.
-  - WGS84 좌표계 연동 100vh 구글 위성 지도 임베드.
-  - 2022 개정 교육과정 연계 지구과학 메타데이터 구조화 (`curriculumHelper`).
-  - 대한민국 및 전 세계 권역 전환 스위치 (`Navigation.tsx`).
+- **지형 탐험가(Geography Explorer) 코어 플랫폼 최초 공개**: React 19, TypeScript 5.8, Three.js, React Three Fiber, Tailwind CSS v4, Vite 6.2 기반.
+- 6대 대분류 히어로 슬라이드쇼, 26종 지형 태그, WGS84 위성 지도 임베드, 2022 개정 교육과정 연계 메타데이터(`curriculumHelper`).
