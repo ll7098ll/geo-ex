@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, Box, Archive } from 'lucide-react';
+import { Globe, Archive } from 'lucide-react';
 import { Region } from '../types';
 import { OdometerCounter } from './kinetic/OdometerCounter';
 

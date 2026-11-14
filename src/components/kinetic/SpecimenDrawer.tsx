@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Trash2, ArrowUpRight, Box, Compass, Layers } from 'lucide-react';
+import { X, Trash2, ArrowUpRight, Box, Layers } from 'lucide-react';
 import { PlaceInfo } from '../../types';
 
 interface SpecimenDrawerProps {
@@ -20,6 +20,17 @@ export const SpecimenDrawer: React.FC<SpecimenDrawerProps> = ({
   onClearAll,
   onSelectSpecimen,
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (

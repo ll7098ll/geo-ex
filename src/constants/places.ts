@@ -124,3 +124,21 @@ export function getDiversePlace(
 export function getPlaceById(id: string): PlaceInfo | undefined {
   return PRESET_PLACES.find(p => p.id === id);
 }
+
+const CATEGORY_DATASETS: { categoryId: string; places: PlaceInfo[] }[] = [
+  { categoryId: 'volcanic', places: VOLCANIC_PLACES },
+  { categoryId: 'coastal', places: COASTAL_PLACES },
+  { categoryId: 'fluvial', places: FLUVIAL_PLACES },
+  { categoryId: 'karst', places: KARST_PLACES },
+  { categoryId: 'glacial', places: GLACIAL_PLACES },
+  { categoryId: 'arid', places: ARID_PLACES },
+];
+
+export function getCategoryIdForPlace(place: PlaceInfo): string {
+  for (const dataset of CATEGORY_DATASETS) {
+    if (dataset.places.some(p => p.id === place.id || p.placeName === place.placeName)) {
+      return dataset.categoryId;
+    }
+  }
+  return 'volcanic';
+}

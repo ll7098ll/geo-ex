@@ -1104,7 +1104,7 @@ export const VOLCANIC_PLACES: PlaceInfo[] = [
     }
   },
   {
-    id: 'caldera-kr-2',
+    id: 'caldera-kr-3',
     terrain: '칼데라',
     region: 'korea',
     placeName: '울릉도 나리분지 & 알봉',
@@ -1171,7 +1171,7 @@ export const VOLCANIC_PLACES: PlaceInfo[] = [
     }
   },
   {
-    id: 'caldera-wd-2',
+    id: 'caldera-wd-4',
     terrain: '칼데라',
     region: 'world',
     placeName: '미국 옐로우스톤 국립공원 슈퍼볼케이노 & 그랜드 프리즘',

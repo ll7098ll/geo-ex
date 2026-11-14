@@ -964,7 +964,7 @@ export const KARST_PLACES: PlaceInfo[] = [
     }
   },
   {
-    id: 'tower-kr-1',
+    id: 'tower-kr-4',
     terrain: '탑 카르스트',
     region: 'korea',
     placeName: '단양 도담삼봉 카르스트 잔구 (Dodamsambong)',
@@ -997,7 +997,7 @@ export const KARST_PLACES: PlaceInfo[] = [
     }
   },
   {
-    id: 'cave-wd-3',
+    id: 'cave-wd-5',
     terrain: '석회동굴',
     region: 'world',
     placeName: '슬로베니아 포스토이나 동굴 (Postojna Cave)',

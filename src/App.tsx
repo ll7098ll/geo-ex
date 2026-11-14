@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { TERRAIN_CATEGORIES } from './constants/terrains';
+import { getCategoryIdForPlace } from './constants/places';
 import { Region, PlaceInfo } from './types';
 import { useTerrainSearch } from './hooks/useTerrainSearch';
 import { Navigation } from './components/Navigation';
 import { HeroSlideshow } from './components/HeroSlideshow';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { ErrorMessage } from './components/ErrorMessage';
-import { SlideNavigationDock, SLIDE_ITEMS } from './components/SlideNavigationDock';
+import { SlideNavigationDock } from './components/SlideNavigationDock';
 import { GoogleMapSlide } from './components/slides/GoogleMapSlide';
 import { Terrain3DSlide } from './components/slides/Terrain3DSlide';
 import { GeologicalGuideSlide } from './components/slides/GeologicalGuideSlide';
@@ -58,6 +59,8 @@ export default function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const slideRefs = useRef<(HTMLElement | null)[]>([]);
   const isInitialLoad = useRef(true);
+  const activeSlideIndexRef = useRef(0);
+  const polarityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync specimens to localStorage
   useEffect(() => {
@@ -85,7 +88,10 @@ export default function App() {
   }, [isAutoPlaying, loading, activeSlideIndex]);
 
   // 3. Trigger 1-Frame Polarity Cut Gate on Chapter Transitions
-  const triggerPolarityCut = (chapterIndex: number) => {
+  const triggerPolarityCut = useCallback((chapterIndex: number) => {
+    if (polarityTimeoutRef.current) {
+      clearTimeout(polarityTimeoutRef.current);
+    }
     const meta = CHAPTER_METAS[chapterIndex] || CHAPTER_METAS[0];
     setPolarityGate({
       isVisible: true,
@@ -94,12 +100,21 @@ export default function App() {
       subtitle: meta.subtitle,
     });
 
-    setTimeout(() => {
+    polarityTimeoutRef.current = setTimeout(() => {
       setPolarityGate((prev) => ({ ...prev, isVisible: false }));
+      polarityTimeoutRef.current = null;
     }, 380);
-  };
+  }, []);
 
-  // 4. Scroll tracking using IntersectionObserver to update activeSlideIndex
+  useEffect(() => {
+    return () => {
+      if (polarityTimeoutRef.current) {
+        clearTimeout(polarityTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // 4. Scroll tracking using IntersectionObserver to update activeSlideIndex (mounted once)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -111,9 +126,10 @@ export default function App() {
             const indexStr = entry.target.getAttribute('data-slide-index');
             if (indexStr !== null) {
               const newIndex = Number(indexStr);
-              if (newIndex !== activeSlideIndex && !isInitialLoad.current) {
+              if (newIndex !== activeSlideIndexRef.current && !isInitialLoad.current) {
                 triggerPolarityCut(newIndex);
               }
+              activeSlideIndexRef.current = newIndex;
               setActiveSlideIndex(newIndex);
               isInitialLoad.current = false;
             }
@@ -126,12 +142,12 @@ export default function App() {
       }
     );
 
-    slideRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
+    slideRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
     });
 
     return () => observer.disconnect();
-  }, [result, activeSlideIndex]);
+  }, [triggerPolarityCut]);
 
   // 5. Smooth slide transition handler
   const scrollToSlide = (index: number) => {
@@ -199,8 +215,11 @@ export default function App() {
   };
 
   const handleSelectSpecimen = async (specimen: PlaceInfo) => {
+    const targetCategory = getCategoryIdForPlace(specimen);
+    setRegion(specimen.region);
+    setCurrentCategoryId(targetCategory);
     setSelectedTerrain(specimen.terrain);
-    await searchTerrain(specimen.terrain, region, currentCategoryId);
+    await searchTerrain(specimen.terrain, specimen.region, targetCategory, specimen.id);
     scrollToSlide(2); // Jump directly to 3D Diorama
   };
 
@@ -281,6 +300,7 @@ export default function App() {
             setIsAutoPlaying={setIsAutoPlaying}
             onExplore={handleExplore}
             onScrollNext={() => scrollToSlide(1)}
+            isActive={activeSlideIndex === 0}
           />
         </section>
 
@@ -340,6 +360,7 @@ export default function App() {
               onScrollNext={() => scrollToSlide(3)}
               onAddSpecimen={handleAddSpecimen}
               isCollected={isCurrentCollected}
+              isActive={activeSlideIndex === 2}
             />
           ) : (
             <div className="h-full w-full flex flex-col items-center justify-center bg-[#08080A] p-6 text-center">

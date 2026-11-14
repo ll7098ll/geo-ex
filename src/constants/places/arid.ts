@@ -1036,7 +1036,7 @@ export const ARID_PLACES: PlaceInfo[] = [
     }
   },
   {
-    id: 'desert-kr-1',
+    id: 'desert-kr-4',
     terrain: '사막',
     region: 'korea',
     placeName: '태안 신두리 해안사구 (Taean Sinduri Sand Dunes)',
@@ -1069,7 +1069,7 @@ export const ARID_PLACES: PlaceInfo[] = [
     }
   },
   {
-    id: 'playa-wd-2',
+    id: 'playa-wd-5',
     terrain: '플라야',
     region: 'world',
     placeName: '볼리비아 우유니 소금사막 (Salar de Uyuni)',

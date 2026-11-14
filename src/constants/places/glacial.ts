@@ -437,7 +437,7 @@ export const GLACIAL_PLACES: PlaceInfo[] = [
   // 추가 6: 호른 (Horn / 혼)
   // ==========================================
   {
-    id: 'horn-kr-1',
+    id: 'horn-kr-2',
     terrain: '혼 (호른)',
     region: 'korea',
     placeName: '도봉산 선인봉·자운봉·만장봉 삼각 피라미드 암봉',

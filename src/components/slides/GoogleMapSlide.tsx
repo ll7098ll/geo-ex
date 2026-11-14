@@ -248,7 +248,7 @@ export const GoogleMapSlide: React.FC<GoogleMapSlideProps> = ({
                   <button
                     key={alt.id}
                     onClick={() => onSelectAlternativePlace?.(alt)}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono bg-[#131418] hover:bg-[#FFCC00] text-zinc-300 hover:text-black hairline-border hover:border-[#FFCC00] transition-all cursor-pointer whitespace-nowrap corner-ticks"
+                    className="group flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono bg-[#131418] hover:bg-[#FFCC00] text-zinc-300 hover:text-black hairline-border hover:border-[#FFCC00] transition-all cursor-pointer whitespace-nowrap corner-ticks"
                   >
                     <span className="text-[#FFCC00] font-bold group-hover:text-black">
                       [{String(idx + 1).padStart(2, '0')}]

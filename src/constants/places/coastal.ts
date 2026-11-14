@@ -627,7 +627,7 @@ export const COASTAL_PLACES: PlaceInfo[] = [
   // 추가 2: 해식애 (Sea Cliff)
   // ==========================================
   {
-    id: 'cliff-kr-2',
+    id: 'cliff-kr-4',
     terrain: '해식애 (해안 절벽)',
     region: 'korea',
     placeName: '부산 태종대 신선바위 해식애와 파식대',
