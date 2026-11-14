@@ -26,12 +26,6 @@ export interface FieldObservationGuide {
   cautionAndConservation?: string;// 지질 보존 주의사항 및 안전 수칙
 }
 
-export interface GeologicalGlossaryItem {
-  term: string;
-  definition: string;
-  curriculumNote?: string;
-}
-
 export interface PlaceInfo {
   id: string;
   terrain: string;
@@ -47,14 +41,6 @@ export interface PlaceInfo {
   evolutionStages?: TerrainEvolutionStage[];
   fieldGuide?: FieldObservationGuide;
   curriculumLink?: string;
-  keyTakeaways?: string[];
-  glossary?: GeologicalGlossaryItem[];
-}
-
-export interface TerrainAnnotation {
-  name: string;
-  description: string;
-  position: [number, number, number]; // [x, y, z] in 3D scene
 }
 
 export interface SearchResult {
@@ -81,4 +67,3 @@ export interface TerrainCategory {
 }
 
 export * from './contour';
-
