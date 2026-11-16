@@ -8,15 +8,14 @@ import {
   RotateCw,
   RotateCcw,
   RefreshCw,
-  Plus,
-  Check,
 } from 'lucide-react';
 import Terrain3D, { Terrain3DRef } from '../Terrain3D';
-import { SearchResult as SearchResultType, Region, PlaceInfo } from '../../types';
+import { SearchResult as SearchResultType, PlaceInfo } from '../../types';
+import { SpecimenCollectButton } from '../common/SpecimenCollectButton';
+import { AlternativePlacesBar } from '../common/AlternativePlacesBar';
 
 interface Terrain3DSlideProps {
   result: SearchResultType;
-  region: Region;
   selectedTerrain: string | null;
   onSelectAlternativePlace?: (place: PlaceInfo) => void;
   onScrollNext?: () => void;
@@ -27,7 +26,6 @@ interface Terrain3DSlideProps {
 
 export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
   result,
-  region: _region,
   selectedTerrain,
   onSelectAlternativePlace,
   onScrollNext,
@@ -183,23 +181,11 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
           </div>
 
           {/* Alternative Specimen Quick Buttons */}
-          {alternativePlaces && alternativePlaces.length > 0 && (
-            <div className="hidden lg:flex items-center gap-1.5 bg-[#131418]/95 backdrop-blur-md hairline-border px-3 py-1">
-              <span className="text-[11px] font-sans text-zinc-400 font-semibold pl-0.5 flex items-center gap-1 shrink-0">
-                <Layers className="w-3 h-3 text-[#FFCC00]" />
-                연관 지형
-              </span>
-              {alternativePlaces.map((alt) => (
-                <button
-                  key={alt.id}
-                  onClick={() => onSelectAlternativePlace?.(alt)}
-                  className="px-2 py-0.5 text-xs font-sans bg-white/5 hover:bg-[#FFCC00] text-zinc-200 hover:text-black transition-colors duration-200 cursor-pointer whitespace-nowrap"
-                >
-                  {alt.placeName}
-                </button>
-              ))}
-            </div>
-          )}
+          <AlternativePlacesBar
+            places={alternativePlaces}
+            onSelectPlace={onSelectAlternativePlace}
+            variant="strip"
+          />
         </div>
 
         {/* Right: Unified 3D Controls Strip */}
@@ -311,28 +297,12 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {placeInfo && onAddSpecimen && (
-                    <button
-                      onClick={() => onAddSpecimen(placeInfo)}
-                      className={`px-3 py-1 text-xs font-sans font-bold transition-colors duration-200 flex items-center gap-1 cursor-pointer hairline-border ${
-                        isCollected
-                          ? 'bg-[#FFCC00] text-black border-[#FFCC00]'
-                          : 'bg-[#131418] text-[#FFCC00] hover:bg-[#FFCC00] hover:text-black'
-                      }`}
-                    >
-                      {isCollected ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>수집 완료</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>표본 수집</span>
-                        </>
-                      )}
-                    </button>
-                  )}
+                  <SpecimenCollectButton
+                    placeInfo={placeInfo}
+                    isCollected={isCollected}
+                    onAddSpecimen={onAddSpecimen}
+                    variant="compact"
+                  />
 
                   <button
                     onClick={() => setIsFlipped(true)}

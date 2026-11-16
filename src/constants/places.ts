@@ -1,5 +1,5 @@
 import { PlaceInfo, Region } from '../types';
-import { normalizeTerrainName } from '../components/terrain/terrainMath';
+import { normalizeTerrainName } from './terrainRegistry';
 import { VOLCANIC_PLACES } from './places/volcanic';
 import { COASTAL_PLACES } from './places/coastal';
 import { FLUVIAL_PLACES } from './places/fluvial';
@@ -12,7 +12,7 @@ import { ARID_PLACES } from './places/arid';
  * Pre-generated with comprehensive scientific formation processes,
  * exploration highlights, observation points, and high-precision search metadata.
  */
-export const PRESET_PLACES: PlaceInfo[] = [
+const PRESET_PLACES: PlaceInfo[] = [
   ...VOLCANIC_PLACES,
   ...COASTAL_PLACES,
   ...FLUVIAL_PLACES,

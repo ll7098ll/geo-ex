@@ -1,14 +1,7 @@
 import * as THREE from 'three';
-import { evalVolcanicTerrain } from './generators/volcanic';
-import { evalCoastalTerrain } from './generators/coastal';
-import { evalFluvialTerrain } from './generators/fluvial';
-import { evalKarstTerrain } from './generators/karst';
-import { evalGlacialTerrain } from './generators/glacial';
-import { evalAridTerrain } from './generators/arid';
 import { generateTerrainElevationField } from './contour/terrainDEMGenerator';
+import { resolveTerrainKey } from '../../constants/terrainRegistry';
 import {
-  normalizeTerrainName,
-  TerrainEvalResult,
   fbm,
   smoothstep,
   clamp,
@@ -16,176 +9,13 @@ import {
 } from './terrainMath';
 
 export * from './terrainMath';
+export * from './terrainEvaluator';
 export * from './contour/terrainDEMGenerator';
 export * from './contour/terrainContourMetadata';
-
-// ==========================================
-// Terrain Key Resolver (Supports sub-archetype resolution via optional placeContext)
-// ==========================================
-export const resolveTerrainKey = (name: string, placeContext?: string): string => {
-  const norm = normalizeTerrainName(name);
-  const ctx = placeContext || '';
-
-  // Direct sub-archetype matches
-  if (norm === '순상화산') return '순상화산';
-  if (norm === '종상화산') return '종상화산';
-  if (norm === '용암대지') return '용암대지';
-  if (norm === '수성화산') return '수성화산';
-  if (norm === '감입곡류천' || norm.includes('감입곡류')) return '감입곡류천';
-
-  if (norm.includes('오름') || norm.includes('기생화산')) return '기생화산';
-  if (norm.includes('사주') || norm.includes('사취')) return '사주·사취';
-  if (norm.includes('석호')) return '석호';
-  if (norm.includes('파식대')) return '파식대';
-  if (norm.includes('해식애')) return '해식애';
-  if (norm.includes('시스택')) return '시스택';
-  if (norm.includes('해안 사구') || (norm.includes('사구') && !norm.includes('사막'))) return '해안 사구';
-
-  if (norm.includes('곡류')) {
-    if (
-      ctx.includes('감입곡류') ||
-      ctx.includes('호스슈') ||
-      ctx.includes('어라연') ||
-      ctx.includes('한반도지형') ||
-      ctx.includes('그랜드 캐니언') ||
-      ctx.includes('구문소') ||
-      ctx.includes('부용대')
-    ) {
-      return '감입곡류천';
-    }
-    return '곡류천';
-  }
-
-  if (norm.includes('범람원')) return '범람원';
-  if (norm.includes('선상지')) return '선상지';
-  if (norm.includes('삼각주')) return '삼각주';
-  if (norm.includes('하안단구')) return '하안단구';
-  if (norm.includes('폭포')) return '폭포';
-  if (norm.includes('석회동굴')) return '석회동굴';
-  if (norm.includes('돌리네')) return '돌리네';
-  if (norm.includes('카렌')) return '카렌';
-  if (norm.includes('탑 카르스트') || norm.includes('탑카르스트')) return '탑 카르스트';
-  if (norm.includes('U자곡') || norm.includes('유자곡')) return 'U자곡';
-  if (norm.includes('피오르드')) return '피오르드';
-  if (norm.includes('혼') || norm.includes('호른')) return '혼';
-  if (norm.includes('권곡') || norm.includes('카르')) return '권곡';
-  if (norm.includes('모레인') || norm.includes('빙퇴석')) return '모레인';
-  if (norm.includes('메사') || norm.includes('뷰트')) return '메사·뷰트';
-  if (norm.includes('와디')) return '와디';
-  if (norm.includes('버섯바위')) return '버섯바위';
-  if (norm.includes('오아시스')) return '오아시스';
-  if (norm.includes('플라야')) return '플라야';
-  if (norm.includes('사막')) return '사막';
-  if (norm.includes('주상절리')) return '주상절리';
-  if (norm.includes('용암동굴')) return '용암동굴';
-  if (norm.includes('칼데라')) return '칼데라';
-  if (norm.includes('단층 산맥') || norm.includes('단층')) return '단층 산맥';
-  if (norm.includes('갯벌')) return '갯벌';
-
-  if (norm.includes('화산')) {
-    if (ctx.includes('종상화산') || ctx.includes('산방산') || ctx.includes('용암돔')) {
-      return '종상화산';
-    }
-    if (ctx.includes('용암대지') || ctx.includes('한탄강')) {
-      return '용암대지';
-    }
-    if (ctx.includes('수성화산') || ctx.includes('응회구') || ctx.includes('성산일출봉')) {
-      return '수성화산';
-    }
-    if (
-      ctx.includes('순상화산') ||
-      ctx.includes('킬라우에아') ||
-      ctx.includes('마우나로아') ||
-      ctx.includes('한라산')
-    ) {
-      return '순상화산';
-    }
-    return '화산';
-  }
-
-  return norm;
-};
-
-/**
- * Returns the base-level water elevation for terrains with sea/river base water,
- * or null for dry / perched-basin terrains where low outer slopes are subaerial land.
- */
-export function getBaseWaterElevation(normSub: string, reliefScale = 1.0): number | null {
-  switch (normSub) {
-    case '갯벌':
-      return 0.33 * reliefScale;
-    case '해식애':
-      return 0.50 * reliefScale;
-    case '시스택':
-      return 0.50 * reliefScale;
-    case '해안 사구':
-      return 0.42 * reliefScale;
-    case '사주·사취':
-      return 0.52 * reliefScale;
-    case '석호':
-      return 0.55 * reliefScale;
-    case '파식대':
-      return 0.44 * reliefScale;
-    case '주상절리':
-      return 0.52 * reliefScale;
-    case '수성화산':
-      return 0.46 * reliefScale;
-    case '종상화산':
-      return 0.42 * reliefScale;
-    case '용암대지':
-      return 0.52 * reliefScale;
-    case '곡류천':
-      return 0.56 * reliefScale;
-    case '감입곡류천':
-      return 0.58 * reliefScale;
-    case '범람원':
-      return 0.60 * reliefScale;
-    case '삼각주':
-      return 0.50 * reliefScale;
-    case '하안단구':
-      return 0.56 * reliefScale;
-    case '탑 카르스트':
-      return 0.52 * reliefScale;
-    case '피오르드':
-      return 0.66 * reliefScale;
-    default:
-      return null;
-  }
-}
-
-// ==========================================
-// Terrain Height & Vertex Color Evaluator
-// ==========================================
-export function evaluateTerrainPoint(
-  normSub: string,
-  category: string,
-  x: number,
-  y: number,
-  reliefScale = 1.0
-): TerrainEvalResult {
-  const v = evalVolcanicTerrain(normSub, x, y, reliefScale);
-  if (v) return v;
-
-  const c = evalCoastalTerrain(normSub, x, y, reliefScale);
-  if (c) return c;
-
-  const f = evalFluvialTerrain(normSub, x, y, reliefScale);
-  if (f) return f;
-
-  const k = evalKarstTerrain(normSub, x, y, reliefScale);
-  if (k) return k;
-
-  const g = evalGlacialTerrain(normSub, x, y, reliefScale);
-  if (g) return g;
-
-  const a = evalAridTerrain(normSub, x, y, reliefScale);
-  if (a) return a;
-
-  // Generic fallback mountain landscape
-  const h = fbm(x * 0.6, y * 0.6) * 3.0 * reliefScale;
-  const color = new THREE.Color('#666666');
-  return { height: h, color };
-}
+export {
+  resolveTerrainKey,
+  getBaseWaterElevation,
+} from '../../constants/terrainRegistry';
 
 // ==========================================
 // Complete Geological Block Diorama Generator

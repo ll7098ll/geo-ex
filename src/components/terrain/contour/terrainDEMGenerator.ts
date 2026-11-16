@@ -1,8 +1,6 @@
 import { TerrainElevationField } from '../../../types/contour';
-import {
-  evaluateTerrainPoint,
-  resolveTerrainKey,
-} from '../terrainGenerators';
+import { resolveTerrainKey } from '../../../constants/terrainRegistry';
+import { evaluateTerrainPoint } from '../terrainEvaluator';
 import { getTerrainContourMeta } from './terrainContourMetadata';
 
 // Bounded LRU cache to prevent re-allocating DEM arrays across explorations
@@ -53,7 +51,7 @@ export function generateTerrainElevationField(
     for (let i = 0; i <= segments; i++) {
       const x = -halfSize + i * step;
 
-      const evalResult = evaluateTerrainPoint(normSub, category, x, y, effectiveRelief);
+      const evalResult = evaluateTerrainPoint(normSub, x, y, effectiveRelief);
       const h = evalResult.height;
 
       elevations[idx] = h;

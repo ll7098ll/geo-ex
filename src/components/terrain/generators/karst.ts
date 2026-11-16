@@ -11,7 +11,7 @@ import {
   TerrainEvalResult,
 } from '../terrainMath';
 
-export const KARST_TOWER_SPECS = [
+const KARST_TOWER_SPECS = [
   { tx: -3.2, ty: -0.8, rx: 1.85, ry: 1.55, h: 5.45, phase: 0.4 },  // 중앙 서측 주봉
   { tx: -4.4, ty: 0.9, rx: 1.35, ry: 1.25, h: 4.15, phase: 1.7 },   // 주봉과 안부로 이어진 연봉(봉총/Fengcong)
   { tx: 3.1, ty: 0.6, rx: 1.65, ry: 1.45, h: 5.05, phase: 2.3 },    // 동측 거봉

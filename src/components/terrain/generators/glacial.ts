@@ -5,7 +5,6 @@ import {
   ridgedFbm,
   smoothstep,
   smin,
-  smax,
   clamp,
   sdSegment,
   mixColor,
@@ -256,7 +255,6 @@ export function evalGlacialTerrain(
     const ang = Math.atan2(dy, dx); // +Y(후면)가 +PI/2, -Y(전면 입구)가 -PI/2
 
     // 1) 3면 반원형 권곡 두벽(Headwall: 북·동·서 3면을 병풍처럼 감싸고 남쪽 전면만 열림!)
-    const frontOpenMask = 1.0 - smoothstep(-2.25, -0.90, ang) * smoothstep(-0.90, -2.25, -Math.PI - ang);
     // 간단하고 대칭적인 정면 개구부 가중치: sin(ang)이 -1(정면 남쪽)일 때 열리고, +1(후면 북쪽) 및 좌우일 때 높음
     const amphitheaterClosure = clamp((Math.sin(ang) + 0.68) / 1.35, 0.0, 1.0);
 

@@ -126,38 +126,46 @@ src/
 │   ├── Terrain3D.tsx                      # 단일 R3F Canvas, OrbitControls, 조명 리그, DioramaMesh
 │   ├── LoadingOverlay.tsx                 # 탐사 데이터 동기화 로딩 오버레이
 │   ├── ErrorMessage.tsx                   # Swiss-Brutalist 시스템 알림 토스트
+│   ├── common/
+│   │   ├── AlternativePlacesBar.tsx       # 연관 명소 선택 공통 바 (Slide 2·3 공용)
+│   │   └── SpecimenCollectButton.tsx      # 표본 수집 토글 공통 버튼 (Slide 2·3·4 공용)
 │   ├── kinetic/
 │   │   ├── FilmGrainOverlay.tsx           # 정적 CSS 타일 필름 그레인 & 뷰포트 코너 크로스헤어
 │   │   ├── HeroApertureCanvas.tsx         # 활성 슬라이드 한정 마우스 추적 조리개 캔버스
 │   │   ├── OdometerCounter.tsx            # 스프링 물리 숫자 휠 카운터
-│   │   ├── PolarityCutGate.tsx            # 1프레임 일렉트릭 코발트 챕터 전환 커튼
 │   │   └── SpecimenDrawer.tsx             # localStorage 연동 슬라이드아웃 표본 아카이브 (ESC 지원)
 │   ├── slides/
 │   │   ├── GoogleMapSlide.tsx             # ACT 02: 100vh 위성 지도, 돋보기 락, 28° 해칭 플래카드
 │   │   ├── Terrain3DSlide.tsx             # ACT 03: 영속 3D 스테이지(인라인/전체화면), 180° 3D 플립 카드
-│   │   └── GeologicalGuideSlide.tsx       # ACT 04: 4단계 난이도 스위처, 4단 아코디언, 4대 대시보드 탭
+│   │   ├── GeologicalGuideSlide.tsx       # ACT 04: 매거진 아티클 뷰 & 4단계 난이도 스위처
+│   │   └── guide/                         # Slide 04 하위 섹션 (StickyBar, Timeline, Dossier, Theme)
 │   └── terrain/
 │       ├── terrainMath.ts                 # FBM, Domain Warping, Hexagonal Voronoi 단일 수학 엔진
-│       ├── terrainGenerators.ts           # 39종 아키타입 라우팅, LRU GEOMETRY_CACHE(24)
+│       ├── terrainEvaluator.ts            # 지형 아키타입별 높이·색상 단일 평가기
+│       ├── terrainGenerators.ts           # 3D 블록 지오메트리 생성 & LRU GEOMETRY_CACHE(24)
 │       ├── terrainTextures.ts             # 프로시저럴 범프 텍스처 생성기
-│       ├── TerrainSpecialMeshes.tsx       # ConformantWaterMesh & 특수 지질 메쉬 (dispose 관리)
+│       ├── TerrainSpecialMeshes.tsx       # 39종 특수 메쉬 라우팅 디스패처
+│       ├── meshes/                        # shared & 6대 지형군별 특수 메쉬 모듈 (dispose 관리)
 │       ├── generators/                    # volcanic, coastal, fluvial, karst, glacial, arid 생성기
 │       └── contour/
 │           ├── terrainContourShader.ts    # Triplanar 절벽 & 수면 마스킹 GLSL 셰이더
 │           ├── terrainDEMGenerator.ts     # 240×240 DEM 필드 생성기 & LRU DEM_CACHE(20)
 │           └── terrainContourMetadata.ts  # 39종 지형별 등고선 간격(index/intermediate) 규격
 ├── constants/
+│   ├── terrainRegistry.ts                 # 지형 키·별칭·카테고리·기준 수위 단일 진실 원천
 │   ├── terrains.ts                        # 6대 대분류 & 26개 지형 태그 마스터
 │   ├── places.ts                          # 165개 명소 엔트리, 셔플 알고리즘, getCategoryIdForPlace
 │   └── places/                            # 6대 범주별 데이터 (volcanic 33, coastal 25, fluvial 25, karst 31, glacial 18, arid 33)
 ├── hooks/
-│   └── useTerrainSearch.ts                # 장소 검색, ID 직접 복원 및 후보 전환 커스텀 훅
+│   ├── useTerrainSearch.ts                # 장소 검색, ID 직접 복원 및 후보 전환 커스텀 훅
+│   ├── useSlideNavigation.ts              # 4슬라이드 스크롤 스냅 & IntersectionObserver 추적 훅
+│   └── useSpecimenBag.ts                  # 표본 수집 상태 & localStorage 영속화 훅
 ├── utils/
 │   ├── curriculumHelper.ts                # 2022 개정 교육과정 성취기준 및 팩트시트 헬퍼
 │   ├── educationLevelHelper.ts            # 초등·중등·고등·일반 4단계 난이도 콘텐츠 변환기
 │   └── terrainConceptData.ts              # 26종 지형별 핵심 질문 및 3대 개념 지식 베이스
 └── types/
-    ├── index.ts                           # PlaceInfo, GeologyMetadata, TerrainEvolutionStage
+    ├── index.ts                           # PlaceInfo, SearchResult, Region, TerrainCategory
     └── contour.ts                         # TerrainElevationField, ContourIntervalSettings
 ```
 

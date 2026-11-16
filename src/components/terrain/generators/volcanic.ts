@@ -155,7 +155,6 @@ export function evalVolcanicTerrain(
 
     // 지류 소협곡 (재인폭포/대교천 합류 지류)
     const tribY = 1.8 + (x - canyonX) * 0.45;
-    const inTrib = x > canyonX && Math.abs(y - tribY) < 0.75 && x < canyonX + 5.5;
     const distTrib = x > canyonX ? Math.abs(y - tribY) : 99.0;
 
     // 광활하고 평탄한 현무암 용암대지 상부면 (철원평야)

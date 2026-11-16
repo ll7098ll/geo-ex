@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ChevronUp, ChevronDown, Compass, MapPin, Box, BookOpen } from 'lucide-react';
 
-export interface SlideItem {
+interface SlideItem {
   id: string;
   number: string;
   title: string;
@@ -10,7 +10,7 @@ export interface SlideItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-export const SLIDE_ITEMS: SlideItem[] = [
+const SLIDE_ITEMS: SlideItem[] = [
   {
     id: 'section-main',
     number: '01',

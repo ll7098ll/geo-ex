@@ -21,7 +21,7 @@ import {
 // ==========================================
 // Terrain Default Material Settings per Category & SubTerrain
 // ==========================================
-export function getDefaultMaterialSettings(category: string, subTerrain: string, placeContext?: string) {
+function getDefaultMaterialSettings(category: string, subTerrain: string, placeContext?: string) {
   const normSub = resolveTerrainKey(subTerrain, placeContext);
   let roughness = 0.75;
   let metalness = 0.05;
@@ -75,7 +75,6 @@ export function getDefaultMaterialSettings(category: string, subTerrain: string,
     roughness,
     metalness,
     bumpScale,
-    opacity: 1.0,
   };
 }
 
@@ -195,7 +194,6 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       {/* 3. Contextual 3D Special Meshes (Columns, Waterfalls, Lava, Water bodies, Caves, etc.) */}
       <TerrainSpecialMeshes
         normSub={normSub}
-        category={category}
         reliefScale={reliefScale}
       />
     </group>
@@ -219,114 +217,118 @@ class EnvironmentErrorBoundary extends React.Component<
   }
 }
 
-interface TerrainAtmosphereProps {
-  category: string;
+interface TerrainEnvironmentConfig {
+  sunPos: [number, number, number];
+  turbidity: number;
+  rayleigh: number;
+  keyColor: string;
+  keyIntensity: number;
+  hemiSky: string;
+  hemiGround: string;
+  hemiIntensity: number;
+  rimColor: string;
+  rimIntensity: number;
+  fogColor: string;
+  fogDensity: number;
+  preset: 'sunset' | 'dawn' | 'park' | 'city';
 }
 
-const TerrainEnvironmentRig: React.FC<TerrainAtmosphereProps> = ({ category }) => {
-  const { scene } = useThree();
+const ENVIRONMENT_BY_CATEGORY: Record<string, TerrainEnvironmentConfig> = {
+  volcanic: {
+    sunPos: [80, 20, 60],
+    turbidity: 8.0,
+    rayleigh: 2.6,
+    keyColor: '#ffaa66',
+    keyIntensity: 2.2,
+    hemiSky: '#5e3229',
+    hemiGround: '#241714',
+    hemiIntensity: 0.85,
+    rimColor: '#e05638',
+    rimIntensity: 0.75,
+    fogColor: '#1c1310',
+    fogDensity: 0.015,
+    preset: 'sunset',
+  },
+  glacial: {
+    sunPos: [100, 45, 90],
+    turbidity: 0.2,
+    rayleigh: 0.35,
+    keyColor: '#f2f8ff',
+    keyIntensity: 2.5,
+    hemiSky: '#b8dcff',
+    hemiGround: '#5a7894',
+    hemiIntensity: 0.95,
+    rimColor: '#90caff',
+    rimIntensity: 0.9,
+    fogColor: '#0f1826',
+    fogDensity: 0.014,
+    preset: 'dawn',
+  },
+  arid: {
+    sunPos: [80, 50, 40],
+    turbidity: 9.0,
+    rayleigh: 2.8,
+    keyColor: '#fff2d6',
+    keyIntensity: 2.6,
+    hemiSky: '#ffdfa8',
+    hemiGround: '#996939',
+    hemiIntensity: 0.85,
+    rimColor: '#ffd180',
+    rimIntensity: 0.7,
+    fogColor: '#211812',
+    fogDensity: 0.017,
+    preset: 'park',
+  },
+  karst: {
+    sunPos: [90, 28, 80],
+    turbidity: 2.5,
+    rayleigh: 1.2,
+    keyColor: '#fffcee',
+    keyIntensity: 2.1,
+    hemiSky: '#b6e6d8',
+    hemiGround: '#264d3b',
+    hemiIntensity: 0.85,
+    rimColor: '#5eead4',
+    rimIntensity: 0.65,
+    fogColor: '#121e1a',
+    fogDensity: 0.015,
+    preset: 'city',
+  },
+  coastal: {
+    sunPos: [100, 38, 80],
+    turbidity: 1.2,
+    rayleigh: 0.75,
+    keyColor: '#fffef0',
+    keyIntensity: 2.3,
+    hemiSky: '#aae2ff',
+    hemiGround: '#194361',
+    hemiIntensity: 0.9,
+    rimColor: '#38bdf8',
+    rimIntensity: 0.75,
+    fogColor: '#0e1d29',
+    fogDensity: 0.015,
+    preset: 'city',
+  },
+  fluvial: {
+    sunPos: [100, 35, 75],
+    turbidity: 1.5,
+    rayleigh: 0.9,
+    keyColor: '#fffde6',
+    keyIntensity: 2.2,
+    hemiSky: '#cceeff',
+    hemiGround: '#2e5223',
+    hemiIntensity: 0.85,
+    rimColor: '#86efac',
+    rimIntensity: 0.65,
+    fogColor: '#112022',
+    fogDensity: 0.015,
+    preset: 'city',
+  },
+};
 
-  const config = useMemo(() => {
-    switch (category) {
-      case 'volcanic':
-        return {
-          sunPos: [80, 20, 60] as [number, number, number],
-          turbidity: 8.0,
-          rayleigh: 2.6,
-          keyColor: '#ffaa66',
-          keyIntensity: 2.2,
-          hemiSky: '#5e3229',
-          hemiGround: '#241714',
-          hemiIntensity: 0.85,
-          rimColor: '#e05638',
-          rimIntensity: 0.75,
-          fogColor: '#1c1310',
-          fogDensity: 0.015,
-          preset: 'sunset' as const,
-        };
-      case 'glacial':
-        return {
-          sunPos: [100, 45, 90] as [number, number, number],
-          turbidity: 0.2,
-          rayleigh: 0.35,
-          keyColor: '#f2f8ff',
-          keyIntensity: 2.5,
-          hemiSky: '#b8dcff',
-          hemiGround: '#5a7894',
-          hemiIntensity: 0.95,
-          rimColor: '#90caff',
-          rimIntensity: 0.9,
-          fogColor: '#0f1826',
-          fogDensity: 0.014,
-          preset: 'dawn' as const,
-        };
-      case 'arid':
-        return {
-          sunPos: [80, 50, 40] as [number, number, number],
-          turbidity: 9.0,
-          rayleigh: 2.8,
-          keyColor: '#fff2d6',
-          keyIntensity: 2.6,
-          hemiSky: '#ffdfa8',
-          hemiGround: '#996939',
-          hemiIntensity: 0.85,
-          rimColor: '#ffd180',
-          rimIntensity: 0.7,
-          fogColor: '#211812',
-          fogDensity: 0.017,
-          preset: 'park' as const,
-        };
-      case 'karst':
-        return {
-          sunPos: [90, 28, 80] as [number, number, number],
-          turbidity: 2.5,
-          rayleigh: 1.2,
-          keyColor: '#fffcee',
-          keyIntensity: 2.1,
-          hemiSky: '#b6e6d8',
-          hemiGround: '#264d3b',
-          hemiIntensity: 0.85,
-          rimColor: '#5eead4',
-          rimIntensity: 0.65,
-          fogColor: '#121e1a',
-          fogDensity: 0.015,
-          preset: 'city' as const,
-        };
-      case 'coastal':
-        return {
-          sunPos: [100, 38, 80] as [number, number, number],
-          turbidity: 1.2,
-          rayleigh: 0.75,
-          keyColor: '#fffef0',
-          keyIntensity: 2.3,
-          hemiSky: '#aae2ff',
-          hemiGround: '#194361',
-          hemiIntensity: 0.9,
-          rimColor: '#38bdf8',
-          rimIntensity: 0.75,
-          fogColor: '#0e1d29',
-          fogDensity: 0.015,
-          preset: 'city' as const,
-        };
-      case 'fluvial':
-      default:
-        return {
-          sunPos: [100, 35, 75] as [number, number, number],
-          turbidity: 1.5,
-          rayleigh: 0.9,
-          keyColor: '#fffde6',
-          keyIntensity: 2.2,
-          hemiSky: '#cceeff',
-          hemiGround: '#2e5223',
-          hemiIntensity: 0.85,
-          rimColor: '#86efac',
-          rimIntensity: 0.65,
-          fogColor: '#112022',
-          fogDensity: 0.015,
-          preset: 'city' as const,
-        };
-    }
-  }, [category]);
+const TerrainEnvironmentRig: React.FC<{ category: string }> = ({ category }) => {
+  const { scene } = useThree();
+  const config = ENVIRONMENT_BY_CATEGORY[category] || ENVIRONMENT_BY_CATEGORY.fluvial;
 
   useEffect(() => {
     scene.fog = new THREE.FogExp2(config.fogColor, config.fogDensity);
@@ -381,7 +383,7 @@ export interface Terrain3DRef {
   toggleAutoRotate: () => void;
 }
 
-export interface Terrain3DProps {
+interface Terrain3DProps {
   category: string;
   subTerrain: string;
   placeContext?: string;

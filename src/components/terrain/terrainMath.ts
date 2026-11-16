@@ -5,12 +5,12 @@ export interface TerrainEvalResult {
   color: THREE.Color;
 }
 
-export const random = (x: number, y: number) => {
+const random = (x: number, y: number) => {
   const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453123;
   return n - Math.floor(n);
 };
 
-export const noise = (x: number, y: number) => {
+const noise = (x: number, y: number) => {
   const ix = Math.floor(x);
   const iy = Math.floor(y);
   const fx = x - ix;
@@ -216,12 +216,4 @@ export const mixColor = (c1: string, c2: string, t: number) => {
   const color2 = new THREE.Color(c2);
   color1.lerp(color2, clamp(t, 0, 1));
   return color1;
-};
-
-/**
- * Normalizes terrain strings for robust matching, removing parenthetical terms
- * e.g., "해식애 (해안 절벽)" -> "해식애", "혼 (호른)" -> "혼"
- */
-export const normalizeTerrainName = (name: string): string => {
-  return name.replace(/\s*\(.*?\)\s*/g, '').trim();
 };

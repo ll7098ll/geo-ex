@@ -3,16 +3,14 @@ import {
   MapPin,
   ExternalLink,
   Globe,
-  Layers,
-  ChevronRight,
   MousePointerClick,
   ChevronDown,
   Navigation as NavigationIcon,
   Compass,
-  Plus,
-  Check,
 } from 'lucide-react';
 import { SearchResult as SearchResultType, Region, PlaceInfo } from '../../types';
+import { SpecimenCollectButton } from '../common/SpecimenCollectButton';
+import { AlternativePlacesBar } from '../common/AlternativePlacesBar';
 
 interface GoogleMapSlideProps {
   result: SearchResultType;
@@ -168,30 +166,16 @@ export const GoogleMapSlide: React.FC<GoogleMapSlideProps> = ({
           </div>
 
           {/* Specimen Action Button */}
-          {placeInfo && onAddSpecimen && (
-            <div className="mt-4">
-              <button
-                onClick={() => onAddSpecimen(placeInfo)}
-                className={`w-full py-2.5 px-4 font-sans text-xs font-bold tracking-wide transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer hairline-border active:scale-[0.99] ${
-                  isCollected
-                    ? 'bg-[#FFCC00] text-black border-[#FFCC00]'
-                    : 'bg-[#131418] text-[#FFCC00] hover:bg-[#FFCC00] hover:text-black hover:border-[#FFCC00]'
-                }`}
-              >
-                {isCollected ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>표본함에 저장됨</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    <span>표본함에 수집하기</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+          <div className="mt-4">
+            <SpecimenCollectButton
+              placeInfo={placeInfo}
+              isCollected={isCollected}
+              onAddSpecimen={onAddSpecimen}
+              variant="full"
+              collectedLabel="표본함에 저장됨"
+              idleLabel="표본함에 수집하기"
+            />
+          </div>
 
           {/* External Cartographic Reference Links */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -232,29 +216,11 @@ export const GoogleMapSlide: React.FC<GoogleMapSlideProps> = ({
           </div>
 
           {/* Alternative Field Exploration Sites */}
-          {alternativePlaces && alternativePlaces.length > 0 && (
-            <div className="mt-4 pt-3.5 hairline-border-t">
-              <div className="flex items-center gap-1.5 text-xs font-sans font-bold text-zinc-400 mb-2">
-                <Layers className="w-3.5 h-3.5 text-[#FFCC00]" />
-                <span>함께 둘러볼 연관 명소</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {alternativePlaces.map((alt, idx) => (
-                  <button
-                    key={alt.id}
-                    onClick={() => onSelectAlternativePlace?.(alt)}
-                    className="group flex items-center gap-1.5 px-2.5 py-1 text-xs font-sans bg-[#131418] hover:bg-[#FFCC00] text-zinc-200 hover:text-black hairline-border hover:border-[#FFCC00] transition-colors duration-200 cursor-pointer whitespace-nowrap"
-                  >
-                    <span className="text-[#FFCC00] font-mono text-[11px] font-bold group-hover:text-black">
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <span>{alt.placeName}</span>
-                    <ChevronRight className="w-3 h-3 opacity-60 shrink-0" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <AlternativePlacesBar
+            places={alternativePlaces}
+            onSelectPlace={onSelectAlternativePlace}
+            variant="card"
+          />
         </div>
       </div>
 

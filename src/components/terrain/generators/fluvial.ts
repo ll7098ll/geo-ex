@@ -12,7 +12,7 @@ import {
 } from '../terrainMath';
 
 // Incised Omega (Ω) meander canyon spine (영월 한반도지형 / 동강 어라연 / 호스슈 벤드 스타일)
-export const INCISED_OMEGA_SPINE: [number, number][] = [
+const INCISED_OMEGA_SPINE: [number, number][] = [
   [-6.8, 10.2],
   [-4.4, 7.6],
   [-1.95, 4.9],  // 곡류 잘록한 목(Meander Neck) 좌측 진입

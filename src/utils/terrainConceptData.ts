@@ -4,7 +4,9 @@
  * 고등은 2022 개정 성취기준 학술 심층으로, 일반은 지리 교양·자연유산 관점으로 구성됩니다.
  */
 
-export interface ConceptItem {
+import { getCategoryForTerrainName, TerrainCategoryId } from '../constants/terrainRegistry';
+
+interface ConceptItem {
   term: string;
   description: string;
   curriculumPoint: string;
@@ -25,7 +27,7 @@ export interface TerrainMetadataRecord {
   general: TerrainLevelProfile;
 }
 
-export const TERRAIN_KNOWLEDGE_BASE: Record<string, TerrainMetadataRecord> = {
+const TERRAIN_KNOWLEDGE_BASE: Record<string, TerrainMetadataRecord> = {
   // ============================================================
   // 1. 화산 및 산지 지형 (Volcanic)
   // ============================================================
@@ -846,39 +848,29 @@ export const TERRAIN_KNOWLEDGE_BASE: Record<string, TerrainMetadataRecord> = {
   },
 };
 
+const CATEGORY_KNOWLEDGE_FALLBACK: Record<TerrainCategoryId, string> = {
+  volcanic: '화산',
+  fluvial: '곡류천',
+  coastal: '해식애 (해안 절벽)',
+  karst: '석회동굴',
+  glacial: '피오르드',
+  arid: '사막',
+};
+
 /**
  * 26종 세부 지형 이름을 매핑하여 가장 적합한 정선 지식 프로필 반환
  */
 export function getTerrainKnowledge(terrainName: string): TerrainMetadataRecord {
   const t = (terrainName || '').trim();
 
-  // Exact match
   if (TERRAIN_KNOWLEDGE_BASE[t]) {
     return TERRAIN_KNOWLEDGE_BASE[t];
   }
 
-  // Partial matches
   if (t.includes('칼데라')) return TERRAIN_KNOWLEDGE_BASE['칼데라'];
   if (t.includes('주상절리')) return TERRAIN_KNOWLEDGE_BASE['주상절리'];
-  if (t.includes('화산') || t.includes('오름') || t.includes('용암')) return TERRAIN_KNOWLEDGE_BASE['화산'];
-
   if (t.includes('선상지')) return TERRAIN_KNOWLEDGE_BASE['선상지'];
-  if (t.includes('곡류') || t.includes('하천') || t.includes('강') || t.includes('폭포') || t.includes('삼각주') || t.includes('단구')) {
-    return TERRAIN_KNOWLEDGE_BASE['곡류천'];
-  }
 
-  if (t.includes('해식') || t.includes('절벽') || t.includes('해안') || t.includes('시스택') || t.includes('사주') || t.includes('갯벌')) {
-    return TERRAIN_KNOWLEDGE_BASE['해식애 (해안 절벽)'];
-  }
-
-  if (t.includes('동굴') || t.includes('석회') || t.includes('카르스트') || t.includes('돌리네') || t.includes('탑')) {
-    return TERRAIN_KNOWLEDGE_BASE['석회동굴'];
-  }
-
-  if (t.includes('피오르드') || t.includes('빙하') || t.includes('u자') || t.includes('혼') || t.includes('모레인')) {
-    return TERRAIN_KNOWLEDGE_BASE['피오르드'];
-  }
-
-  // Default: Arid / Desert
-  return TERRAIN_KNOWLEDGE_BASE['사막'];
+  const category = getCategoryForTerrainName(t);
+  return TERRAIN_KNOWLEDGE_BASE[CATEGORY_KNOWLEDGE_FALLBACK[category]];
 }

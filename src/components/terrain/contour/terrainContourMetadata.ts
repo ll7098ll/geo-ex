@@ -1,10 +1,11 @@
 import { ContourIntervalSettings } from '../../../types/contour';
+import { CONTOUR_KEY_ALIASES } from '../../../constants/terrainRegistry';
 
-export interface TerrainContourMeta {
+interface TerrainContourMeta {
   contourSettings: ContourIntervalSettings;
 }
 
-export const TERRAIN_CONTOUR_METADATA: Record<string, TerrainContourMeta> = {
+const TERRAIN_CONTOUR_METADATA: Record<string, TerrainContourMeta> = {
   // 1. 화산 지형 (Volcanic)
   '화산': { contourSettings: { indexInterval: 2.0, intermediateInterval: 0.5 } },
   '순상화산': { contourSettings: { indexInterval: 0.8, intermediateInterval: 0.2 } },
@@ -57,21 +58,7 @@ export const TERRAIN_CONTOUR_METADATA: Record<string, TerrainContourMeta> = {
   '메사·뷰트': { contourSettings: { indexInterval: 1.2, intermediateInterval: 0.3 } },
 };
 
-const KEY_ALIASES: Record<string, string> = {
-  '사주': '사주·사취',
-  '사취': '사주·사취',
-  '호른': '혼',
-  '카르': '권곡',
-  '빙퇴석': '모레인',
-  '유자곡': 'U자곡',
-  '탑카르스트': '탑 카르스트',
-  '오름': '기생화산',
-  '메사': '메사·뷰트',
-  '뷰트': '메사·뷰트',
-  '감입곡류': '감입곡류천',
-};
-
 export function getTerrainContourMeta(key: string): TerrainContourMeta {
-  const resolved = KEY_ALIASES[key] || key;
+  const resolved = CONTOUR_KEY_ALIASES[key] || key;
   return TERRAIN_CONTOUR_METADATA[resolved] || TERRAIN_CONTOUR_METADATA['화산'];
 }

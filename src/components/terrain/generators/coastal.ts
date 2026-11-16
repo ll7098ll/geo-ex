@@ -4,7 +4,6 @@ import {
   warpedFbm,
   ridgedFbm,
   smoothstep,
-  smin,
   smax,
   clamp,
   sdSegment,
@@ -458,7 +457,6 @@ export function evalCoastalTerrain(
 
     // 3) 석호 기저 분지(-3.2 < x < 2.1) 및 동해 외해(x > 3.5)
     const inLagoonBasin = smoothstep(-3.4, -2.4, x) * (1.0 - smoothstep(1.8, 2.5, x)) * (1.0 - smoothstep(4.8, 6.2, Math.abs(y)));
-    const lagoonFloor = 0.28 + fbm(x * 1.6, y * 1.6) * 0.06;
     const seaFloor = 0.18 + fbm(x * 1.4, y * 1.4) * 0.06;
 
     const baseSurface = x > 2.75 ? seaFloor : 0.42 - inLagoonBasin * 0.14;
