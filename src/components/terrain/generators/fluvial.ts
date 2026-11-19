@@ -11,11 +11,13 @@ import {
   TerrainEvalResult,
 } from '../terrainMath';
 
-// Incised Omega (Ω) meander canyon spine (영월 한반도지형 / 동강 어라연 / 호스슈 벤드 스타일)
-const INCISED_OMEGA_SPINE: [number, number][] = [
+// Incised Omega (Ω) meander canyon control points (영월 한반도지형 / 동강 어라연 / 호스슈 벤드 스타일)
+// Endpoints extend past the [-10, 10] domain so signed distance stays continuous across the entire block.
+const INCISED_OMEGA_CTRL: [number, number][] = [
+  [-9.2, 13.0],
   [-6.8, 10.2],
   [-4.4, 7.6],
-  [-1.95, 4.9],  // 곡류 잘록한 목(Meander Neck) 좌측 진입
+  [-2.0, 4.9],   // 곡류 잘록한 목(Meander Neck) 좌측 진입
   [-3.85, 1.8],
   [-4.95, -1.6], // 서쪽 루프 외벽
   [-3.35, -4.55],
@@ -23,10 +25,44 @@ const INCISED_OMEGA_SPINE: [number, number][] = [
   [3.45, -4.45],
   [4.95, -1.45], // 동쪽 루프 외벽
   [3.75, 1.9],
-  [1.95, 4.85],  // 곡류 잘록한 목(Meander Neck) 우측 통과
+  [2.0, 4.85],   // 곡류 잘록한 목(Meander Neck) 우측 통과
   [4.5, 7.5],
   [7.0, 10.2],
+  [9.4, 13.0],
 ];
+
+// Build dense smooth Catmull-Rom polyline (56 smooth segments) to eliminate polygonal facets
+const INCISED_OMEGA_SPINE: [number, number][] = (() => {
+  const pts: [number, number][] = [];
+  const n = INCISED_OMEGA_CTRL.length;
+  const subSteps = 5;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = INCISED_OMEGA_CTRL[Math.max(0, i - 1)];
+    const p1 = INCISED_OMEGA_CTRL[i];
+    const p2 = INCISED_OMEGA_CTRL[i + 1];
+    const p3 = INCISED_OMEGA_CTRL[Math.min(n - 1, i + 2)];
+    const count = i === n - 2 ? subSteps : subSteps - 1;
+    for (let s = 0; s <= count; s++) {
+      const t = s / subSteps;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const x =
+        0.5 *
+        (2 * p1[0] +
+          (-p0[0] + p2[0]) * t +
+          (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 +
+          (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3);
+      const y =
+        0.5 *
+        (2 * p1[1] +
+          (-p0[1] + p2[1]) * t +
+          (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 +
+          (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3);
+      pts.push([x, y]);
+    }
+  }
+  return pts;
+})();
 
 export function getWaterfallLipY(x: number): number {
   // 상류 후면(y > 1.4)에서 전면(y < 1.4)으로 말발굽 형태로 파고든 두부침식 폭포 립(Lip)
@@ -84,18 +120,31 @@ export function evalFluvialTerrain(
       (1.0 - smoothstep(6.2, 9.2, rFan)) *
       sectorEnvelope;
 
-    // 4) 선단(Fan Toe, rFan ≈ 9.2~11.8) 외곽 평야 및 용천수 집수 소하천 (y ≈ -8.2)
+    // 4) 선단(Fan Toe, rFan ≈ 8.6~11.8) 외곽 평야 및 용천수 집수 소하천 (y ≈ -8.2)
     const collectorY = -8.25 + Math.cos(x * 0.22) * 0.55;
     const collectorCut = (1.0 - smoothstep(0.28, 0.85, Math.abs(y - collectorY))) * 0.22;
-    const lowlandPlain = 0.36 - collectorCut + fbm(x * 0.9, y * 0.9) * 0.04;
+    const onFanToeZone = smoothstep(mtnFrontY - 1.2, mtnFrontY - 2.6, y) * sectorEnvelope;
+    const springWave = Math.abs(Math.sin(fanAzimuth * 6.5 + (fbm(x * 0.65, y * 0.65, 3) - 0.5) * 1.8));
+    const springRivuletMask =
+      onFanToeZone *
+      smoothstep(8.2, 9.1, rFan) *
+      (1.0 - smoothstep(11.4, 12.2, rFan)) *
+      smoothstep(0.91, 0.975, springWave);
+    const lowlandPlain = 0.36 - collectorCut - springRivuletMask * 0.07 + fbm(x * 0.9, y * 0.9) * 0.04;
 
-    const fanTotal = Math.max(lowlandPlain, fanConeBase - braidCarve + fbm(x * 1.4, y * 1.4) * 0.05);
+    const fanTotal = Math.max(
+      lowlandPlain,
+      fanConeBase - braidCarve - springRivuletMask * 0.07 + fbm(x * 1.4, y * 1.4) * 0.05
+    );
     const rawH = y > mtnFrontY - 0.5 ? smax(fanTotal, mountainBody, 0.38) : fanTotal;
     h = Math.max(0.18, rawH * reliefScale);
 
-    const isUpperStream = y > apexY - 0.4 && gorgeDistX < 0.48;
+    const isUpperStream = y > apexY - 0.4 && gorgeDistX < 0.46;
     const isApexBraid = rFan < 4.2 && activeMainBranch > 0.55 && sectorEnvelope > 0.5 && y <= apexY;
-    const isSpringStream = Math.abs(y - collectorY) < 0.52 || (rFan > 8.8 && rFan < 11.5 && Math.abs(Math.sin(fanAzimuth * 7.0)) > 0.92);
+    // Gate spring streams strictly to the fan toe apron (never on the rear mountain slope!)
+    const isSpringStream =
+      (Math.abs(y - collectorY) < 0.48 && rawH < 0.56) ||
+      (y < mtnFrontY - 1.6 && rawH < 0.68 && springRivuletMask > 0.45);
 
     if (isUpperStream || isApexBraid || isSpringStream) {
       // 상류 계곡수 -> 선정 망상 물줄기 -> (선앙 지하 복류) -> 선단 용천수 재출현!
@@ -107,10 +156,10 @@ export function evalFluvialTerrain(
           ? mixColor('#665c52', '#82776b', fbm(x * 4, y * 4))
           : mixColor('#2d4f24', '#416932', fbm(x * 2.5, y * 2.5))
       );
-    } else if (rFan < 3.0 && sectorEnvelope > 0.4) {
+    } else if (rFan < 3.0 && sectorEnvelope > 0.4 && y < mtnFrontY + 0.2) {
       // 선정(Fan Apex): 조립질 호박돌·자갈 각력 퇴적지
       color.set(mixColor('#736a5e', '#94897b', fbm(x * 6, y * 6)));
-    } else if (rFan < 8.6 && sectorEnvelope > 0.35) {
+    } else if (rFan < 8.4 && sectorEnvelope > 0.35 && y < mtnFrontY + 0.1) {
       // 선앙(Mid-fan): 배수가 잘되는 사력질 복류천 지대 (과수원·밭 패치와 건천 자갈길 교차)
       const dryGravel = braidCarve > 0.055;
       const orchardPatch = fbm(Math.floor(x * 0.9), Math.floor(y * 0.9)) > 0.48;
@@ -125,7 +174,9 @@ export function evalFluvialTerrain(
       }
     } else {
       // 선단(Fan Toe) 용천대 및 충적 평야 비옥한 논농사 지대
-      color.set(mixColor('#356629', '#4b823b', fbm(x * 2.5, y * 2.5)));
+      const springBelt = smoothstep(7.8, 9.2, rFan) * (1.0 - smoothstep(10.8, 12.4, rFan)) * onFanToeZone;
+      const paddy = mixColor('#356629', '#4b823b', fbm(x * 2.5, y * 2.5));
+      color.copy(paddy).lerp(new THREE.Color('#275924'), springBelt * 0.45);
     }
     return { height: h, color };
   }
@@ -240,50 +291,50 @@ export function evalFluvialTerrain(
       }
     }
 
-    // 루프 내부 반도 여부 (중심 (0, -0.8) 반도 구릉은 내측 활주사면으로 북에서 남으로 점진 하강!)
-    const distPeninsulaCore = Math.hypot(x / 3.4, (y + 0.6) / 3.8);
-    const isInsidePeninsula = signedSide > 0 && y < 5.2 && distPeninsulaCore < 1.35;
+    // 100% 연속 부호 거리 기반 반도 가중치 (불연속 if 절벽 & 피라미드 아티팩트 원천 제거!)
+    const signedDist = signedSide * minDist;
+    const interiorMask = smoothstep(-0.32, 0.32, signedDist);
+    const neckTransition = 1.0 - smoothstep(2.4, 6.4, y);
+    const peninsulaWeight = interiorMask * neckTransition;
 
     // 융기된 배후 산지·고원 높이
     const plateauH =
       3.95 +
-      warpedFbm(x * 0.32, y * 0.32, 4) * 0.75 +
-      ridgedFbm(x * 0.5, y * 0.5, 3) * 0.38;
+      warpedFbm(x * 0.32, y * 0.32, 4) * 0.72 +
+      ridgedFbm(x * 0.5, y * 0.5, 3) * 0.36;
 
-    // 반도 내부 활주사면 구릉: 잘록한 목(y ≈ 4.2, h ≈ 3.45)에서 남단 포인트바 끝(y ≈ -4.2, h ≈ 0.78)으로 비대칭 경사!
+    // 반도 내부 활주사면 구릉: 잘록한 목(y ≈ 4.2)에서 남단 포인트바 끝(y ≈ -4.2, h ≈ 0.75)으로 매끄럽게 하강!
     const slipOffSlopeH =
       0.72 +
-      smoothstep(-4.4, 3.8, y) * 2.75 +
-      Math.max(0, 1.0 - Math.abs(x) / 2.8) * 0.45 +
-      fbm(x * 0.9, y * 0.9) * 0.18;
+      smoothstep(-4.4, 4.0, y) * 2.85 +
+      Math.max(0, 1.0 - Math.abs(x) / 3.0) * 0.42 +
+      fbm(x * 0.9, y * 0.9) * 0.16;
 
     const chanHalfW = 0.76;
     const riverBedH = 0.22 + fbm(x * 2.5, y * 2.5) * 0.05;
 
-    let rawH = 0;
-    if (isInsidePeninsula) {
-      // 내측 활주사면(Slip-off spur): 강물에서 완만하게 자갈·모래 포인트바를 거쳐 반도 소나무 구릉으로 상승
-      const innerT = smoothstep(chanHalfW * 0.72, chanHalfW + 1.85, minDist);
-      rawH = riverBedH + (slipOffSlopeH - riverBedH) * Math.pow(innerT, 1.15);
-    } else {
-      // 외측 공격사면(Incised Canyon Cut-bank): 수백 미터 높이의 깎아지른 기반암 수직 절벽!
-      const outerT = smoothstep(chanHalfW * 0.78, chanHalfW + 0.75, minDist);
-      const strataLedge = Math.sin(outerT * Math.PI * 3.0) * 0.08;
-      rawH = riverBedH + (plateauH - riverBedH) * Math.pow(outerT, 0.68) + strataLedge * outerT;
-    }
+    // 내측 완경사 활주사면(Slip-off spur)과 외측 급경사 공격사면(Incised Cut-bank)의 연속 블렌딩!
+    const innerT = Math.pow(smoothstep(chanHalfW * 0.68, chanHalfW + 1.95, minDist), 1.15);
+    const outerT = Math.pow(smoothstep(chanHalfW * 0.78, chanHalfW + 0.85, minDist), 0.72);
+    const wallT = outerT * (1.0 - peninsulaWeight) + innerT * peninsulaWeight;
+    const targetLandH = plateauH * (1.0 - peninsulaWeight) + slipOffSlopeH * peninsulaWeight;
+    const strataLedge = Math.sin(outerT * Math.PI * 3.0) * 0.065 * outerT * (1.0 - peninsulaWeight);
 
+    const rawH = riverBedH + (targetLandH - riverBedH) * wallT + strataLedge;
     h = Math.max(0.18, rawH * reliefScale);
 
     if (minDist < chanHalfW + 0.08 && rawH < 0.60) {
       // 옥빛 감입곡류 협곡 강물 바닥
       color.set(mixColor('#0f4552', '#1b6778', fbm(x * 5, y * 5)));
-    } else if (isInsidePeninsula && minDist < chanHalfW + 1.35 && rawH < 0.98) {
+    } else if (peninsulaWeight > 0.45 && minDist < chanHalfW + 1.38 && rawH < 0.98) {
       // 반도 끝단 초승달 모양 백사장·자갈 포인트바 (선암마을 한반도지형 끝단 모래톱!)
       color.set(mixColor('#cfc5a5', '#ebe3c7', fbm(x * 5, y * 5)));
-    } else if (!isInsidePeninsula && minDist < chanHalfW + 0.95 && rawH > 0.60) {
+    } else if (peninsulaWeight < 0.45 && minDist < chanHalfW + 1.05 && outerT < 0.94 && rawH > 0.60) {
       // 외벽 수직 암벽 단애: 고생대 석회암/중생대 사암 수평 층리 절벽
       const rockBand = Math.sin(rawH * 10.5 + x * 0.3) * 0.5 + 0.5;
-      color.set(mixColor('#594e43', '#96826c', rockBand));
+      const cliffCol = mixColor('#594e43', '#96826c', rockBand);
+      const forestCol = mixColor('#294d22', '#3f6931', fbm(x * 2.2, y * 2.2));
+      color.copy(cliffCol).lerp(forestCol, smoothstep(0.78, 0.94, outerT));
     } else {
       // 융기 산지 및 반도 구릉 울창한 소나무·혼효림 (사암 고원 노출부 혼합)
       const rockCrest = smoothstep(4.35, 4.95, rawH);
@@ -297,7 +348,7 @@ export function evalFluvialTerrain(
 
   // =========================================================================
   // 4. 범람원 (하도 + 완만한 미고지 자연제방 + 저지대 배후습지 & 파제퇴적체: 낙동강·한강 하류)
-  // 자연제방은 거대한 산벽이 아니라 배후습지보다 0.45~0.55m 살짝 높은 현실적 충적 미기복으로 조형
+  // 자연제방은 배후습지보다 0.35~0.45m 살짝 높은 완만한 비대칭 미고지, 배후습지는 점토질 논·갈대 습지와 국소 늪지
   // =========================================================================
   if (normSub === '범람원') {
     const riverX = Math.sin(y * 0.32) * 1.85 + Math.cos(y * 0.17) * 0.55;
@@ -307,118 +358,123 @@ export function evalFluvialTerrain(
 
     const chanHalfW = 0.95;
 
-    // 1) 자연제방 (Natural Levee): 하천 양안 바로 옆에서 최고점을 찍고 배후습지 쪽으로 완만하게 낮아지는 비대칭 미고지
+    // 1) 자연제방 (Natural Levee): 하천 양안에서 완만하게 넓어지며 배후습지로 낮아지는 비대칭 사질 미고지
     const leveeOffset = Math.max(0, perpDist - chanHalfW);
-    let leveeProfile = Math.exp(-Math.pow((leveeOffset - 0.55) / 1.15, 2.0)) * 0.52;
+    const leveeAmp = signedPerp > 0 ? 0.44 : 0.37;
+    const leveeSpan = signedPerp > 0 ? 1.55 : 1.38;
+    let leveeProfile = Math.exp(-Math.pow((leveeOffset - 0.62) / leveeSpan, 2.0)) * leveeAmp;
 
     // 홍수 시 동쪽 제방 일부(y ≈ 1.2)가 터져 배후습지로 부채꼴 퇴적된 파제퇴적체(Crevasse Splay)
     const crevasseBreach =
-      signedPerp > 0 ? 1.0 - 0.48 * Math.exp(-Math.pow((y - 1.2) / 0.75, 2.0)) : 1.0;
+      signedPerp > 0 ? 1.0 - 0.45 * Math.exp(-Math.pow((y - 1.2) / 0.78, 2.0)) : 1.0;
     leveeProfile *= crevasseBreach;
-    const splayDist = Math.hypot((signedPerp - 2.2) / 1.8, (y - 1.2) / 1.9);
-    const crevasseSplay = signedPerp > 1.2 && splayDist < 1.0 ? (1.0 - splayDist) * 0.24 : 0;
+    const splayDist = Math.hypot((signedPerp - 2.35) / 1.9, (y - 1.2) / 2.0);
+    const crevasseSplay = signedPerp > 1.2 && splayDist < 1.0 ? (1.0 - splayDist) * 0.22 : 0;
 
-    // 2) 배후습지 (Backswamp): 자연제방 바깥쪽(perpDist > 2.6)의 낮고 평탄한 점토질 저습지 및 얕은 늪지 와지
-    const swampDepression =
-      smoothstep(2.4, 3.8, perpDist) *
-      (0.18 + smoothstep(0.45, 0.72, fbm(x * 0.55 + 1.4, y * 0.55, 3)) * 0.16);
+    // 2) 배후습지 (Backswamp): 수면(0.58)보다 살짝 높은 점토질 논·갈대 습지 평야 + 국소적인 얕은 늪지 웅덩이만 침수!
+    const marshNoise = fbm(x * 0.52 + 1.4, y * 0.52 - 0.8, 3);
+    const backswampBasin = smoothstep(2.6, 4.3, perpDist);
+    const localPondHollow = smoothstep(0.57, 0.78, marshNoise) * 0.22;
+    const swampDepression = backswampBasin * (0.09 + localPondHollow);
 
-    // 외곽 곡벽 구릉 끝자락 (|x| > 8.2)
+    // 외곽 곡벽 구릉 끝자락 (|x| > 7.8)
     const valleyMargin = smoothstep(7.8, 10.0, Math.abs(x)) * (0.95 + fbm(x * 0.7, y * 0.7) * 0.35);
 
-    const floodplainSurface = 0.72 + leveeProfile + crevasseSplay - swampDepression + valleyMargin + fbm(x * 1.1, y * 1.1) * 0.03;
-    const channelT = smoothstep(chanHalfW * 0.68, chanHalfW + 0.35, perpDist);
+    const floodplainSurface =
+      0.74 + leveeProfile + crevasseSplay - swampDepression + valleyMargin + fbm(x * 1.1, y * 1.1) * 0.028;
+    const channelT = smoothstep(chanHalfW * 0.68, chanHalfW + 0.38, perpDist);
     const riverBed = 0.22 + fbm(x * 2.5, y * 2.5) * 0.04;
 
     const rawH = riverBed + (floodplainSurface - riverBed) * channelT;
     h = Math.max(0.16, rawH * reliefScale);
 
-    if (perpDist < chanHalfW + 0.12 && rawH < 0.64) {
+    if (perpDist < chanHalfW + 0.12 && rawH < 0.62) {
       // 본류 하천 수로
       color.set(mixColor('#174d5c', '#246b7d', fbm(x * 5, y * 5)));
-    } else if (leveeProfile + crevasseSplay > 0.20 && valleyMargin < 0.2) {
+    } else if (leveeProfile + crevasseSplay > 0.17 && valleyMargin < 0.2) {
       // 자연제방 및 파제퇴적체: 배수가 양호한 사질양토 황갈색 밭·과수원·취락 터
       color.set(mixColor('#8c7751', '#ab9368', fbm(x * 3.5, y * 3.5)));
     } else if (valleyMargin > 0.25) {
       // 곡벽 산록림
       color.set(mixColor('#2f5225', '#426b33', fbm(x * 2.5, y * 2.5)));
-    } else if (rawH < 0.59) {
-      // 배후습지 저습지 늪 수면 및 창포·갈대 군락
-      color.set(mixColor('#1c4232', '#2b5942', fbm(x * 5, y * 5)));
+    } else if (rawH < 0.61) {
+      // 배후습지 국소 늪지 연못 및 습생 갈대 군락
+      color.set(mixColor('#1b4534', '#2c5c43', fbm(x * 5, y * 5)));
     } else {
-      // 배후습지 점토질 논경지 바둑판 구획 색감
+      // 배후습지 점토질 논경지 바둑판 구획 및 습윤 초지
       const paddyGrid =
-        Math.abs(Math.sin(x * 1.8)) < 0.07 || Math.abs(Math.sin(y * 1.8)) < 0.07 ? 0.15 : 0.0;
-      color.set(mixColor('#355928', '#4c7538', clamp(fbm(x * 2.2, y * 2.2) + paddyGrid, 0, 1)));
+        Math.abs(Math.sin(x * 1.8)) < 0.065 || Math.abs(Math.sin(y * 1.8)) < 0.065 ? 0.14 : 0.0;
+      const wetTint = smoothstep(0.69, 0.61, rawH);
+      const paddyCol = mixColor('#385e2a', '#517a3c', clamp(fbm(x * 2.2, y * 2.2) + paddyGrid, 0, 1));
+      color.copy(paddyCol).lerp(new THREE.Color('#274f35'), wetTint * 0.55);
     }
     return { height: h, color };
   }
 
   // =========================================================================
-  // 5. 삼각주 (바다를 향해 부채꼴·새발 모양으로 돌출 성장하는 하구 퇴적 지형: 낙동강 을숙도, 나일·미시시피)
-  // 후면(y > 4.2) 본류 하천 -> 분기점(0, 4.2) -> 4갈래 분류 하천 및 바다로 돌출한 델타 엽상체·하구 사주!
+  // 5. 삼각주 (바다를 향해 비대칭 부채꼴·조족상으로 돌출 성장하는 하구 퇴적 지형: 낙동강 을숙도, 나일·미시시피)
+  // 후면(y > 4.2) 본류 하천 -> 비대칭 분기점 -> 각기 다른 방향·길이·곡률의 분류 하천 및 하구 사주섬!
   // =========================================================================
   if (normSub === '삼각주') {
-    const apexX = 0.0;
-    const apexY = 4.4;
+    const apexX = -0.35;
+    const apexY = 4.45;
 
-    // 1) 상류 본류 수로 (y > 4.2 -> (0, 4.4)로 진입)
-    const trunkSeg = sdSegment(x - Math.sin((y - apexY) * 0.45) * 0.55, y, 0.0, 10.2, apexX, apexY);
+    // 1) 상류 본류 수로 (y > 4.2 -> (-0.35, 4.45)로 진입)
+    const trunkSeg = sdSegment(x - Math.sin((y - apexY) * 0.42) * 0.58, y, -0.55, 10.2, apexX, apexY);
 
-    // 2) 분기점에서 전면 바다(-Y)를 향해 뻗어나가는 4개의 분류 하천(Distributaries) 및 돌출 퇴적 엽상체(Delta Lobes)
+    // 2) 좌우 거울 대칭을 깬 5개의 비대칭 분류 하천(Distributaries) 및 돌출 엽상체(Delta Lobes)
     const lobes = [
-      { bx: -5.4, by: -3.2, lobeReach: 1.05, chanW: 0.42 },
-      { bx: -1.85, by: -5.3, lobeReach: 1.35, chanW: 0.52 }, // 주 돌출 조족상 엽상체 1
-      { bx: 2.05, by: -5.0, lobeReach: 1.28, chanW: 0.48 },  // 주 돌출 조족상 엽상체 2
-      { bx: 5.5, by: -2.8, lobeReach: 0.98, chanW: 0.40 },
+      { sx: apexX, sy: apexY, bx: -6.1, by: -1.9, chanW: 0.36, lobeW: 1.55, warpFreq: 0.52, warpAmp: 0.36, barOffX: -0.75, barOffY: -0.75, barRx: 1.05 },
+      { sx: apexX, sy: apexY, bx: -2.65, by: -6.15, chanW: 0.54, lobeW: 1.88, warpFreq: 0.46, warpAmp: 0.42, barOffX: -0.35, barOffY: -0.95, barRx: 1.42 }, // 주 돌출 조족상 엽상체 (남서)
+      { sx: apexX, sy: apexY, bx: 0.85, by: -4.85, chanW: 0.44, lobeW: 1.62, warpFreq: 0.62, warpAmp: 0.30, barOffX: 0.25, barOffY: -0.82, barRx: 1.18 },   // 중앙 분류
+      { sx: 0.25, sy: 0.5, bx: 3.45, by: -5.35, chanW: 0.46, lobeW: 1.72, warpFreq: 0.50, warpAmp: 0.38, barOffX: 0.65, barOffY: -0.88, barRx: 1.32 },     // 2차 분기 동남 분류
+      { sx: apexX, sy: apexY, bx: 5.85, by: -1.35, chanW: 0.34, lobeW: 1.42, warpFreq: 0.58, warpAmp: 0.28, barOffX: 0.72, barOffY: -0.65, barRx: 0.92 },  // 동쪽 구하도
     ];
 
-    // 기본 호상 삼각주 평야 + 각 분류 하도를 따라 바다 쪽으로 길게 돌출한 자연제방 엽상체(Bird-foot / Arcuate Lobes)!
     const dx = x - apexX;
     const dy = apexY - y;
-    const rFromApex = Math.hypot(dx, Math.max(0.0, dy));
-    const upperPlain = smoothstep(2.2, 6.2, y) * (0.48 + (y - 2.2) * 0.045);
+    const coastWarp = (warpedFbm(x * 0.25, y * 0.25, 3) - 0.5) * 1.15;
+    const rFromApex = Math.hypot(dx * 0.96, Math.max(0.0, dy)) + coastWarp;
+    const upperPlain = smoothstep(2.0, 6.2, y) * (0.48 + (y - 2.0) * 0.045);
 
-    // 기본 반원형 델타 바디
-    const arcuateBody = smoothstep(8.2, 4.5, rFromApex) * smoothstep(-5.8, 3.5, y) * 0.46;
+    // 기본 비대칭 호상 델타 평야
+    const arcuateBody = smoothstep(8.3, 4.2, rFromApex) * smoothstep(-5.8, 3.5, y) * 0.45;
 
     let lobeLand = 0;
     let channelCarve = 0;
     let mouthBarLift = 0;
-    let minChanRatio = 99.0;
 
     // 본류 하도 굴착
-    if (y > apexY - 0.3) {
-      const trunkRatio = trunkSeg.dist / 0.68;
-      minChanRatio = Math.min(minChanRatio, trunkRatio);
+    if (y > apexY - 0.35) {
       channelCarve = Math.max(channelCarve, (1.0 - smoothstep(0.35, 0.72, trunkSeg.dist)) * 0.56);
     }
 
     for (const lb of lobes) {
-      const wx = x + Math.sin(y * 0.55 + lb.bx) * 0.32;
-      const seg = sdSegment(wx, y, apexX, apexY, lb.bx, lb.by);
+      const wx = x + Math.sin(y * lb.warpFreq + lb.bx * 0.7) * lb.warpAmp;
+      const seg = sdSegment(wx, y, lb.sx, lb.sy, lb.bx, lb.by);
 
-      // 분류 하도 양안을 따라 바다 속으로 길게 뻗어 나가는 퇴적 둑(Prograding delta lobe)
-      const lobeWidth = 1.65 + seg.t * 0.55;
+      // 분류 하도 양안을 따라 바다 속으로 뻗어 나가는 자연제방 엽상체(Prograding delta lobe)
+      const lobeWidth = lb.lobeW + seg.t * 0.45;
       const thisLobe =
         Math.exp(-Math.pow(seg.dist / lobeWidth, 2.0)) *
         0.52 *
-        (1.0 - smoothstep(0.78, 1.02, seg.t));
+        (1.0 - smoothstep(0.76, 1.02, seg.t));
       lobeLand = Math.max(lobeLand, thisLobe);
 
       // 분류 수로 굴착
       const cw = lb.chanW * (1.05 - 0.25 * seg.t);
-      const cRatio = seg.dist / cw;
-      if (seg.t < 0.98) minChanRatio = Math.min(minChanRatio, cRatio);
-      const thisCarve = (1.0 - smoothstep(cw * 0.55, cw * 1.15, seg.dist)) * 0.48 * (1.0 - smoothstep(0.92, 1.05, seg.t));
+      const thisCarve =
+        (1.0 - smoothstep(cw * 0.52, cw * 1.15, seg.dist)) *
+        0.48 *
+        (1.0 - smoothstep(0.92, 1.05, seg.t));
       channelCarve = Math.max(channelCarve, thisCarve);
 
-      // 분류 하구 바로 앞바다에 초승달 모양으로 쌓이는 하구 사주(Distributary Mouth Bar / 을숙도형 사주섬!)
-      const mbX = lb.bx + (lb.bx - apexX) * 0.14;
-      const mbY = lb.by - 0.85;
-      const dMouthBar = Math.hypot((x - mbX) / 1.15, (y - mbY) / 0.52);
-      if (dMouthBar < 1.1) {
-        mouthBarLift = Math.max(mouthBarLift, (1.0 - smoothstep(0.25, 1.05, dMouthBar)) * 0.42);
+      // 분류 하구 바로 앞바다에 비대칭 초승달 모양으로 쌓이는 하구 사주(Mouth Bar / 을숙도형 사주섬!)
+      const mbX = lb.bx + lb.barOffX;
+      const mbY = lb.by + lb.barOffY;
+      const dMouthBar = Math.hypot((x - mbX) / lb.barRx, (y - mbY) / 0.48);
+      if (dMouthBar < 1.15) {
+        mouthBarLift = Math.max(mouthBarLift, (1.0 - smoothstep(0.24, 1.08, dMouthBar)) * 0.43);
       }
     }
 
@@ -427,9 +483,9 @@ export function evalFluvialTerrain(
     const rawH = Math.max(0.16, deltaTop + fbm(x * 1.8, y * 1.8) * 0.035);
     h = rawH * reliefScale;
 
-    if (rawH < 0.52) {
+    if (rawH < 0.51) {
       // 분류 하도 및 전면 바다 (하구 부근은 황갈색 부유 토사 플룸이 섞인 기수역 색조!)
-      const sedimentPlume = smoothstep(-7.8, -1.5, y) * Math.exp(-Math.pow(x / 6.8, 2.0));
+      const sedimentPlume = smoothstep(-8.2, -1.5, y) * Math.exp(-Math.pow((x + 0.3) / 7.2, 2.0));
       const seaCol = mixColor('#0c3347', '#16506b', fbm(x * 3, y * 3));
       const brackishCol = mixColor('#285957', '#427060', fbm(x * 4, y * 4));
       color.copy(seaCol).lerp(brackishCol, sedimentPlume * 0.72);
@@ -516,22 +572,29 @@ export function evalFluvialTerrain(
 
   // =========================================================================
   // 7. 폭포 (상류 경암층 고원 -> 말발굽형 폭포 단애 -> 폭호(Plunge Pool) -> 두부침식 후퇴 협곡: 나이아가라, 정방폭포)
-  // 후면(y > 1.35) 상류에서 전면(y < 1.35) 카메라 정면을 향해 시원하게 쏟아져 내리는 정방향 배치!
+  // 상류 하천 바닥과 폭포 립(lipY) 높이를 정확히 일치시켜 암석 댐 불연속(0.66m) 원천 제거!
   // =========================================================================
   if (normSub === '폭포') {
     const lipY = getWaterfallLipY(x);
     const streamX = Math.sin((y - 1.5) * 0.32) * 0.72;
     const distStream = Math.abs(x - streamX);
 
-    // 폭포 낙하지점 직하부 깊은 원형 폭호 (Plunge Pool: (0, -0.15))
-    const poolDist = Math.hypot(x / 2.05, (y + 0.15) / 1.75);
+    // 폭포 낙하지점 직하부 깊은 원형 폭호 (Plunge Pool: (0.1, -0.15))
+    const poolDist = Math.hypot((x - 0.1) / 2.05, (y + 0.15) / 1.75);
+
+    const chanHalfW = 1.35;
+    const plateauTop = 4.26 + smoothstep(1.5, 8.0, Math.abs(x)) * 0.42 + fbm(x * 0.7, y * 0.7) * 0.16;
+
+    // 립(lipY) 지점에서의 상류 하천 단면 높이 (y < lipY 측과 y >= lipY 측의 완전한 C0 연속성 보장!)
+    const streamXAtLip = Math.sin((lipY - 1.5) * 0.32) * 0.72;
+    const inUpperRiverAtLip = 1.0 - smoothstep(chanHalfW * 0.45, chanHalfW, Math.abs(x - streamXAtLip));
+    const plateauTopAtLip = 4.26 + smoothstep(1.5, 8.0, Math.abs(x)) * 0.42 + fbm(x * 0.7, lipY * 0.7) * 0.16;
+    const upperBedAtLip = 3.56 + fbm(x * 2.5, lipY * 2.5) * 0.04;
 
     let rawH = 0;
     if (y >= lipY) {
       // 1) 상류 저항성 경암층(Caprock: 돌로마이트/현무암) 대지 및 폭포로 유입되는 상류 하천
-      const chanHalfW = 1.35;
       const inUpperRiver = 1.0 - smoothstep(chanHalfW * 0.45, chanHalfW, distStream);
-      const plateauTop = 4.28 + smoothstep(1.5, 8.0, Math.abs(x)) * 0.42 + fbm(x * 0.7, y * 0.7) * 0.16;
       const upperBed = 3.56 + (y - lipY) * 0.025 + fbm(x * 2.5, y * 2.5) * 0.04;
       rawH = plateauTop - (plateauTop - upperBed) * inUpperRiver;
 
@@ -539,38 +602,45 @@ export function evalFluvialTerrain(
         color.set(mixColor('#145061', '#226f82', fbm(x * 5, y * 5)));
       } else if (distStream < chanHalfW + 0.45) {
         // 물에 씻긴 단단한 상부 경암층 암반 테두리
-        color.set(mixColor('#57524b', '#756e64', fbm(x * 5, y * 5)));
+        const rimBlend = smoothstep(chanHalfW, chanHalfW + 0.45, distStream);
+        color
+          .copy(mixColor('#57524b', '#756e64', fbm(x * 5, y * 5)))
+          .lerp(mixColor('#2c5223', '#426e34', fbm(x * 2.2, y * 2.2)), rimBlend);
       } else {
         // 상류 울창한 수림 고원
         color.set(mixColor('#2c5223', '#426e34', fbm(x * 2.2, y * 2.2)));
       }
     } else {
       // 2) 폭포 절벽 전면 급락부 + 깊은 폭호(Plunge Pool) + 두부침식 후퇴 협곡(Recession Gorge)
-      const cliffWallT = smoothstep(lipY - 0.55, lipY, y);
+      const cliffWallT = smoothstep(lipY - 0.58, lipY, y);
       const gorgeHalfW = 1.65 + clamp((-0.8 - y) / 9.0, 0.0, 1.0) * 0.55;
       const gorgeWallT = smoothstep(gorgeHalfW * 0.72, gorgeHalfW + 0.85, distStream);
 
       const wallT = Math.max(cliffWallT, gorgeWallT);
-      const plateauRimH = 4.22 + smoothstep(2.0, 8.0, Math.abs(x)) * 0.38 + fbm(x * 0.7, y * 0.7) * 0.16;
+
+      // 립 바로 아래에서 상류 하천 절개 깊이를 정확히 이어받아 암석 댐 없이 자연스럽게 쏟아짐!
+      const lipChannelCut = (plateauTopAtLip - upperBedAtLip) * inUpperRiverAtLip * smoothstep(lipY - 0.72, lipY, y);
+      const targetRimH = plateauTop - lipChannelCut;
 
       // 하류 하상 및 깊게 파인 폭호 와지 바닥
       const poolScour = poolDist < 1.0 ? (1.0 - poolDist * poolDist) * 0.18 : 0;
       const lowerBed = 0.30 - poolScour + fbm(x * 2.5, y * 2.5) * 0.04;
 
-      rawH = lowerBed + (plateauRimH - lowerBed) * Math.pow(wallT, 0.72);
+      rawH = lowerBed + (targetRimH - lowerBed) * Math.pow(wallT, 0.72);
 
       if (wallT < 0.15 && rawH < 0.62) {
         // 폭호 및 하류 협곡 급류 바닥
         color.set(mixColor('#0e4252', '#1c697d', fbm(x * 5, y * 5)));
-      } else if (wallT < 0.92) {
-        // 후퇴 협곡 양안 절벽: 상부 두꺼운 경암층(밝은 회갈색) vs 하부 무른 셰일 연암층(어두운 회흑색) 차별층리!
+      } else if (wallT < 0.96) {
+        // 후퇴 협곡 양안 절벽: 상부 경암층(회갈색) vs 하부 셰일 연암층(회흑색), 상단 수림으로 부드럽게 블렌드
         const isUpperCaprock = rawH > 3.15;
         const shaleStrata = Math.sin(rawH * 14.0) * 0.5 + 0.5;
-        color.set(
-          isUpperCaprock
-            ? mixColor('#696055', '#8f8373', fbm(x * 4, y * 4))
-            : mixColor('#2e2b29', '#4a443f', shaleStrata)
-        );
+        const rockCol = isUpperCaprock
+          ? mixColor('#696055', '#8f8373', fbm(x * 4, y * 4))
+          : mixColor('#2e2b29', '#4a443f', shaleStrata);
+        const topForest = mixColor('#2c5223', '#426e34', fbm(x * 2.2, y * 2.2));
+        const rimGreen = smoothstep(0.84, 0.96, wallT) * (1.0 - inUpperRiverAtLip * cliffWallT);
+        color.copy(rockCol).lerp(topForest, rimGreen);
       } else {
         // 협곡 상단 수림대
         color.set(mixColor('#2c5223', '#426e34', fbm(x * 2.2, y * 2.2)));

@@ -114,7 +114,7 @@ export const IncisedMeanderFeatures: React.FC<{ reliefScale: number }> = ({ reli
 };
 
 export const FloodplainFeatures: React.FC<{ reliefScale?: number }> = ({ reliefScale = 1.0 }) => {
-  const waterFn = useMemo(() => () => 0.60 * reliefScale, [reliefScale]);
+  const waterFn = useMemo(() => () => 0.58 * reliefScale, [reliefScale]);
 
   // Grounded hamlet cottages along the dry elevated Natural Levee crest!
   const leveeHousesGeo = useMemo(() => {
@@ -209,68 +209,91 @@ export const RiverTerraceFeatures: React.FC<{ reliefScale?: number }> = ({ relie
 export const WaterfallCascades: React.FC<{ reliefScale?: number }> = ({ reliefScale = 1.0 }) => {
   const curtainMatRef = useRef<THREE.MeshStandardMaterial>(null);
 
-  // 1. 3D Overhanging Hard Caprock Lip + Recessed Dark Shale Alcove behind the waterfall!
+  // 1. 3D Overhanging Hard Caprock Lip tucked cleanly inside the horseshoe notch (no protruding side ears!)
   const caprockLedgeGeo = useMemo(() => {
     return buildVaultedRoofShell(
-      -3.2,
-      3.2,
-      0.75,
-      2.35,
-      40,
+      -2.0,
+      2.2,
+      1.05,
+      2.32,
+      44,
       20,
       (x, y) => {
         const lipY = getWaterfallLipY(x);
-        // Jutting 0.58m forward (-Y) from lipY to create a genuine undercut waterfall ledge!
-        if (y < lipY - 0.58 || y > lipY + 0.22) return null;
-        const jut = clamp((y - (lipY - 0.58)) / 0.8, 0, 1);
-        const inChannel = 1.0 - smoothstep(0.6, 1.35, Math.abs(x));
-        const topZ = (4.22 - inChannel * 0.64) * reliefScale;
-        const ceilZ = (2.85 + (1.0 - jut) * 0.35) * reliefScale;
-        if (topZ <= ceilZ + 0.08 * reliefScale) return null;
+        const streamXAtLip = Math.sin((lipY - 1.5) * 0.32) * 0.72;
+        const relX = Math.abs(x - streamXAtLip);
+        // Taper overhang width smoothly to zero at gorge flanks so no brown ledges jut into forest walls
+        const overhangProfile = 1.0 - smoothstep(1.05, 1.72, relX);
+        if (overhangProfile <= 0.04) return null;
+        const jutDepth = 0.24 * overhangProfile;
+        if (y < lipY - jutDepth || y > lipY + 0.14) return null;
+
+        const jut = clamp((y - (lipY - jutDepth)) / (jutDepth + 0.14), 0, 1);
+        const inChannel = 1.0 - smoothstep(0.55, 1.32, relX);
+        // Keep caprock top cleanly beneath the upper river water & waterfall rollover so no brown seam pokes through!
+        const demLipZ = evaluateTerrainPoint('폭포', x, lipY + 0.06, reliefScale).height;
+        const topZ = Math.min(demLipZ - 0.04 * reliefScale, inChannel > 0.25 ? 3.54 * reliefScale : 99.0);
+        const ceilZ = (2.82 + (1.0 - jut) * 0.30 - inChannel * 0.25) * reliefScale;
+        if (topZ <= ceilZ + 0.10 * reliefScale) return null;
         return {
           ceilZ,
           topZ,
-          topColor: inChannel > 0.4 ? new THREE.Color('#1c596b') : new THREE.Color('#665e54'),
+          topColor: inChannel > 0.35 ? new THREE.Color('#195566') : new THREE.Color('#645c52'),
           innerColor: new THREE.Color('#1a1816'),
         };
       },
       (_x, _y, z) => {
         const b = Math.sin((z / Math.max(0.5, reliefScale)) * 16.0) * 0.5 + 0.5;
-        return mixColor('#595147', '#8c8070', b);
+        return mixColor('#575046', '#8a7e6e', b);
       }
     );
   }, [reliefScale]);
   useDisposeGeometry(caprockLedgeGeo);
 
-  // 2. True Parabolic Free-Falling Horseshoe Water Curtain!
+  // 2. Continuous Parabolic Free-Falling Horseshoe Water Curtain (overlaps upper river cleanly — zero gap!)
   const waterfallSheetGeo = useMemo(() => {
-    const nx = 36;
-    const ns = 28;
+    const nx = 44;
+    const ns = 32;
     const posList: number[] = [];
     const colList: number[] = [];
     const idxList: number[] = [];
 
-    const cCrest = new THREE.Color('#25859c');
+    const cCrest = new THREE.Color('#1f7d94');
+    const cMid = new THREE.Color('#7ecfe0');
     const cFoam = new THREE.Color('#eefaff');
     const tmp = new THREE.Color();
 
-    for (let j = 0; j <= ns; j++) {
-      const s = j / ns; // 0 at lip crest -> 1 at plunge pool impact
-      for (let i = 0; i <= nx; i++) {
-        const x = -1.22 + (i / nx) * 2.44;
-        const lipY = getWaterfallLipY(x) - 0.42;
-        // Parabolic projectile trajectory forward (-Y) and downward (-Z)
-        const y = lipY - s * 1.08;
-        const zTop = 3.74 * reliefScale;
-        const zBot = 0.52 * reliefScale;
-        const z = zTop - (zTop - zBot) * (s * s * 0.85 + s * 0.15);
+    const lipYCenter = getWaterfallLipY(0.0);
+    const centerX = Math.sin((lipYCenter - 1.5) * 0.32) * 0.72;
 
-        // Natural water-curtain rib streaks
-        const rib = Math.sin(x * 11.0 + s * 3.0) * 0.035 * Math.sin(s * Math.PI);
+    for (let j = 0; j <= ns; j++) {
+      const s = j / ns; // 0 inside upper river crest -> 1 into plunge pool
+      for (let i = 0; i <= nx; i++) {
+        const u = (i / nx) * 2.0 - 1.0; // -1..+1 across waterfall width
+        const x = centerX + u * 1.18;
+        const lipY = getWaterfallLipY(x);
+        // Start slightly behind the lip (+0.14m) so curtain vaults cleanly over the caprock rim!
+        const yStart = lipY + 0.14;
+        const forwardThrow = 1.56 * (1.0 - 0.14 * u * u);
+        const y = yStart - s * forwardThrow;
+
+        const zTop = 3.82 * reliefScale;
+        const zBot = 0.50 * reliefScale;
+        // Rounded horizontal rollover near crest (s < 0.25) transitioning into accelerating parabolic free-fall
+        const dropCurve = Math.pow(s, 2.05);
+        const z = zTop - (zTop - zBot) * dropCurve;
+
+        // Subtle organic curtain ribs & foaming undulations
+        const rib = Math.sin(x * 11.5 + s * 3.2) * 0.03 * Math.sin(s * Math.PI);
         posList.push(x, y + rib, z);
 
-        const froth = clamp(Math.pow(s, 0.7) * 0.85 + (Math.sin(x * 16.0) * 0.5 + 0.5) * 0.25, 0, 1);
-        tmp.copy(cCrest).lerp(cFoam, froth);
+        const streak = Math.sin(x * 15.0 + s * 2.5) * 0.5 + 0.5;
+        const froth = clamp(Math.pow(s, 0.75) * 0.88 + streak * 0.22 * smoothstep(0.08, 0.45, s), 0, 1);
+        if (froth < 0.45) {
+          tmp.copy(cCrest).lerp(cMid, froth / 0.45);
+        } else {
+          tmp.copy(cMid).lerp(cFoam, (froth - 0.45) / 0.55);
+        }
         colList.push(tmp.r, tmp.g, tmp.b);
       }
     }
@@ -300,14 +323,14 @@ export const WaterfallCascades: React.FC<{ reliefScale?: number }> = ({ reliefSc
   useFrame(({ clock }) => {
     const t = clock.getElapsedTime();
     if (curtainMatRef.current) {
-      curtainMatRef.current.opacity = 0.86 + Math.sin(t * 7.5) * 0.05;
+      curtainMatRef.current.opacity = 0.88 + Math.sin(t * 7.5) * 0.04;
     }
   });
 
   const upperRiverFn = useMemo(
     () => (x: number, y: number) => {
       const lipY = getWaterfallLipY(x);
-      return y >= lipY - 0.15 ? 3.80 * reliefScale : null;
+      return y >= lipY - 0.06 ? 3.80 * reliefScale : null;
     },
     [reliefScale]
   );
@@ -315,7 +338,7 @@ export const WaterfallCascades: React.FC<{ reliefScale?: number }> = ({ reliefSc
   const lowerRiverFn = useMemo(
     () => (x: number, y: number) => {
       const lipY = getWaterfallLipY(x);
-      return y <= lipY - 0.35 ? 0.56 * reliefScale : null;
+      return y <= lipY - 0.30 ? 0.56 * reliefScale : null;
     },
     [reliefScale]
   );
@@ -330,10 +353,10 @@ export const WaterfallCascades: React.FC<{ reliefScale?: number }> = ({ reliefSc
         <meshStandardMaterial
           ref={curtainMatRef}
           vertexColors
-          roughness={0.12}
-          metalness={0.08}
+          roughness={0.14}
+          metalness={0.06}
           transparent
-          opacity={0.88}
+          opacity={0.90}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -362,8 +385,8 @@ export const WaterfallCascades: React.FC<{ reliefScale?: number }> = ({ reliefSc
         waveScale={0.65}
       />
 
-      {/* Plunge-pool turbulent whitewater foam ring & spray mist */}
-      <VolcanicSteamPlume position={[0, 0.35, 0.62 * reliefScale]} scale={0.72} />
+      {/* Plunge-pool turbulent whitewater spray mist */}
+      <VolcanicSteamPlume position={[0.12, 0.55, 0.60 * reliefScale]} scale={0.68} />
 
       <GroundedPineTrees
         normSub="폭포"

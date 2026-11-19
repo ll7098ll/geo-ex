@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import * as THREE from 'three';
 import {
   evaluateTerrainPoint,
-  fbm,
   smoothstep,
 } from '../terrainGenerators';
 import { MUSHROOM_PEDESTAL_SPECS } from '../generators/arid';
@@ -178,23 +177,23 @@ export const OasisPalms: React.FC<{ reliefScale?: number }> = ({ reliefScale = 1
     [reliefScale]
   );
 
-  // Grounded +Z curved Date Palm trees & Adobe Oasis Pavilion (둔황 월아천·시와 오아시스 분위기!)
+  // Grounded +Z curved Date Palm trees with genuine downward-drooping (-Z) frond crowns on dry oasis banks!
   const oasisPropsGeo = useMemo(() => {
     const parts: THREE.BufferGeometry[] = [];
     const palmCoords: [number, number, number][] = [
-      [-2.25, -0.1, 1.0],
-      [-1.75, 0.95, 0.92],
-      [-0.65, 1.15, 1.05],
-      [0.85, 1.05, 0.95],
-      [1.95, 0.75, 1.02],
-      [2.35, -0.15, 0.88],
-      [-1.55, -1.55, 0.85],
-      [1.45, -1.65, 0.90],
+      [-2.35, -0.05, 1.0],
+      [-1.82, 1.05, 0.92],
+      [-0.65, 1.25, 1.05],
+      [0.85, 1.15, 0.95],
+      [2.32, 0.92, 1.02], // Moved cleanly up-bank onto dry oasis sand (above 0.64 water level!)
+      [2.45, -0.15, 0.88],
+      [-1.62, -1.62, 0.85],
+      [1.52, -1.72, 0.90],
     ];
 
     for (const [px, py, sc] of palmCoords) {
       const gz = evaluateTerrainPoint('오아시스', px, py, reliefScale).height;
-      const trunkH = 0.95 * sc;
+      const trunkH = 0.98 * sc;
       const leanX = (px > 0 ? 0.08 : -0.08) * sc;
 
       const trunk = new THREE.CylinderGeometry(0.042 * sc, 0.068 * sc, trunkH, 7);
@@ -202,18 +201,32 @@ export const OasisPalms: React.FC<{ reliefScale?: number }> = ({ reliefScale = 1
       trunk.translate(px + leanX * 0.5, py, gz + trunkH * 0.48);
       parts.push(paintGeometrySolid(trunk, '#6b4c30'));
 
-      const topZ = gz + trunkH * 0.94;
-      for (let f = 0; f < 7; f++) {
-        const ang = (f / 7) * Math.PI * 2 + px;
-        const frond = new THREE.ConeGeometry(0.11 * sc, 0.52 * sc, 4);
-        frond.scale(1.0, 1.0, 0.28);
-        // Orient frond outward horizontally and drooping slightly
-        frond.rotateZ(-Math.PI / 2 + 0.35);
-        frond.rotateY(0);
-        const holder = new THREE.Matrix4().makeRotationZ(ang);
-        frond.applyMatrix4(holder);
-        frond.translate(px + leanX + Math.cos(ang) * 0.22 * sc, py + Math.sin(ang) * 0.22 * sc, topZ);
-        parts.push(paintGeometrySolid(frond, f % 2 === 0 ? '#2b6e22' : '#3d8731'));
+      const topZ = gz + trunkH * 0.95;
+      // Outer drooping palm fronds (pointing outward +X, pitched downward -Z via rotateY(+pitch), then rotated by azimuth ang!)
+      for (let f = 0; f < 8; f++) {
+        const ang = (f / 8) * Math.PI * 2 + px;
+        const frondLen = 0.56 * sc;
+        const frond = new THREE.ConeGeometry(0.105 * sc, frondLen, 4);
+        frond.translate(0, frondLen * 0.48, 0);
+        frond.scale(1.0, 1.0, 0.22);
+        frond.rotateZ(-Math.PI / 2); // Align frond axis along +X
+        frond.rotateY(0.36 + (f % 2) * 0.16); // Positive rotateY pitches +X tip downward (-Z)!
+        frond.rotateZ(ang);
+        frond.translate(px + leanX, py, topZ);
+        parts.push(paintGeometrySolid(frond, f % 2 === 0 ? '#27691f' : '#3a852e'));
+      }
+      // Inner slightly arched upper crown fronds
+      for (let f = 0; f < 5; f++) {
+        const ang = (f / 5) * Math.PI * 2 + py + 0.4;
+        const frondLen = 0.36 * sc;
+        const frond = new THREE.ConeGeometry(0.085 * sc, frondLen, 4);
+        frond.translate(0, frondLen * 0.46, 0);
+        frond.scale(1.0, 1.0, 0.22);
+        frond.rotateZ(-Math.PI / 2);
+        frond.rotateY(-0.14); // Gently lifted inner crown
+        frond.rotateZ(ang);
+        frond.translate(px + leanX, py, topZ + 0.03 * sc);
+        parts.push(paintGeometrySolid(frond, '#459636'));
       }
     }
 
@@ -240,17 +253,15 @@ export const OasisPalms: React.FC<{ reliefScale?: number }> = ({ reliefScale = 1
   );
 };
 
-
 export const PlayaBrineFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale }) => {
-  // Subtle mirror-like shallow brine film pockets inside the central salt pan (우유니 거울 염수막!)
+  // Smooth continuous brine mirror elevation: fills ONLY the 2 depressed Uyuni brine basins while crisp white hex halite ridges poke above!
   const brineFn = useMemo(
     () => (x: number, y: number) => {
       const rx = 7.4 + Math.sin(y * 0.4) * 0.45;
       const ry = y > 0 ? 6.6 : 9.2;
       const rBasin = Math.hypot(x / rx, y / ry);
-      if (rBasin > 0.72) return null;
-      const pocket = fbm(x * 0.45 + 2.1, y * 0.45, 2);
-      return pocket > 0.52 ? 0.318 * reliefScale : null;
+      if (rBasin > 0.76) return null;
+      return 0.303 * reliefScale;
     },
     [reliefScale]
   );
@@ -260,12 +271,12 @@ export const PlayaBrineFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
       normSub="플라야"
       reliefScale={reliefScale}
       waterLevelFn={brineFn}
-      deepColor="#9ec5db"
-      shallowColor="#cfe6f2"
+      deepColor="#9ac3db"
+      shallowColor="#cce5f2"
       foamColor="#ffffff"
-      opacity={0.52}
-      waveScale={0.05}
-      roughness={0.02}
+      opacity={0.56}
+      waveScale={0.04}
+      roughness={0.03}
     />
   );
 };

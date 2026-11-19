@@ -72,11 +72,11 @@ export const VolcanicSteamPlume: React.FC<{
   const puffsRef = useRef<THREE.Group>(null);
   const seeds = useMemo(
     () =>
-      Array.from({ length: 8 }, (_, i) => ({
-        phase: (i / 8) * Math.PI * 2,
-        driftX: (Math.sin(i * 4.3) - 0.2) * 0.45,
-        driftY: Math.cos(i * 2.9) * 0.35,
-        baseSize: 0.22 + (i % 3) * 0.09,
+      Array.from({ length: 12 }, (_, i) => ({
+        phase: (i / 12) * Math.PI * 2,
+        driftX: 0.25 + Math.sin(i * 4.3) * 0.35,
+        driftY: Math.cos(i * 2.9) * 0.28,
+        baseSize: 0.16 + (i % 4) * 0.055,
       })),
     []
   );
@@ -86,17 +86,17 @@ export const VolcanicSteamPlume: React.FC<{
     if (!puffsRef.current) return;
     puffsRef.current.children.forEach((child, i) => {
       const s = seeds[i];
-      const prog = ((t * 0.28 + s.phase / (Math.PI * 2)) % 1.0);
+      const prog = ((t * 0.24 + s.phase / (Math.PI * 2)) % 1.0);
       child.position.set(
-        s.driftX * prog * 1.8 * scale,
-        s.driftY * prog * 1.8 * scale,
-        prog * 2.3 * scale
+        s.driftX * prog * 1.65 * scale,
+        s.driftY * prog * 1.45 * scale,
+        prog * 2.15 * scale
       );
-      const sz = s.baseSize * (1.0 + prog * 1.9) * scale;
-      child.scale.set(sz, sz, sz * 0.78);
+      const sz = s.baseSize * (0.85 + prog * 1.75) * scale;
+      child.scale.set(sz * 1.15, sz * 1.05, sz * 0.72);
       const mat = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
       if (mat) {
-        mat.opacity = Math.sin(prog * Math.PI) * 0.28;
+        mat.opacity = Math.sin(prog * Math.PI) * 0.19;
       }
     });
   });
@@ -105,8 +105,8 @@ export const VolcanicSteamPlume: React.FC<{
     <group position={position} ref={puffsRef}>
       {seeds.map((_, idx) => (
         <mesh key={idx}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial color="#e6ecef" transparent opacity={0.22} roughness={1} depthWrite={false} />
+          <sphereGeometry args={[1, 14, 10]} />
+          <meshStandardMaterial color="#eef4f7" transparent opacity={0.14} roughness={1} depthWrite={false} />
         </mesh>
       ))}
     </group>
@@ -126,10 +126,10 @@ export const ColumnarJointingColumns: React.FC<{ reliefScale?: number }> = ({ re
     const idxList: number[] = [];
 
     const seenCells = new Set<string>();
-    const cDark = new THREE.Color('#16181d');
-    const cMid = new THREE.Color('#282c34');
-    const cCap = new THREE.Color('#3b404a');
-    const cWet = new THREE.Color('#0f1418');
+    const cDark = new THREE.Color('#191c22');
+    const cMid = new THREE.Color('#2d323b');
+    const cCap = new THREE.Color('#424854');
+    const cWet = new THREE.Color('#12181e');
     const tmp = new THREE.Color();
 
     for (let ySample = -9.4; ySample <= 9.4; ySample += 0.36) {
@@ -147,10 +147,11 @@ export const ColumnarJointingColumns: React.FC<{ reliefScale?: number }> = ({ re
         const distInland = cx - coastCurve;
         if (distInland < -2.75 || distInland > 3.05) continue;
 
-        // Stepped discrete basalt colonnade terrace height (Giant's Causeway / 중문 주상절리 계단식 단면!)
+        // Stepped discrete basalt colonnade terrace height guaranteed proud above recessed DEM backing!
         const normStep = clamp((distInland + 2.75) / 5.8, 0.0, 1.0);
         const quantizedTier = Math.floor(Math.pow(normStep, 1.18) * 11.0 + cell.cellId * 2.3) / 11.5;
-        const rawTop = clamp(0.46 + quantizedTier * 3.42, 0.42, 3.88);
+        const demBaseH = evaluateTerrainPoint('주상절리', cx, cy, 1.0).height;
+        const rawTop = clamp(Math.max(0.48 + quantizedTier * 3.42, demBaseH + 0.22), 0.44, 4.02);
         const topZ = rawTop * reliefScale;
         const botZ = 0.16 * reliefScale;
 
@@ -164,7 +165,7 @@ export const ColumnarJointingColumns: React.FC<{ reliefScale?: number }> = ({ re
           cornersY.push(cy + Math.sin(ang) * jitterR);
         }
 
-        const shade = 0.78 + cell.cellId * 0.38;
+        const shade = 0.80 + cell.cellId * 0.36;
 
         // 6 crisp flat vertical prism faces
         for (let s = 0; s < 6; s++) {
@@ -201,7 +202,7 @@ export const ColumnarJointingColumns: React.FC<{ reliefScale?: number }> = ({ re
         const dishDip = (cell.cellId > 0.5 ? -0.025 : 0.02) * reliefScale;
         const capTone = tmp
           .copy(rawTop < 0.72 ? cDark : cCap)
-          .multiplyScalar(0.85 + cell.cellId * 0.28);
+          .multiplyScalar(0.86 + cell.cellId * 0.28);
         if (distInland > 2.45) {
           capTone.lerp(new THREE.Color('#3a572c'), 0.45);
         }
@@ -266,47 +267,54 @@ export const LavaTubeFeatures: React.FC<{ reliefScale?: number }> = ({
 
     const getCeilingZ = (x: number, y: number): number => {
       const cx = Math.sin(y * 0.26) * 1.35;
-      const dx = (x - cx) / 1.95;
+      const dx = (x - cx) / 2.02;
       const arch = Math.max(0, 1.0 - dx * dx);
-      return (0.85 + Math.pow(arch, 0.58) * 1.48 + (y + 10.0) * 0.015) * reliefScale;
+      return (0.82 + Math.pow(arch, 0.58) * 1.48 + (y + 10.0) * 0.015) * reliefScale;
     };
 
     const roofShell = buildVaultedRoofShell(
-      -3.8,
-      3.8,
+      -4.1,
+      4.1,
       -6.4,
-      3.9,
-      56,
+      4.0,
       72,
+      96,
       (x, y) => {
         const cx = Math.sin(y * 0.26) * 1.35;
         const distTube = Math.abs(x - cx);
-        if (distTube > 1.92) return null;
+        if (distTube > 2.04) return null;
 
-        // Front entrance collapse gap (y in [-4.35, -2.35]) separates the front Natural Bridge from the main Lava Tube!
-        if (y > -4.35 && y < -2.35) return null;
+        // Organic curved front entrance collapse gap separating Natural Bridge from main Lava Tube
+        const gapFront = -4.25 + Math.sin(x * 1.4) * 0.14;
+        const gapBack = -2.35 + Math.cos(x * 1.2) * 0.16;
+        if (y > gapFront && y < gapBack) return null;
 
-        // Circular Skylight collapse window (천창 / 궤) at (cx(0.65), 0.65)
+        // Organic slightly irregular Skylight collapse window (천창 / 궤) at (cx(0.65), 0.65)
         const skylightCx = Math.sin(0.65 * 0.26) * 1.35;
-        const dSkylight = Math.hypot(x - skylightCx, y - 0.65);
-        if (dSkylight < 0.86) return null;
+        const skyAng = Math.atan2(y - 0.65, x - skylightCx);
+        const skyR = 0.86 + Math.sin(skyAng * 3.0 + 0.5) * 0.08 + Math.cos(skyAng * 5.0) * 0.05;
+        if (Math.hypot(x - skylightCx, y - 0.65) < skyR) return null;
 
         const ceilZ = getCeilingZ(x, y);
+        // Match the exact uncarved pahoehoe plain height + subtle shoulder tuck into the DEM rim!
+        const ropy = Math.sin(y * 5.5 + Math.cos(x * 2.2) * 1.8) * 0.035;
+        const shoulderTuck = smoothstep(1.62, 2.04, distTube) * 0.08;
         const surfaceBase =
-          (2.68 + (y / 10.0) * 0.35 + warpedFbm(x * 0.45, y * 0.45, 3) * 0.26) * reliefScale;
+          (2.65 + (y / 10.0) * 0.35 + warpedFbm(x * 0.45, y * 0.45, 3) * 0.26 + ropy - shoulderTuck) *
+          reliefScale;
 
         const gotjawal = smoothstep(0.42, 0.64, fbm(x * 0.75 + 2.0, y * 0.75, 4));
-        const topColor = mixColor('#2a2624', '#3d3733', fbm(x * 3, y * 3)).lerp(
-          new THREE.Color('#274a1f'),
+        const topColor = mixColor('#2e2a28', '#423c38', fbm(x * 3, y * 3)).lerp(
+          new THREE.Color('#294e21'),
           gotjawal * 0.78
         );
-        const innerColor = mixColor('#181311', '#2c221e', fbm(x * 5, y * 5));
+        const innerColor = mixColor('#1a1412', '#302520', fbm(x * 5, y * 5));
 
         return { ceilZ, topZ: surfaceBase, topColor, innerColor };
       },
       (x, _y, z) => {
         const bed = Math.sin((z / Math.max(0.5, reliefScale)) * 12.0 + x * 0.8) * 0.5 + 0.5;
-        return mixColor('#1e1917', '#42352f', bed);
+        return mixColor('#221c19', '#483a33', bed);
       }
     );
     parts.push(roofShell);
@@ -330,7 +338,7 @@ export const LavaTubeFeatures: React.FC<{ reliefScale?: number }> = ({
       const ly = -2.0 + (i / 28) * 5.2;
       const cx = Math.sin(ly * 0.26) * 1.35;
       const lx = cx + Math.sin(i * 7.3) * 1.05;
-      if (Math.hypot(lx - Math.sin(0.65 * 0.26) * 1.35, ly - 0.65) < 1.05) continue;
+      if (Math.hypot(lx - Math.sin(0.65 * 0.26) * 1.35, ly - 0.65) < 1.08) continue;
       const cz = getCeilingZ(lx, ly);
       const len = (0.18 + (i % 4) * 0.06) * reliefScale;
       const cone = new THREE.ConeGeometry(0.055, len, 6);
@@ -354,16 +362,58 @@ export const LavaTubeFeatures: React.FC<{ reliefScale?: number }> = ({
   }, [reliefScale]);
   useDisposeGeometry(lavaTubeGeo);
 
-  // Horizontal residual thermal cooling cracks along the tube floor (properly flat in XY!)
-  const floorGlowSegments = useMemo(() => {
-    return [-3.6, -2.6, -1.5, -0.4, 0.9, 2.1].map((gy, idx) => {
-      const gx = Math.sin(gy * 0.26) * 1.35 + Math.sin(idx * 2.4) * 0.18;
-      const gz = evaluateTerrainPoint('용암동굴', gx, gy, reliefScale).height + 0.025;
-      return { gx, gy, gz, rotZ: -Math.cos(gy * 0.26) * 0.34 };
-    });
+  // Organic sinuous residual glowing cooling-fissure vein along the tube floor (zero rectangular cards!)
+  const floorGlowRibbonGeo = useMemo(() => {
+    const segs = 48;
+    const pos: number[] = [];
+    const col: number[] = [];
+    const idx: number[] = [];
+    const cEdge = new THREE.Color('#2b1109');
+    const cCore = new THREE.Color('#ff5514');
+
+    for (let i = 0; i <= segs; i++) {
+      const t = i / segs;
+      const gy = -3.8 + t * 6.4;
+      const gx = Math.sin(gy * 0.26) * 1.35 + Math.sin(gy * 1.45) * 0.22;
+      const tx = 0.26 * 1.35 * Math.cos(gy * 0.26) + 1.45 * 0.22 * Math.cos(gy * 1.45);
+      const len = Math.hypot(tx, 1.0);
+      const nx = 1.0 / len;
+      const ny = -tx / len;
+
+      const taper = Math.sin(t * Math.PI);
+      const halfW = (0.08 + 0.14 * Math.abs(Math.sin(gy * 1.9))) * taper;
+      const gz = evaluateTerrainPoint('용암동굴', gx, gy, reliefScale).height + 0.022;
+
+      // Left edge, glowing center core, right edge
+      pos.push(gx - nx * halfW, gy - ny * halfW, gz);
+      col.push(cEdge.r, cEdge.g, cEdge.b);
+
+      pos.push(gx, gy, gz + 0.008);
+      col.push(cCore.r, cCore.g, cCore.b);
+
+      pos.push(gx + nx * halfW, gy + ny * halfW, gz);
+      col.push(cEdge.r, cEdge.g, cEdge.b);
+    }
+
+    for (let i = 0; i < segs; i++) {
+      const r0 = i * 3;
+      const r1 = (i + 1) * 3;
+      idx.push(r0, r0 + 1, r1, r0 + 1, r1 + 1, r1);
+      idx.push(r0 + 1, r0 + 2, r1 + 1, r0 + 2, r1 + 2, r1 + 1);
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    return geo;
   }, [reliefScale]);
+  useDisposeGeometry(floorGlowRibbonGeo);
 
   const skylightX = Math.sin(0.65 * 0.26) * 1.35;
+  const skylightFloorZ = evaluateTerrainPoint('용암동굴', skylightX, 0.65, reliefScale).height;
+  const beamHeight = Math.max(0.8, 2.55 * reliefScale - skylightFloorZ);
 
   return (
     <group>
@@ -371,29 +421,26 @@ export const LavaTubeFeatures: React.FC<{ reliefScale?: number }> = ({
         <meshStandardMaterial vertexColors roughness={0.82} metalness={0.12} />
       </mesh>
 
-      {/* Horizontal Ropy-Lava Floor Residual Cooling Cracks */}
-      {floorGlowSegments.map((seg, idx) => (
-        <mesh key={idx} position={[seg.gx, seg.gy, seg.gz]} rotation={[0, 0, seg.rotZ]}>
-          <planeGeometry args={[0.36, 0.92]} />
-          <meshStandardMaterial
-            color="#3d180e"
-            emissive="#c93b0b"
-            emissiveIntensity={0.85}
-            roughness={0.65}
-          />
-        </mesh>
-      ))}
+      {/* Organic Sinuous Ropy-Lava Floor Residual Cooling Vein */}
+      <mesh geometry={floorGlowRibbonGeo}>
+        <meshStandardMaterial
+          vertexColors
+          emissive="#c93b0b"
+          emissiveIntensity={0.9}
+          roughness={0.55}
+        />
+      </mesh>
 
-      {/* Dramatic Volumetric Sunbeam slanting through the Skylight collapse window! */}
+      {/* Volumetric Sunbeam entering strictly through the Skylight hole to the tube floor! */}
       <mesh
-        position={[skylightX + 0.18, 0.55, 1.55 * reliefScale]}
-        rotation={[Math.PI / 2 - 0.12, 0, 0.15]}
+        position={[skylightX + 0.06, 0.62, skylightFloorZ + beamHeight * 0.5]}
+        rotation={[Math.PI / 2 - 0.06, 0, 0.08]}
       >
-        <cylinderGeometry args={[0.62, 1.05, 2.35 * reliefScale, 20, 1, true]} />
+        <cylinderGeometry args={[0.42, 0.78, beamHeight, 20, 1, true]} />
         <meshBasicMaterial
-          color="#fff2cc"
+          color="#fff4d4"
           transparent
-          opacity={0.14}
+          opacity={0.13}
           side={THREE.DoubleSide}
           depthWrite={false}
         />
@@ -536,7 +583,7 @@ export const TuffConeFeatures: React.FC<{ reliefScale: number }> = ({ reliefScal
 export const ParasiticConeFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale }) => {
   const craterPondFn = useMemo(
     () => (x: number, y: number) =>
-      Math.hypot(x + 0.9, y - 0.7) < 1.25 ? 2.24 * reliefScale : null,
+      Math.hypot(x + 0.9, y - 0.7) < 1.25 ? 2.26 * reliefScale : null,
     [reliefScale]
   );
   return (
@@ -547,7 +594,7 @@ export const ParasiticConeFeatures: React.FC<{ reliefScale: number }> = ({ relie
       deepColor="#144538"
       shallowColor="#266e59"
       foamColor="#b8e6d8"
-      opacity={0.86}
+      opacity={0.88}
       waveScale={0.18}
     />
   );
@@ -555,14 +602,14 @@ export const ParasiticConeFeatures: React.FC<{ reliefScale: number }> = ({ relie
 
 export const StratovolcanoFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale }) => (
   <group>
-    <AnimatedLavaLake elevation={3.28 * reliefScale} radius={0.82} />
-    <VolcanicSteamPlume position={[0, 0, 3.65 * reliefScale]} scale={0.95} />
+    <AnimatedLavaLake elevation={3.46 * reliefScale} radius={0.68} />
+    <VolcanicSteamPlume position={[0, 0, 3.72 * reliefScale]} scale={0.9} />
   </group>
 );
 
 export const ShieldVolcanoFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale }) => (
   <group>
-    <AnimatedLavaLake position={[-0.22, -0.18, 1.98 * reliefScale]} radius={0.76} />
-    <VolcanicSteamPlume position={[-0.22, -0.18, 2.35 * reliefScale]} scale={0.75} />
+    <AnimatedLavaLake position={[-0.22, -0.18, 2.04 * reliefScale]} radius={0.74} />
+    <VolcanicSteamPlume position={[-0.22, -0.18, 2.38 * reliefScale]} scale={0.72} />
   </group>
 );

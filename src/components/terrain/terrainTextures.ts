@@ -41,65 +41,90 @@ export function getTerrainBumpTexture(
 
   const imgData = ctx.createImageData(512, 512);
   const data = imgData.data;
+  const TWO_PI = Math.PI * 2;
+
+  // 100% periodic pixel hash (wraps cleanly modulo 512)
+  const periodicHash = (px: number, py: number, seed: number) => {
+    const a = px & 511;
+    const b = py & 511;
+    const h = Math.sin(a * 12.9898 + b * 78.233 + seed) * 43758.5453123;
+    return h - Math.floor(h);
+  };
+
+  // Smooth periodic cellular pore/pit evaluator (cellSize must divide 512)
+  const periodicPore = (px: number, py: number, cellSize: number, seed: number) => {
+    const cells = 512 / cellSize;
+    const gx = Math.floor(px / cellSize);
+    const gy = Math.floor(py / cellSize);
+    const fx = (px - gx * cellSize) / cellSize;
+    const fy = (py - gy * cellSize) / cellSize;
+    const cx = gx & (cells - 1);
+    const cy = gy & (cells - 1);
+    const rx = 0.25 + periodicHash(cx, cy, seed) * 0.5;
+    const ry = 0.25 + periodicHash(cx + 17, cy + 31, seed + 5.1) * 0.5;
+    return Math.hypot(fx - rx, fy - ry);
+  };
 
   for (let y = 0; y < 512; y++) {
+    const v = (y / 512) * TWO_PI;
     for (let x = 0; x < 512; x++) {
+      const u = (x / 512) * TWO_PI;
       const idx = (y * 512 + x) * 4;
       let val = 128;
 
       if (actualKey === 'volcanic') {
-        // Vesicular porous basalt / scoria texture with micro-cavities & cooling micro-cracks
-        const n1 = Math.sin(x * 0.4) * Math.cos(y * 0.4) * 0.5 + 0.5;
-        const n2 = Math.sin(x * 1.8 + y * 1.2) * 0.5 + 0.5;
-        const pore = ((x * 37 + y * 59) % 23) < 4 ? 0.2 : 0.8;
-        const crack = Math.abs(Math.sin(x * 0.15 + Math.sin(y * 0.2) * 2.0)) > 0.85 ? 0.3 : 1.0;
+        // Vesicular porous basalt / scoria texture with periodic micro-cavities & cooling micro-cracks
+        const n1 = Math.sin(u * 32) * Math.cos(v * 32) * 0.5 + 0.5;
+        const n2 = Math.sin(u * 96 + v * 64) * 0.5 + 0.5;
+        const pore = periodicPore(x, y, 8, 1.3) < 0.26 ? 0.22 : 0.82;
+        const crack = Math.abs(Math.sin(u * 12 + Math.sin(v * 16) * 2.0)) > 0.86 ? 0.32 : 1.0;
         val = Math.floor((n1 * 0.4 + n2 * 0.3 + pore * 0.3) * crack * 255);
       } else if (actualKey === 'arid' || actualKey === 'sandy') {
         // Wind-blown sand ripples and fine quartz grit
-        const ripple = Math.sin(x * 0.35 - y * 0.12) * 0.5 + 0.5;
-        const fineGrit = ((x * 17 + y * 31) % 13) / 13.0;
-        const n1 = Math.sin(x * 0.8) * Math.sin(y * 0.8) * 0.5 + 0.5;
+        const ripple = Math.sin(u * 28 - v * 10 + Math.sin(v * 4) * 0.6) * 0.5 + 0.5;
+        const fineGrit = periodicHash(x, y, 7.2);
+        const n1 = Math.sin(u * 64) * Math.sin(v * 64) * 0.5 + 0.5;
         val = Math.floor((ripple * 0.55 + n1 * 0.25 + fineGrit * 0.2) * 255);
       } else if (actualKey === 'glacial') {
         // Glacial striations (parallel scratch grooves) and crystalline frost
-        const striation = Math.sin(y * 0.85 + Math.sin(x * 0.05) * 1.5) * 0.5 + 0.5;
-        const microScratch = Math.sin(y * 2.4) * 0.5 + 0.5;
-        const frost = ((x * 41 + y * 67) % 17) / 17.0;
+        const striation = Math.sin(v * 68 + Math.sin(u * 4) * 1.5) * 0.5 + 0.5;
+        const microScratch = Math.sin(v * 192) * 0.5 + 0.5;
+        const frost = periodicHash(x, y, 13.7);
         val = Math.floor((striation * 0.5 + microScratch * 0.3 + frost * 0.2) * 255);
       } else if (actualKey === 'karst') {
         // Pitted limestone with solution runnels & dissolution pores
-        const lapies = Math.abs(Math.sin(x * 0.4 + y * 0.15)) * 0.5 + 0.5;
-        const pit = ((x * 29 + y * 43) % 19) < 5 ? 0.25 : 0.85;
-        const n2 = Math.sin(x * 1.2 + y * 1.2) * 0.5 + 0.5;
+        const lapies = Math.abs(Math.sin(u * 32 + v * 12 + Math.sin(v * 8) * 0.5)) * 0.5 + 0.5;
+        const pit = periodicPore(x, y, 16, 19.4) < 0.28 ? 0.28 : 0.85;
+        const n2 = Math.sin(u * 96 + v * 96) * 0.5 + 0.5;
         val = Math.floor((lapies * 0.45 + pit * 0.35 + n2 * 0.2) * 255);
       } else if (actualKey === 'coastal') {
         // Intertidal sand ripples and wet mud glisten
-        const tidalRipple = Math.sin(x * 0.55 + Math.cos(y * 0.25) * 1.2) * 0.5 + 0.5;
-        const waterSheen = Math.sin(x * 0.1 + y * 0.1) * 0.5 + 0.5;
-        const grit = ((x * 19 + y * 37) % 11) / 11.0;
+        const tidalRipple = Math.sin(u * 44 + Math.cos(v * 20) * 1.2) * 0.5 + 0.5;
+        const waterSheen = Math.sin(u * 8 + v * 8) * 0.5 + 0.5;
+        const grit = periodicHash(x, y, 23.1);
         val = Math.floor((tidalRipple * 0.55 + waterSheen * 0.25 + grit * 0.2) * 255);
       } else if (actualKey === 'rocky') {
         // Sharp fractured bedrock joints and jagged scree facets
-        const f1 = Math.abs(Math.sin(x * 0.6 + y * 0.2));
-        const f2 = Math.abs(Math.cos(x * 0.3 - y * 0.7));
-        const joint = f1 > 0.82 || f2 > 0.85 ? 0.15 : 0.95;
-        const roughness = ((x * 29 + y * 53) % 17) / 17.0;
+        const f1 = Math.abs(Math.sin(u * 48 + v * 16));
+        const f2 = Math.abs(Math.cos(u * 24 - v * 56));
+        const joint = f1 > 0.82 || f2 > 0.85 ? 0.18 : 0.95;
+        const roughness = periodicHash(x, y, 31.9);
         val = Math.floor(((f1 * 0.45 + f2 * 0.45) * joint + roughness * 0.1) * 255);
       } else if (actualKey === 'crystalline') {
         // Faceted crystal polygon planes & bright sparkling specular micro-facets
-        const c1 = Math.sin(x * 1.4 + y * 0.4) * Math.cos(y * 1.2 - x * 0.4);
+        const c1 = Math.sin(u * 112 + v * 32) * Math.cos(v * 96 - u * 32);
         const facet = Math.abs(c1);
-        const glint = ((x * 47 + y * 71) % 31) > 28 ? 1.0 : 0.4;
+        const glint = periodicHash(x, y, 41.3) > 0.92 ? 1.0 : 0.42;
         val = Math.floor((facet * 0.7 + glint * 0.3) * 255);
       } else if (actualKey === 'smooth') {
         // Subtle silky fluid polish with gentle low-frequency undulation
-        const s1 = Math.sin(x * 0.15) * Math.cos(y * 0.15) * 0.5 + 0.5;
+        const s1 = Math.sin(u * 12) * Math.cos(v * 12) * 0.5 + 0.5;
         val = Math.floor((s1 * 0.6 + 0.4) * 255);
       } else {
         // Fluvial / default: alluvial silt, stratified river pebbles and sand
-        const n1 = Math.sin(x * 0.3) * Math.cos(y * 0.3) * 0.5 + 0.5;
-        const n2 = Math.sin(x * 0.9 + y * 0.5) * 0.5 + 0.5;
-        const pebble = ((x * 23 + y * 47) % 19) / 19.0;
+        const n1 = Math.sin(u * 24) * Math.cos(v * 24) * 0.5 + 0.5;
+        const n2 = Math.sin(u * 72 + v * 40) * 0.5 + 0.5;
+        const pebble = periodicHash(x, y, 53.7);
         val = Math.floor((n1 * 0.45 + n2 * 0.35 + pebble * 0.2) * 255);
       }
 

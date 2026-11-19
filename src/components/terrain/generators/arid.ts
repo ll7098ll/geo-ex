@@ -6,6 +6,7 @@ import {
   hexVoronoi,
   smoothstep,
   smax,
+  smin,
   clamp,
   sdSegment,
   mixColor,
@@ -14,8 +15,8 @@ import {
 
 /**
  * C1-continuous analytical Barchan crescentic sand dune evaluator.
- * Guarantees zero height and zero slope at horn tips (no rectangular box clipping!),
- * with a gentle convex windward stoss slope (10-14 deg) and a sharp 34 deg leeward slip-face brink.
+ * Sculpted with long tapering crescent horns, gentle convex windward stoss slope (10-14 deg),
+ * and a razor-sharp curved brink dropping into a concave 33-deg leeward avalanche slip-face.
  */
 function evalBarchanDune(
   px: number,
@@ -25,54 +26,57 @@ function evalBarchanDune(
   scale: number,
   heightMax: number,
   windAngle = -0.35
-): { h: number; isSlipFace: boolean; ripples: number } {
+): { h: number; isSlipFace: boolean; slipBlend: number; ripples: number } {
   const cosA = Math.cos(windAngle);
   const sinA = Math.sin(windAngle);
-  // u: cross-wind axis, v: downwind axis (wind blows from v < 0 toward v > 0; horns point toward +v)
+  // u: cross-wind axis, v: downwind axis (wind blows from v < 0 toward v > 0; crescent horns sweep toward +v)
   const u = ((px - cx) * cosA - (py - cy) * sinA) / scale;
   const v = ((px - cx) * sinA + (py - cy) * cosA) / scale;
 
-  const halfW = 1.65;
+  const halfW = 1.72;
   if (Math.abs(u) >= halfW) {
-    return { h: 0, isSlipFace: false, ripples: 0 };
+    return { h: 0, isSlipFace: false, slipBlend: 0, ripples: 0 };
   }
 
-  // Smooth C1 horn taper: (1 - (u/W)^2)^1.75 -> 0 height and 0 derivative at |u| = halfW
+  // Sweeping horn height envelope: fuller along the curving crescent arms, smooth zero closure at tips
   const uNorm = u / halfW;
-  const widthEnvelope = Math.pow(Math.max(0.0, 1.0 - uNorm * uNorm), 1.75);
+  const widthEnvelope = Math.pow(Math.max(0.0, 1.0 - uNorm * uNorm), 1.18);
 
-  // Parabolic brink line curving forward (+v) into the two crescent horns
-  const vBrink = 0.42 * u * u - 0.15;
+  // Deep parabolic crescent brink curving strongly downwind (+v) into twin horns
+  const vBrink = 0.56 * u * u - 0.36;
   const dv = v - vBrink;
 
-  // Stoss length (upwind) and slip-face length (downwind) taper smoothly toward the horns
-  const stossLen = 1.55 * (1.0 - 0.35 * uNorm * uNorm);
-  const slipLen = 0.62 * (0.45 + 0.55 * (1.0 - uNorm * uNorm));
+  // Long gentle upwind stoss tail vs short steep downwind slip-face
+  const stossLen = 1.85 * (1.0 - 0.42 * uNorm * uNorm);
+  const slipLen = 0.50 * (0.26 + 0.74 * (1.0 - uNorm * uNorm));
 
   if (dv <= 0) {
-    // Windward stoss slope (dv in [-stossLen, 0])
-    if (dv <= -stossLen) return { h: 0, isSlipFace: false, ripples: 0 };
+    // Windward convex stoss slope (dv in [-stossLen, 0])
+    if (dv <= -stossLen) return { h: 0, isSlipFace: false, slipBlend: 0, ripples: 0 };
     const tStoss = clamp(1.0 + dv / stossLen, 0.0, 1.0);
-    const profile = Math.pow(smoothstep(0.0, 1.0, tStoss), 1.12);
+    // Gentle convex rise sharpening cleanly to the brink crest (dv = 0)
+    const profile = Math.pow(smoothstep(0.0, 1.0, tStoss), 0.92);
     const ripples =
-      Math.sin(v * scale * 8.5 + Math.cos(u * scale * 2.0) * 1.4) *
-      0.032 *
+      Math.sin(v * scale * 9.5 + Math.cos(u * scale * 2.2) * 1.4) *
+      0.028 *
       Math.sin(tStoss * Math.PI) *
       widthEnvelope;
     return {
       h: heightMax * widthEnvelope * profile + ripples,
       isSlipFace: false,
+      slipBlend: 0,
       ripples,
     };
   } else {
-    // Leeward 34-degree avalanche slip-face (dv in (0, slipLen])
-    if (dv >= slipLen) return { h: 0, isSlipFace: false, ripples: 0 };
+    // Leeward 33-degree concave avalanche slip-face (dv in (0, slipLen])
+    if (dv >= slipLen) return { h: 0, isSlipFace: false, slipBlend: 0, ripples: 0 };
     const tSlip = clamp(1.0 - dv / slipLen, 0.0, 1.0);
-    // Smooth foot transition at tSlip -> 0, linear steep slope near brink tSlip -> 1
-    const profile = tSlip * tSlip * (2.0 - tSlip);
+    // Crisp angle right at the brink (tSlip -> 1) with smooth foot apron (tSlip -> 0)
+    const profile = tSlip * tSlip * (2.25 - 1.25 * tSlip);
     return {
       h: heightMax * widthEnvelope * profile,
-      isSlipFace: tSlip > 0.08,
+      isSlipFace: tSlip > 0.06,
+      slipBlend: smoothstep(0.04, 0.24, tSlip),
       ripples: 0,
     };
   }
@@ -95,53 +99,49 @@ export function evalAridTerrain(
 
   // =========================================================================
   // 1. 사막 (바르한 초승달 사구군 & 횡사구 에르그 모래바다: 소수스블레이, 사하라 에르그 셰비)
-  // C1 연속 함수로 사각형 절단 아티팩트를 100% 제거하고 날카로운 브링크(Brink) 능선과 34° 사태면 구현!
+  // 뚜렷한 초승달 뿔(Horns)과 날카로운 브링크(Brink) 능선, 33° 바람그늘 사태면(Slip-face) 구현!
   // =========================================================================
   if (normSub === '사막') {
     const dunes = [
-      { cx: -0.8, cy: 0.4, scale: 2.35, hMax: 3.35, ang: -0.42 },  // 중앙 거대 주 바르한 사구
-      { cx: 4.4, cy: 3.2, scale: 1.75, hMax: 2.45, ang: -0.38 },   // 북동 사구
-      { cx: -4.8, cy: -3.2, scale: 1.85, hMax: 2.65, ang: -0.45 }, // 남서 사구
-      { cx: 3.9, cy: -3.6, scale: 1.55, hMax: 2.05, ang: -0.35 },  // 남동 사구
-      { cx: -4.9, cy: 4.4, scale: 1.65, hMax: 2.25, ang: -0.40 },  // 북서 사구
+      { cx: -0.5, cy: 0.2, scale: 2.45, hMax: 3.45, ang: -0.42 },  // 중앙 거대 주 바르한 사구
+      { cx: 4.7, cy: 3.3, scale: 1.75, hMax: 2.48, ang: -0.38 },   // 북동 바르한
+      { cx: -5.1, cy: -3.2, scale: 1.88, hMax: 2.68, ang: -0.46 }, // 남서 바르한
+      { cx: 4.2, cy: -3.9, scale: 1.55, hMax: 2.08, ang: -0.35 },  // 남동 바르한
+      { cx: -5.0, cy: 4.5, scale: 1.65, hMax: 2.28, ang: -0.40 },  // 북서 바르한
     ];
 
     let maxDuneH = 0;
-    let onSlipFace = false;
+    let slipBlend = 0;
     for (const dn of dunes) {
       const res = evalBarchanDune(x, y, dn.cx, dn.cy, dn.scale, dn.hMax, dn.ang);
       if (res.h > maxDuneH) {
         maxDuneH = res.h;
-        onSlipFace = res.isSlipFace;
+        slipBlend = res.slipBlend;
       }
     }
 
-    // 배경 사구간 저지대(Interdune corridor) 및 거대 선형 사구 잔물결 기복
+    // 배경 사구간 저지대(Interdune corridor) 및 바람결 미세 잔물결
     const bgUndulation =
-      warpedFbm(x * 0.28, y * 0.28, 3) * 0.32 +
-      Math.sin((x * 0.85 - y * 0.52) * 5.5) * 0.028 * (1.0 - clamp(maxDuneH / 0.8, 0, 1));
+      warpedFbm(x * 0.26, y * 0.26, 3) * 0.26 +
+      Math.sin((x * 0.85 - y * 0.52) * 5.8) * 0.025 * (1.0 - clamp(maxDuneH / 0.6, 0, 1));
 
-    const rawH = Math.max(0.28, 0.36 + maxDuneH + bgUndulation);
+    const rawH = Math.max(0.28, 0.34 + maxDuneH + bgUndulation);
     h = rawH * reliefScale;
 
-    if (maxDuneH < 0.14) {
-      // 사구 사이 평탄한 자갈·조립사 바닥 (Interdune serir / reg corridor)
-      color.set(mixColor('#a87642', '#c48f56', fbm(x * 4, y * 4)));
-    } else if (onSlipFace) {
-      // 바람그늘 34° 슬립페이스(Slip-face): 그늘진 붉은 황토·테라코타빛 고운 모래 사태면
-      color.set(mixColor('#b86830', '#d17e41', fbm(x * 4, y * 4)));
-    } else {
-      // 햇빛을 받아 황금빛·살구빛으로 빛나는 풍상측 완사면 및 칼날 능선
-      const crestHighlight = smoothstep(1.2, 3.4, rawH);
-      color.set(mixColor('#d99952', '#f5c478', crestHighlight * 0.78 + fbm(x * 3.5, y * 3.5) * 0.22));
-    }
+    const regCol = mixColor('#a67340', '#c28d54', fbm(x * 4, y * 4));
+    const crestHighlight = smoothstep(0.95, 3.3, rawH);
+    const stossCol = mixColor('#dda058', '#fae0a2', crestHighlight * 0.80 + fbm(x * 3.5, y * 3.5) * 0.20);
+    const slipCol = mixColor('#a65222', '#c76c34', fbm(x * 4, y * 4));
+
+    const duneMask = smoothstep(0.08, 0.24, maxDuneH);
+    const duneCol = stossCol.clone().lerp(slipCol, slipBlend);
+    color.copy(regCol).lerp(duneCol, duneMask);
     return { height: h, color };
   }
 
   // =========================================================================
-  // 2. 버섯바위 (모래바람 도약 마모가 빚은 풍식 자갈 사막 Reg & 기저 풍식 와지: 이집트 백사막, 야류, 고블린밸리)
-  // 잘록한 버섯 목(z = 0.7~1.8)을 파묻어버리던 기존 마운드(h=1.95)를 완전히 제거하고,
-  // 평탄한 사막 포도(Desert Pavement, h ≈ 0.48)와 와류 세굴 홈 위에 정교한 3D 층리 버섯바위 볼륨을 직결!
+  // 2. 버섯바위 (모래바람 도약 마모가 빚은 풍식 자갈 사막 Reg & 기저 풍식 와지 & 야르당: 이집트 백사막, 야류, 고블린밸리)
+  // 부드러운 세굴 와지 색 전이 + 비대칭 유선형 야르당 능선 + 평탄한 사막 포도 위 3D 층리 버섯바위!
   // =========================================================================
   if (normSub === '버섯바위') {
     // 바람에 세립분이 날아가고 자갈과 풍식 암반이 남은 평탄한 사막 포도(Reg)
@@ -150,24 +150,22 @@ export function evalAridTerrain(
       warpedFbm(x * 0.35, y * 0.35, 3) * 0.14 +
       Math.sin(x * 4.8 - y * 1.6) * 0.022;
 
-    // 외곽 배후(y > 6.2)의 낮은 풍식 야르당(Yardang: 바람 방향으로 길게 깎인 유선형 사암 둔덕)
+    // 외곽 배후(y > 4.8)의 비대칭 풍식 야르당(Yardang: 바람 방향으로 깎인 불규칙 유선형 사암 능선!)
+    const ySpan = smoothstep(4.6, 8.6, y);
+    const yd1 = Math.exp(-Math.pow((x + 6.4 - (y - 6.5) * 0.35) / 1.45, 2.0)) * 1.15;
+    const yd2 = Math.exp(-Math.pow((x + 0.6 - (y - 6.8) * 0.35) / 2.05, 2.0)) * 0.88;
+    const yd3 = Math.exp(-Math.pow((x - 5.8 - (y - 6.4) * 0.35) / 1.65, 2.0)) * 1.28;
     const yardang =
-      y > 5.2
-        ? smoothstep(5.2, 8.8, y) *
-          Math.pow(Math.max(0, Math.cos(x * 0.85)), 2.2) *
-          0.95
-        : 0;
+      ySpan * Math.max(yd1, Math.max(yd2, yd3)) * (0.75 + ridgedFbm(x * 0.55, y * 0.55, 3) * 0.45);
 
     // 각 3D 버섯바위 기둥 바로 밑동을 받치는 낮은 기반암 받침(h <= 0.64)과 그 둘레의 바람 와류 세굴 와지(Scour moat)
     let plinthLift = 0;
     let scourDip = 0;
     for (const m of MUSHROOM_PEDESTAL_SPECS) {
       const dm = Math.hypot(x - m.mx, y - m.my);
-      if (dm < m.plinthR * 2.2) {
-        // 기둥 바로 밑(dm < plinthR*0.65)은 0.14m 살짝 솟아 암반 뿌리를 형성하고,
-        // 둘레(dm ≈ plinthR*1.2)는 모래바람 와류로 0.07m 오목하게 패임!
-        const root = (1.0 - smoothstep(0.0, m.plinthR * 0.75, dm)) * 0.14;
-        const moat = Math.exp(-Math.pow((dm - m.plinthR * 1.25) / 0.42, 2.0)) * 0.07;
+      if (dm < m.plinthR * 2.5) {
+        const root = (1.0 - smoothstep(0.0, m.plinthR * 0.78, dm)) * 0.14;
+        const moat = Math.exp(-Math.pow((dm - m.plinthR * 1.28) / 0.52, 2.0)) * 0.065;
         plinthLift = Math.max(plinthLift, root);
         scourDip = Math.max(scourDip, moat);
       }
@@ -176,21 +174,19 @@ export function evalAridTerrain(
     const rawH = Math.max(0.32, desertPavement + yardang + plinthLift - scourDip);
     h = rawH * reliefScale;
 
-    if (yardang > 0.35) {
-      // 배후 야르당 풍식 사암 층리
-      const strata = Math.sin(rawH * 12.0) * 0.5 + 0.5;
-      color.set(mixColor('#a66c3b', '#d19862', strata));
-    } else if (plinthLift > 0.04) {
-      // 버섯바위 밑동 기반암 노두
-      color.set(mixColor('#9c683b', '#ba8250', fbm(x * 6, y * 6)));
-    } else if (scourDip > 0.03) {
-      // 기둥 주변 와류 세굴 홈에 모인 밝은 세립 석영 모래
-      color.set(mixColor('#d9b077', '#edd09f', fbm(x * 5, y * 5)));
-    } else {
-      // 사막 포도(Desert Pavement / Reg): 적갈색 사막 바니시(Desert varnish) 자갈과 황토 모래 평원
-      const gravelNoise = fbm(x * 5.5, y * 5.5, 3);
-      color.set(mixColor('#916940', '#b88b58', gravelNoise));
-    }
+    // 부드러운 연속 색 블렌딩 (원형 팬케이크 띠 제거!)
+    const gravelNoise = fbm(x * 5.5, y * 5.5, 3);
+    const regCol = mixColor('#916940', '#b88b58', gravelNoise);
+    const sandCol = mixColor('#cfa670', '#e3c08d', fbm(x * 4.5, y * 4.5));
+    const plinthCol = mixColor('#966338', '#b57e4e', fbm(x * 6, y * 6));
+    const strata = Math.sin(rawH * 12.0) * 0.5 + 0.5;
+    const yardangCol = mixColor('#9e6435', '#cc925c', strata);
+
+    color
+      .copy(regCol)
+      .lerp(sandCol, smoothstep(0.012, 0.058, scourDip) * 0.72)
+      .lerp(plinthCol, smoothstep(0.03, 0.11, plinthLift))
+      .lerp(yardangCol, smoothstep(0.18, 0.52, yardang));
     return { height: h, color };
   }
 
@@ -291,7 +287,7 @@ export function evalAridTerrain(
 
   // =========================================================================
   // 4. 와디 (건조 사암 고원을 가르는 수지상 돌발홍수 협곡 & 마른 망상 자갈 하상: 와디 럼, 페트라 시크)
-  // 물이 상시 흐르는 푸른 강이 아니라, 망상 자갈·모래톱과 건열 실트지가 드러난 건천(Dry Wash) 하상으로 조형!
+  // 지류 합류점 고정 좌표 + smin 매끄러운 협곡 합류로 삼각형 절단 없이 자연스러운 건조 협곡 구현!
   // =========================================================================
   if (normSub === '와디') {
     // 1) 주 와디 슬롯 캐니언 유로 (S자로 굽이치며 전면 y < -6.2 산록 입구에서 부채꼴로 개방됨)
@@ -299,20 +295,22 @@ export function evalAridTerrain(
     const d1x = 0.36 * 2.15 * Math.cos(y * 0.36) - 0.19 * 0.75 * Math.sin(y * 0.19);
     const perpMain = Math.abs(x - wadiX) / Math.sqrt(1.0 + d1x * d1x);
 
-    // 2) 동쪽 고원에서 합류하는 지류 건천 협곡 (Tributary Wadi)
+    // 2) 동쪽 고원에서 합류하는 지류 건천 협곡 — 합류점 y = 0.8의 고정 wadiX 사용!
+    const tribJoinX = Math.sin(0.8 * 0.36) * 2.15 + Math.cos(0.8 * 0.19) * 0.75;
+    const tribWarp = Math.sin((y - 0.8) * 0.55) * 0.32 * smoothstep(0.8, 2.8, y);
     const tribSeg = sdSegment(
-      x + Math.sin(y * 0.6) * 0.35,
+      x + tribWarp,
       y,
-      wadiX + 0.2,
+      tribJoinX + 0.15,
       0.8,
-      7.8,
-      5.6
+      7.9,
+      5.8
     );
-    const perpTrib = x > wadiX - 0.3 ? tribSeg.dist / 0.68 : 99.0;
+    const perpTrib = tribSeg.dist / 0.70;
 
     // 전면 출구(y < -5.5)로 나오면서 협곡 폭이 나팔 모양으로 넓어짐
     const mainHalfW = 0.92 + smoothstep(-4.0, -9.5, y) * 1.65;
-    const wadiRatio = Math.min(perpMain / mainHalfW, perpTrib);
+    const wadiRatio = smin(perpMain / mainHalfW, perpTrib, 0.18);
 
     // 3) 계단식 적색 사암 고원 단애 (후면·측면은 3.9~4.5m 고원, 전면 y < -6.5는 분지 평원으로 열림)
     const plateauMask = smoothstep(-8.2, -4.5, y);
@@ -323,32 +321,21 @@ export function evalAridTerrain(
       Math.sin((x - wadiX) * 4.5 + Math.sin(y * 0.8) * 1.6) * 0.08 * clamp(1.0 - wadiRatio, 0.0, 1.0);
     const dryBedH = 0.44 + (y + 10.0) * 0.016 + Math.max(0, braidBar) + fbm(x * 2.5, y * 2.5) * 0.05;
 
-    let rawH = dryBedH;
-    if (wadiRatio >= 0.82) {
-      const wallT = clamp((wadiRatio - 0.82) / 0.95, 0.0, 1.0);
-      // 사암 지층 단차(Terraced sandstone canyon ledges)
-      const terraceStep = Math.sin(wallT * Math.PI * 4.0) * 0.09 * plateauMask;
-      rawH = dryBedH + Math.pow(wallT, 0.68) * (plateauTop - dryBedH) + terraceStep;
-    }
-
+    const wallT = clamp((wadiRatio - 0.82) / 0.96, 0.0, 1.0);
+    const terraceStep = Math.sin(wallT * Math.PI * 4.0) * 0.085 * plateauMask * smoothstep(0.0, 0.15, wallT);
+    const rawH = dryBedH + Math.pow(wallT, 0.70) * (plateauTop - dryBedH) + terraceStep;
     h = Math.max(0.28, rawH * reliefScale);
 
-    if (wadiRatio < 0.85) {
-      // 평상시 바싹 마른 건천 자갈·모래 하상 (Dry braided gravel bed & flash-flood boulders)
-      const isBarCrest = braidBar > 0.025;
-      color.set(
-        isBarCrest
-          ? mixColor('#b8a386', '#d4bf9e', fbm(x * 6, y * 6))
-          : mixColor('#8f7d68', '#a8957d', fbm(x * 7, y * 7))
-      );
-    } else if (wadiRatio < 1.72 && plateauMask > 0.25) {
-      // 플래시 플러드가 깎아낸 수직 적갈색·황토색 사암 슬롯 캐니언 절벽
-      const strata = Math.sin(rawH * 11.0 + y * 0.25) * 0.5 + 0.5;
-      color.set(mixColor('#8c3b20', '#cc6b3d', strata));
-    } else {
-      // 상부 건조 암석 사막 고원(함마다/Hammada)
-      color.set(mixColor('#b57c47', '#cf965d', fbm(x * 3, y * 3)));
-    }
+    // 하상 자갈 -> 적갈색 사암 절벽 -> 함마다 건조 고원의 부드러운 연속 색 블렌딩
+    const barMix = smoothstep(0.0, 0.05, braidBar);
+    const bedCol = mixColor('#8f7d68', '#c9b495', barMix * 0.75 + fbm(x * 6, y * 6) * 0.25);
+    const strata = Math.sin(rawH * 11.0 + y * 0.25) * 0.5 + 0.5;
+    const cliffCol = mixColor('#8c3b20', '#cc6b3d', strata);
+    const plateauCol = mixColor('#b57c47', '#cf965d', fbm(x * 3, y * 3));
+
+    const cliffBlend = smoothstep(0.76, 1.02, wadiRatio) * plateauMask;
+    const topBlend = smoothstep(1.48, 1.82, wadiRatio) * plateauMask;
+    color.copy(bedCol).lerp(cliffCol, cliffBlend).lerp(plateauCol, topBlend);
     return { height: h, color };
   }
 
@@ -397,7 +384,7 @@ export function evalAridTerrain(
 
   // =========================================================================
   // 6. 플라야 (내륙 폐쇄 분지의 산록 바하다·페디먼트와 중앙 육각형 암염 소금평원: 우유니, 데스밸리 배드워터)
-  // 외곽 테두리의 건조 산록 완사면(Bajada)이 중앙의 순백색 육각 다각형 소금판(Salt Pan)을 둘러싸 분지 지형 완성!
+  // 진짜 육각 Voronoi edgeDist(f2-f1) 기반 선명한 육각형 할라이트 암염 융기선 + 얕은 우유니 거울 염수 분지!
   // =========================================================================
   if (normSub === '플라야') {
     // 타원형 내륙 폐쇄 분지 반경 (전면 카메라 쪽은 낮게 열어 소금 평원이 시원하게 보이도록 구성)
@@ -405,33 +392,42 @@ export function evalAridTerrain(
     const basinRy = y > 0 ? 6.6 : 9.2;
     const rBasin = Math.hypot(x / basinRx, y / basinRy);
 
-    if (rBasin < 0.82) {
-      // 1) 중앙 플라야 염호 바닥 (Playa Salt Flat): 극평탄 증발 암염 대지 + 기하학적 육각형 소금 결정 융기선(Salt Polygons)!
-      const { dist } = hexVoronoi(x * 1.65, y * 1.65);
-      const saltRidge = smoothstep(0.74, 0.94, dist);
-      const rawH = 0.30 + saltRidge * 0.055 + fbm(x * 0.8, y * 0.8) * 0.012;
-      h = rawH * reliefScale;
+    // 육각형 소금 다각형 융기선(Halite Polygons): edgeDist = f2 - f1 -> 0 at every hex wall!
+    const { edgeDist } = hexVoronoi(x * 1.15, y * 1.15, 0.14);
+    const panMask = 1.0 - smoothstep(0.75, 0.85, rBasin);
+    const saltRidge = (1.0 - smoothstep(0.03, 0.19, edgeDist)) * panMask;
 
-      if (saltRidge > 0.38) {
-        // 솟아오른 순백색 할라이트(Halite / 암염) 다각형 결정 테두리
-        color.set(mixColor('#f4f1ed', '#ffffff', fbm(x * 6, y * 6)));
-      } else {
-        // 얇은 염수막이 하늘을 비추는 연회백색·아이보리 소금 결정판
-        color.set(mixColor('#ded8ce', '#f0ece4', fbm(x * 4, y * 4)));
-      }
+    // 우유니 중앙부에 얇은 거울 염수막이 고이는 2개의 완만한 자연 염수 와지 (육각 소금 능선은 수면 위로 돌출!)
+    const brine1 = 1.0 - smoothstep(1.2, 3.6, Math.hypot((x + 1.45) / 1.15, (y + 1.1) / 1.0));
+    const brine2 = 1.0 - smoothstep(0.9, 2.7, Math.hypot((x - 2.35) / 1.05, (y - 1.35) / 0.92));
+    const brineBasin = Math.max(brine1, brine2) * panMask;
+
+    // 외곽 염류 니질대(Saline Mudflat Apron: 0.80 ~ 0.98) -> 복합 선상지 바하다(Bajada) 및 건조 산록(rBasin >= 0.95)
+    const mudT = smoothstep(0.78, 0.98, rBasin);
+    const bajadaT = Math.max(0, rBasin - 0.94);
+    const bajadaFans =
+      Math.pow(bajadaT, 1.55) * 3.25 +
+      Math.sin(Math.atan2(y, x) * 14.0) * 0.08 * smoothstep(0.95, 1.25, rBasin) +
+      ridgedFbm(x * 0.65, y * 0.65, 3) * 0.38 * bajadaT;
+
+    const panBaseH = 0.305 - brineBasin * 0.028 + saltRidge * 0.068 + fbm(x * 0.8, y * 0.8) * 0.008;
+    const rawH = panBaseH + mudT * 0.14 + bajadaFans;
+    h = rawH * reliefScale;
+
+    if (rBasin < 0.84) {
+      // 중앙 플라야 소금 평원: 순백색 육각 암염 테두리 vs 미세 염류·염수막 광택 내부판
+      const interiorCol = mixColor('#d2ccbf', '#e8e3d9', fbm(x * 3.5, y * 3.5)).lerp(
+        new THREE.Color('#c3d4de'),
+        brineBasin * 0.38
+      );
+      const ridgeCol = mixColor('#f7f5f2', '#ffffff', fbm(x * 6, y * 6));
+      const mudCol = mixColor('#b59f84', '#d6c8b4', 1.0 - mudT);
+      color
+        .copy(interiorCol)
+        .lerp(ridgeCol, smoothstep(0.20, 0.68, saltRidge))
+        .lerp(mudCol, smoothstep(0.75, 0.84, rBasin));
       return { height: h, color };
     } else {
-      // 2) 염호 가장자리 염류 니질대(Saline Mudflat Apron: 0.82 ~ 0.98) -> 외곽 복합 선상지 바하다(Bajada) 및 건조 산록(rBasin >= 0.98)
-      const mudT = smoothstep(0.82, 0.98, rBasin);
-      const bajadaT = Math.max(0, rBasin - 0.95);
-      const bajadaFans =
-        Math.pow(bajadaT, 1.55) * 3.25 +
-        Math.sin(Math.atan2(y, x) * 14.0) * 0.08 * smoothstep(0.95, 1.25, rBasin) +
-        ridgedFbm(x * 0.65, y * 0.65, 3) * 0.38 * bajadaT;
-
-      const rawH = 0.31 + mudT * 0.14 + bajadaFans;
-      h = rawH * reliefScale;
-
       if (rBasin < 0.98) {
         // 소금판과 산록 사이의 황회색·적갈색 염류 진흙 전이대(Saline mudflat ring)
         color.set(mixColor('#b59f84', '#d6c8b4', 1.0 - mudT));

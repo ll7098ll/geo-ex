@@ -41,28 +41,57 @@ export const GlacialHornFeatures: React.FC<{ reliefScale?: number }> = ({ relief
 export const GlacialValleyFeatures: React.FC<{ reliefScale?: number }> = ({ reliefScale = 1.0 }) => {
   // Narrow valley-floor meltwater stream ONLY (leaves the flat U-valley meadow dry and green!)
   const meltwaterFn = useMemo(
-    () => (x: number, _y: number) => (Math.abs(x) < 2.6 ? 0.44 * reliefScale : null),
+    () => (x: number, y: number) => {
+      const valleyX = Math.sin(y * 0.25) * 1.15;
+      return Math.abs(x - valleyX) < 2.9 ? 0.44 * reliefScale : null;
+    },
     [reliefScale]
   );
 
-  // Bridalveil Waterfall plunging from the carved West Hanging Valley (y ≈ 1.45, x ≈ valleyX - 1.95) down to the U-valley floor!
+  // Separate perched stream mesh along the West Hanging Valley floor right up to the waterfall lip
+  const hangingStreamFn = useMemo(
+    () => (x: number, y: number) => {
+      const valleyX = Math.sin(y * 0.25) * 1.15;
+      const hvAxisY = 1.45 + Math.sin((x + 4.0) * 0.35) * 0.40;
+      if (x <= valleyX - 3.35 && Math.abs(y - hvAxisY) < 0.65) {
+        return (2.74 + Math.max(0, -x - 3.6) * 0.06) * reliefScale;
+      }
+      return null;
+    },
+    [reliefScale]
+  );
+
+  // Bridalveil Waterfall plunging cleanly from the carved West Hanging Valley lip (x ≈ valleyX - 3.55) to the cliff-base plunge pool!
   const hangingFallGeo = useMemo(() => {
     const valleyX = Math.sin(1.45 * 0.25) * 1.15;
-    const lipX = valleyX - 2.02;
-    const nx = 14;
-    const ns = 22;
+    const lipX = valleyX - 3.60;
+    const plungeX = valleyX - 2.22;
+    const nx = 18;
+    const ns = 28;
     const pos: number[] = [];
     const col: number[] = [];
     const idx: number[] = [];
 
+    const cTop = new THREE.Color('#4aa3bd');
+    const cFoam = new THREE.Color('#eefaff');
+    const tmp = new THREE.Color();
+
     for (let j = 0; j <= ns; j++) {
       const s = j / ns;
       for (let i = 0; i <= nx; i++) {
-        const y = 1.45 + ((i / nx) - 0.5) * 0.62;
-        const x = lipX + s * 0.48;
-        const z = (2.74 - (2.74 - 0.42) * (s * s * 0.8 + s * 0.2)) * reliefScale;
-        pos.push(x, y, z);
-        col.push(0.86, 0.96, 1.0);
+        const u = i / nx - 0.5;
+        const width = 0.52 + s * 0.24;
+        const y = 1.45 + u * width;
+        const x = lipX + s * (plungeX - lipX);
+        const zTop = 2.75 * reliefScale;
+        const zBot = 0.40 * reliefScale;
+        const z = zTop - (zTop - zBot) * Math.pow(s, 1.85);
+        const rib = Math.sin(u * 14.0 + s * 3.0) * 0.025 * Math.sin(s * Math.PI);
+        pos.push(x + rib, y, z);
+
+        const froth = clamp(Math.pow(s, 0.72) * 0.85 + 0.15, 0, 1);
+        tmp.copy(cTop).lerp(cFoam, froth);
+        col.push(tmp.r, tmp.g, tmp.b);
       }
     }
     const stride = nx + 1;
@@ -82,10 +111,12 @@ export const GlacialValleyFeatures: React.FC<{ reliefScale?: number }> = ({ reli
   }, [reliefScale]);
   useDisposeGeometry(hangingFallGeo);
 
+  const plungePosX = Math.sin(1.45 * 0.25) * 1.15 - 2.22;
+
   return (
     <group>
       <mesh geometry={hangingFallGeo}>
-        <meshStandardMaterial vertexColors transparent opacity={0.86} roughness={0.15} side={THREE.DoubleSide} />
+        <meshStandardMaterial vertexColors transparent opacity={0.88} roughness={0.14} side={THREE.DoubleSide} />
       </mesh>
       <ConformantWaterMesh
         normSub="U자곡"
@@ -97,19 +128,31 @@ export const GlacialValleyFeatures: React.FC<{ reliefScale?: number }> = ({ reli
         opacity={0.86}
         waveScale={0.28}
       />
+      <ConformantWaterMesh
+        normSub="U자곡"
+        reliefScale={reliefScale}
+        waterLevelFn={hangingStreamFn}
+        deepColor="#165d70"
+        shallowColor="#2c8fa6"
+        foamColor="#e2f9ff"
+        opacity={0.86}
+        waveScale={0.22}
+      />
       <VolcanicSteamPlume
-        position={[Math.sin(1.45 * 0.25) * 1.15 - 1.55, 1.45, 0.48 * reliefScale]}
-        scale={0.42}
+        position={[plungePosX, 1.45, 0.46 * reliefScale]}
+        scale={0.40}
       />
       <GroundedPineTrees
         normSub="U자곡"
         reliefScale={reliefScale}
         coords={[
-          [-1.3, -4.5, 0.72],
-          [1.2, -5.2, 0.78],
-          [-1.1, 0.2, 0.75],
-          [1.35, 2.8, 0.74],
-          [-1.25, 5.4, 0.76],
+          [-0.15, -4.5, 0.72],
+          [0.35, -5.4, 0.78],
+          [-1.25, 0.2, 0.75],
+          [-0.45, 2.8, 0.74],
+          [2.15, 3.2, 0.72],
+          [-0.35, 5.4, 0.76],
+          [1.85, 5.2, 0.70],
         ]}
       />
     </group>
@@ -141,14 +184,14 @@ export const CirqueFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale 
 };
 
 const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale }) => {
-  // 1. Sculpted 3D Crevassed Valley Glacier Tongue (빙하 설단) descending from y = +9.9 to snout y ≈ +2.1!
+  // 1. Sculpted 3D Crevassed Valley Glacier Tongue (빙하 설단) with sealed back wall & grounded snout edge!
   const glacierTongueGeo = useMemo(() => {
-    const nx = 44;
-    const ny = 56;
-    const xMin = -3.05;
-    const xMax = 3.05;
-    const yMin = 1.95;
-    const yMax = 9.95;
+    const nx = 48;
+    const ny = 60;
+    const xMin = -3.08;
+    const xMax = 3.08;
+    const yMin = 1.92;
+    const yMax = 9.98;
     const stride = nx + 1;
 
     const posList: number[] = [];
@@ -161,14 +204,14 @@ const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
     const medialTill = new THREE.Color('#59524a');
     const tmp = new THREE.Color();
 
-    const evalIceZ = (x: number, y: number): { z: number; col: THREE.Color } | null => {
+    const evalIceZ = (x: number, y: number): { z: number; groundZ: number; col: THREE.Color } | null => {
       const snoutY = 2.05 + 0.16 * x * x;
-      const halfW = 2.88 + smoothstep(2.0, 9.5, y) * 0.22;
-      if (y < snoutY || Math.abs(x) > halfW) return null;
+      const halfW = 2.90 + smoothstep(2.0, 9.5, y) * 0.22;
+      if (y < snoutY - 0.08 || Math.abs(x) > halfW + 0.08) return null;
 
       const groundZ = evaluateTerrainPoint('모레인', x, y, reliefScale).height;
-      const snoutT = smoothstep(snoutY, snoutY + 1.35, y);
-      const marginT = smoothstep(halfW, halfW - 0.55, Math.abs(x));
+      const snoutT = smoothstep(snoutY - 0.06, snoutY + 1.35, y);
+      const marginT = smoothstep(halfW + 0.06, halfW - 0.55, Math.abs(x));
       const dome = Math.pow(snoutT * marginT, 0.55);
 
       // Arcuate transverse crevasses opening across the convex ice flow!
@@ -179,10 +222,12 @@ const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
       // Carve subglacial meltwater ice-cave arch at snout center (x ≈ 0, y ≈ snoutY)
       const portalNotch =
         y < snoutY + 0.45 && Math.abs(x) < 0.55
-          ? (1.0 - Math.pow(x / 0.55, 2.0)) * (1.0 - (y - snoutY) / 0.45) * 0.42
+          ? (1.0 - Math.pow(x / 0.55, 2.0)) * (1.0 - Math.max(0, y - snoutY) / 0.45) * 0.42
           : 0;
 
-      const z = groundZ + Math.max(0.02, iceThickness - portalNotch) * reliefScale;
+      // Tuck perimeter slightly beneath DEM ground so snout/flanks never float
+      const edgeTuck = (1.0 - clamp(dome * 4.0, 0, 1)) * 0.04;
+      const z = groundZ + (Math.max(0.0, iceThickness - portalNotch) - edgeTuck) * reliefScale;
 
       // Color: bright glacier firn/ice + deep azure crevasses + central dark medial moraine stripe!
       const medialBand = Math.exp(-Math.pow((x - Math.sin(y * 0.25) * 0.25) / 0.28, 2.0)) * 0.78;
@@ -192,10 +237,12 @@ const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
       tmp.copy(iceClean).lerp(iceCrevasse, crevBlue * 0.85);
       tmp.lerp(medialTill, Math.max(medialBand, lateralDebris));
 
-      return { z, col: tmp.clone() };
+      return { z, groundZ, col: tmp.clone() };
     };
 
-    const zGrid: ( { z: number; col: THREE.Color } | null )[] = new Array((nx + 1) * (ny + 1)).fill(null);
+    const zGrid: ({ z: number; groundZ: number; col: THREE.Color } | null)[] = new Array((nx + 1) * (ny + 1)).fill(
+      null
+    );
     for (let j = 0; j <= ny; j++) {
       const y = yMin + (j / ny) * (yMax - yMin);
       for (let i = 0; i <= nx; i++) {
@@ -230,6 +277,25 @@ const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
       }
     }
 
+    // Seal the back cross-section edge (j = ny, y = yMax) cleanly down to bedrock DEM so it's solid from behind!
+    const backWallCol = new THREE.Color('#9ec6db');
+    for (let i = 0; i < nx; i++) {
+      const g0 = ny * stride + i;
+      const g1 = g0 + 1;
+      const c0 = zGrid[g0];
+      const c1 = zGrid[g1];
+      if (!c0 || !c1) continue;
+      const x0 = xMin + (i / nx) * (xMax - xMin);
+      const x1 = xMin + ((i + 1) / nx) * (xMax - xMin);
+      const b = posList.length / 3;
+      posList.push(x0, yMax, c0.z, x1, yMax, c1.z, x0, yMax, c0.groundZ - 0.04, x1, yMax, c1.groundZ - 0.04);
+      for (let k = 0; k < 4; k++) {
+        colList.push(backWallCol.r, backWallCol.g, backWallCol.b);
+      }
+      // Outward +Y normal
+      idxList.push(b, b + 2, b + 1, b + 1, b + 2, b + 3);
+    }
+
     // Angular Glacial Erratic Boulders (빙하 표석) perched on the Terminal & Lateral Moraine crests!
     const parts: THREE.BufferGeometry[] = [];
     const iceGeo = new THREE.BufferGeometry();
@@ -259,15 +325,17 @@ const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
   }, [reliefScale]);
   useDisposeGeometry(glacierTongueGeo);
 
-  // Moraine-dammed Proglacial Lake (enclosed inside y in [-2.75 + 0.21*x^2, +2.35], |x| < 3.05!)
+  // Moraine-dammed Proglacial Lake + Sloped Braided Meltwater Channels ONLY (sandur gravel stays dry!)
   const proglacialWaterFn = useMemo(
     () => (x: number, y: number) => {
       const termArcY = -2.85 + 0.21 * x * x;
       if (Math.abs(x) < 3.05 && y > termArcY + 0.1 && y < 2.35) {
         return 1.06 * reliefScale;
       }
-      if (y <= termArcY + 0.1 && Math.abs(x) < 3.5) {
-        return 0.56 * reliefScale;
+      if (y <= termArcY + 0.1 && Math.abs(x) < 3.8) {
+        // Sits cleanly inside the carved braided meltwater channels (depth ~0.24m) while dry sandur stays above!
+        const outwashSlope = smoothstep(-10.0, -2.5, y) * 0.30;
+        return (0.48 + outwashSlope) * reliefScale;
       }
       return null;
     },
@@ -277,15 +345,15 @@ const MoraineAndGlacierFeatures: React.FC<{ reliefScale: number }> = ({ reliefSc
   return (
     <group>
       <mesh geometry={glacierTongueGeo} castShadow receiveShadow>
-        <meshStandardMaterial vertexColors roughness={0.38} metalness={0.14} />
+        <meshStandardMaterial vertexColors roughness={0.44} metalness={0.08} />
       </mesh>
       <ConformantWaterMesh
         normSub="모레인"
         reliefScale={reliefScale}
         waterLevelFn={proglacialWaterFn}
         deepColor="#14636b"
-        shallowColor="#2ba1ab"
-        foamColor="#d9fafc"
+        shallowColor="#26929c"
+        foamColor="#96d1db"
         opacity={0.9}
         waveScale={0.26}
       />
@@ -298,6 +366,68 @@ export const GlacialFeatures: React.FC<{ reliefScale?: number; isFjord?: boolean
   isFjord = false,
 }) => {
   const fjordWaterFn = useMemo(() => () => 0.66 * reliefScale, [reliefScale]);
+
+  // Direct cliff-to-sea fjord waterfall (7자매 폭포 / 밀포드 보웬 폭포 스타일 — 동적 절벽 샘플링으로 정확히 정렬!)
+  const fjordFallData = useMemo(() => {
+    if (!isFjord) return null;
+    const wfY = -2.4;
+    const mainX = Math.sin(wfY * 0.26) * 1.65 - 0.35;
+
+    let xShore = mainX + 2.2;
+    let xCrest = mainX + 3.4;
+    let zCrest = 3.6 * reliefScale;
+
+    for (let sx = mainX + 1.5; sx <= mainX + 5.0; sx += 0.08) {
+      const hz = evaluateTerrainPoint('피오르드', sx, wfY, reliefScale).height;
+      if (hz < 0.72 * reliefScale) {
+        xShore = sx;
+      }
+      if (hz >= 3.45 * reliefScale) {
+        xCrest = sx;
+        zCrest = hz;
+        break;
+      }
+    }
+
+    const nx = 10;
+    const ns = 24;
+    const pos: number[] = [];
+    const col: number[] = [];
+    const idx: number[] = [];
+    const cTop = new THREE.Color('#7ec8db');
+    const cFoam = new THREE.Color('#f0fbff');
+    const tmp = new THREE.Color();
+
+    for (let j = 0; j <= ns; j++) {
+      const s = j / ns;
+      for (let i = 0; i <= nx; i++) {
+        const u = i / nx - 0.5;
+        const width = 0.24 + s * 0.20;
+        const y = wfY + u * width;
+        const x = xCrest - s * (xCrest - (xShore - 0.08));
+        const z = zCrest - (zCrest - 0.64 * reliefScale) * Math.pow(s, 1.55);
+        pos.push(x, y, z);
+
+        tmp.copy(cTop).lerp(cFoam, clamp(Math.pow(s, 0.65), 0, 1));
+        col.push(tmp.r, tmp.g, tmp.b);
+      }
+    }
+    const stride = nx + 1;
+    for (let j = 0; j < ns; j++) {
+      for (let i = 0; i < nx; i++) {
+        const a = j * stride + i;
+        idx.push(a, a + 1, a + stride);
+        idx.push(a + 1, a + stride + 1, a + stride);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(col), 3));
+    geo.setIndex(idx);
+    geo.computeVertexNormals();
+    return { geo, mistPos: [xShore - 0.06, wfY, 0.70 * reliefScale] as [number, number, number] };
+  }, [isFjord, reliefScale]);
+  useDisposeGeometry(fjordFallData?.geo ?? null);
 
   if (isFjord) {
     return (
@@ -312,8 +442,14 @@ export const GlacialFeatures: React.FC<{ reliefScale?: number; isFjord?: boolean
           opacity={0.89}
           waveScale={0.45}
         />
-        {/* Direct cliff-to-sea fjord waterfall (7자매 폭포 / 밀포드 보웬 폭포 스타일!) */}
-        <VolcanicSteamPlume position={[2.05, -2.4, 0.72 * reliefScale]} scale={0.45} />
+        {fjordFallData && (
+          <>
+            <mesh geometry={fjordFallData.geo}>
+              <meshStandardMaterial vertexColors transparent opacity={0.84} roughness={0.14} side={THREE.DoubleSide} />
+            </mesh>
+            <VolcanicSteamPlume position={fjordFallData.mistPos} scale={0.34} />
+          </>
+        )}
       </group>
     );
   }

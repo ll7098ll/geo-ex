@@ -98,34 +98,38 @@ export const voronoi2D = (x: number, y: number, jitter = 0.82) => {
   return { f1, f2, edgeDist: f2 - f1, cellId, cx, cy };
 };
 
-export const hexVoronoi = (x: number, y: number) => {
-  const hx = x * (2.0 / Math.sqrt(3));
-  const hy = y;
-  const ix = Math.floor(hx);
-  const iy = Math.floor(hy);
-  let minDist = 10.0;
+export const hexVoronoi = (x: number, y: number, jitter = 0.16) => {
+  const rowH = Math.sqrt(3) * 0.5;
+  const iy = Math.floor(y / rowH);
+  const ix = Math.floor(x);
+  let f1 = 10.0;
+  let f2 = 10.0;
   let cellId = 0;
   let cellCenterX = 0;
   let cellCenterY = 0;
 
   for (let j = -1; j <= 1; j++) {
-    for (let i = -1; i <= 1; i++) {
+    const py = iy + j;
+    const rowOffset = (py & 1) !== 0 ? 0.5 : 0.0;
+    for (let i = -2; i <= 2; i++) {
       const px = ix + i;
-      const py = iy + j;
-      const jx = px + random(px, py) * 0.12;
-      const jy = py + random(px + 7.1, py + 3.4) * 0.12;
-      const dx = hx - jx;
-      const dy = hy - jy;
+      const jx = px + rowOffset + (random(px * 1.17 + py * 3.1, py * 2.31) - 0.5) * jitter;
+      const jy = py * rowH + (random(px * 4.71 + 7.1, py * 1.93 + 3.4) - 0.5) * jitter;
+      const dx = x - jx;
+      const dy = y - jy;
       const d = Math.sqrt(dx * dx + dy * dy);
-      if (d < minDist) {
-        minDist = d;
+      if (d < f1) {
+        f2 = f1;
+        f1 = d;
         cellId = random(px * 13, py * 37);
         cellCenterX = jx;
         cellCenterY = jy;
+      } else if (d < f2) {
+        f2 = d;
       }
     }
   }
-  return { dist: minDist, cellId, cellCenterX, cellCenterY };
+  return { dist: f1, f1, f2, edgeDist: f2 - f1, cellId, cellCenterX, cellCenterY };
 };
 
 // Exact regular hexagonal lattice for columnar basalt

@@ -8,6 +8,7 @@ export interface ContourShaderParams {
   indexInterval: number;
   highlightElevation: number | null;
   waterLevel?: number | null;
+  reliefScale?: number;
   theme?: Contour3DTheme;
   thickness?: number;
   indexThickness?: number;
@@ -21,6 +22,7 @@ export interface TerrainShaderUniforms {
   uIndexInterval: { value: number };
   uHighlightElevation: { value: number };
   uWaterLevel: { value: number };
+  uReliefScale: { value: number };
   uIndexColor: { value: THREE.Color };
   uIntermediateColor: { value: THREE.Color };
   uHighlightColor: { value: THREE.Color };
@@ -42,6 +44,7 @@ export function createContourShaderUniforms(params: ContourShaderParams): Terrai
     uIndexInterval: { value: Math.max(0.02, params.indexInterval) },
     uHighlightElevation: { value: params.highlightElevation ?? -999.0 },
     uWaterLevel: { value: params.waterLevel ?? -999.0 },
+    uReliefScale: { value: Math.max(0.25, params.reliefScale ?? 1.0) },
     uIndexColor: { value: themeColors.index },
     uIntermediateColor: { value: themeColors.intermediate },
     uHighlightColor: { value: themeColors.highlight },
@@ -64,6 +67,7 @@ export function updateContourShaderUniforms(
   uniforms.uIndexInterval.value = Math.max(0.02, params.indexInterval);
   uniforms.uHighlightElevation.value = params.highlightElevation ?? -999.0;
   uniforms.uWaterLevel.value = params.waterLevel ?? -999.0;
+  uniforms.uReliefScale.value = Math.max(0.25, params.reliefScale ?? 1.0);
   uniforms.uShowValleyRidge.value = params.showValleyRidgeGuide ? 1.0 : 0.0;
   uniforms.uShowSlopeHeat.value = params.showSlopeHeat ? 1.0 : 0.0;
 
@@ -110,8 +114,10 @@ export function injectContourShader(
   Object.assign(shader.uniforms, uniforms);
 
   shader.vertexShader = `
+    attribute float aSubmerged;
     varying vec3 vTerrainLocalPos;
     varying vec3 vTerrainNormal;
+    varying float vSubmerged;
     ${shader.vertexShader}
   `.replace(
     '#include <begin_vertex>',
@@ -119,18 +125,21 @@ export function injectContourShader(
     #include <begin_vertex>
     vTerrainLocalPos = position;
     vTerrainNormal = normal;
+    vSubmerged = aSubmerged;
     `
   );
 
   shader.fragmentShader = `
     varying vec3 vTerrainLocalPos;
     varying vec3 vTerrainNormal;
+    varying float vSubmerged;
 
     uniform float uShowContours;
     uniform float uContourInterval;
     uniform float uIndexInterval;
     uniform float uHighlightElevation;
     uniform float uWaterLevel;
+    uniform float uReliefScale;
     uniform vec3 uIndexColor;
     uniform vec3 uIntermediateColor;
     uniform vec3 uHighlightColor;
@@ -154,93 +163,114 @@ export function injectContourShader(
       );
     }
 
+    vec3 terrainLinearToSRGB(vec3 c) {
+      return pow(max(c, vec3(0.0)), vec3(1.0 / 2.2));
+    }
+
     ${shader.fragmentShader}
-  `.replace(
-    '#include <dithering_fragment>',
-    `
-    #include <dithering_fragment>
-
-    vec3 nrm = normalize(vTerrainNormal);
-    bool isOuterSkirt = (abs(vTerrainLocalPos.x) > 9.985 || abs(vTerrainLocalPos.y) > 9.985 || vTerrainLocalPos.z < -1.30);
-    bool isTopTerrain = !isOuterSkirt && nrm.z > 0.015;
-
-    // 0. Triplanar-style steep rock cliff micro-bedding & crevice detail (prevents UV stretch on vertical cliffs!)
-    if (isTopTerrain) {
-      float cliffWeight = smoothstep(0.78, 0.25, nrm.z);
-      if (cliffWeight > 0.01) {
-        float triX = terrainValueNoise(vec2(vTerrainLocalPos.y * 5.5, vTerrainLocalPos.z * 14.0));
-        float triY = terrainValueNoise(vec2(vTerrainLocalPos.x * 5.5, vTerrainLocalPos.z * 14.0));
-        float strataGrain = mix(triX, triY, abs(nrm.y) / max(0.001, abs(nrm.x) + abs(nrm.y)));
-        float rockShade = 0.88 + 0.24 * strataGrain;
-        gl_FragColor.rgb *= mix(1.0, rockShade, cliffWeight * 0.65);
-      }
-      // Subtle ambient-occlusion darkening in deep narrow canyons & craters
-      float cavityAO = smoothstep(-0.2, 1.1, vTerrainLocalPos.z);
-      gl_FragColor.rgb *= (0.90 + 0.10 * cavityAO);
-    }
-
-    // 1. Slope Heatmap Overlay
-    if (uShowSlopeHeat > 0.5 && isTopTerrain) {
-      float cosTheta = clamp(nrm.z, 0.0, 1.0);
-      float slopeDeg = acos(cosTheta) * 57.29578;
-      vec3 slopeColor;
-      if (slopeDeg < 15.0) {
-        slopeColor = mix(vec3(0.12, 0.68, 0.38), vec3(0.42, 0.78, 0.22), slopeDeg / 15.0);
-      } else if (slopeDeg < 32.0) {
-        slopeColor = mix(vec3(0.92, 0.76, 0.12), vec3(0.96, 0.48, 0.12), (slopeDeg - 15.0) / 17.0);
-      } else {
-        slopeColor = mix(vec3(0.92, 0.22, 0.18), vec3(0.68, 0.06, 0.25), clamp((slopeDeg - 32.0) / 24.0, 0.0, 1.0));
-      }
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, slopeColor, 0.45);
-    }
-
-    // 2. Valley & Ridge Guidance Overlay
-    if (uShowValleyRidge > 0.5 && isTopTerrain && nrm.z > 0.08) {
-      vec3 dNdx = dFdx(nrm);
-      vec3 dNdy = dFdy(nrm);
-      float divN = (dNdx.x + dNdy.y) * 4.5;
-      float ridgeWeight = smoothstep(0.06, 0.24, divN);
-      float valleyWeight = smoothstep(0.06, 0.24, -divN);
-
-      if (valleyWeight > 0.05) {
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.04, 0.78, 0.96), valleyWeight * 0.72);
-      } else if (ridgeWeight > 0.05) {
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.98, 0.32, 0.12), ridgeWeight * 0.72);
-      }
-    }
-
-    // 3. 3D Contour Isolines (Suppressed on outer strata walls and submerged seafloors/riverbeds)
-    bool aboveWater = (uWaterLevel < -900.0) || (vTerrainLocalPos.z >= uWaterLevel - 0.015);
-    if (uShowContours > 0.5 && isTopTerrain && aboveWater) {
-      float elev = vTerrainLocalPos.z;
-      float df = max(fwidth(elev), 0.0004);
-
-      float safeInter = max(0.005, uContourInterval);
-      float distInter = abs(fract(elev / safeInter + 0.5) - 0.5) * safeInter;
-      float lineInter = 1.0 - smoothstep(0.0, df * uThickness, distInter);
-
-      float safeIndex = max(0.01, uIndexInterval);
-      float distIndex = abs(fract(elev / safeIndex + 0.5) - 0.5) * safeIndex;
-      float lineIndex = 1.0 - smoothstep(0.0, df * uIndexThickness, distIndex);
-
-      float lineHighlight = 0.0;
-      if (uHighlightElevation > -900.0) {
-        float distHl = abs(elev - uHighlightElevation);
-        lineHighlight = 1.0 - smoothstep(0.0, df * (uIndexThickness * 1.8), distHl);
+  `
+    .replace(
+      '#include <tonemapping_fragment>',
+      `
+      // 0. Triplanar-style steep rock cliff micro-bedding & cavity AO in linear space before tonemapping
+      vec3 terrainNrmLin = normalize(vTerrainNormal);
+      bool terrainOuterSkirtLin = (abs(vTerrainLocalPos.x) > 9.985 || abs(vTerrainLocalPos.y) > 9.985 || vTerrainLocalPos.z < -1.30);
+      bool terrainTopLin = !terrainOuterSkirtLin && terrainNrmLin.z > 0.015;
+      if (terrainTopLin) {
+        float cliffWeight = smoothstep(0.78, 0.25, terrainNrmLin.z);
+        if (cliffWeight > 0.01) {
+          float normZCliff = vTerrainLocalPos.z / max(0.25, uReliefScale);
+          float triX = terrainValueNoise(vec2(vTerrainLocalPos.y * 5.5, normZCliff * 14.0));
+          float triY = terrainValueNoise(vec2(vTerrainLocalPos.x * 5.5, normZCliff * 14.0));
+          float strataGrain = mix(triX, triY, abs(terrainNrmLin.y) / max(0.001, abs(terrainNrmLin.x) + abs(terrainNrmLin.y)));
+          float rockShade = 0.86 + 0.28 * strataGrain;
+          gl_FragColor.rgb *= mix(1.0, rockShade, cliffWeight * 0.65);
+        }
+        // Subtle ambient-occlusion darkening in deep narrow canyons & craters
+        float cavityAO = smoothstep(-0.2, 1.1, vTerrainLocalPos.z / max(0.25, uReliefScale));
+        gl_FragColor.rgb *= (0.90 + 0.10 * cavityAO);
       }
 
-      // Attenuate intermediate lines slightly on near-vertical cliffs so clustered lines stay readable
-      float cliffFade = smoothstep(0.015, 0.18, nrm.z);
+      #include <tonemapping_fragment>
+      `
+    )
+    .replace(
+      '#include <fog_fragment>',
+      `
+      vec3 nrm = normalize(vTerrainNormal);
+      bool isOuterSkirt = (abs(vTerrainLocalPos.x) > 9.985 || abs(vTerrainLocalPos.y) > 9.985 || vTerrainLocalPos.z < -1.30);
+      bool isTopTerrain = !isOuterSkirt && nrm.z > 0.015;
 
-      if (lineHighlight > 0.01) {
-        vec3 hlGlow = uHighlightColor * 1.35;
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, hlGlow, lineHighlight * 0.95);
-      } else if (lineIndex > 0.01) {
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uIndexColor, lineIndex * 0.88 * (0.45 + 0.55 * cliffFade));
-      } else if (lineInter > 0.01) {
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uIntermediateColor, lineInter * 0.62 * cliffFade);
+      // 1. Slope Heatmap Overlay (sRGB space, prior to atmospheric fog)
+      if (uShowSlopeHeat > 0.5 && isTopTerrain) {
+        float cosTheta = clamp(nrm.z, 0.0, 1.0);
+        float slopeDeg = acos(cosTheta) * 57.29578;
+        vec3 slopeColor;
+        if (slopeDeg < 15.0) {
+          slopeColor = mix(vec3(0.12, 0.68, 0.38), vec3(0.42, 0.78, 0.22), slopeDeg / 15.0);
+        } else if (slopeDeg < 32.0) {
+          slopeColor = mix(vec3(0.92, 0.76, 0.12), vec3(0.96, 0.48, 0.12), (slopeDeg - 15.0) / 17.0);
+        } else {
+          slopeColor = mix(vec3(0.92, 0.22, 0.18), vec3(0.68, 0.06, 0.25), clamp((slopeDeg - 32.0) / 24.0, 0.0, 1.0));
+        }
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, slopeColor, 0.45);
       }
-    }
-    `
-  );
+
+      // 2. Valley & Ridge Guidance Overlay
+      if (uShowValleyRidge > 0.5 && isTopTerrain && nrm.z > 0.08) {
+        vec3 dNdx = dFdx(nrm);
+        vec3 dNdy = dFdy(nrm);
+        float divN = (dNdx.x + dNdy.y) * 4.5;
+        float ridgeWeight = smoothstep(0.06, 0.24, divN);
+        float valleyWeight = smoothstep(0.06, 0.24, -divN);
+
+        if (valleyWeight > 0.05) {
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.04, 0.78, 0.96), valleyWeight * 0.72);
+        } else if (ridgeWeight > 0.05) {
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.98, 0.32, 0.12), ridgeWeight * 0.72);
+        }
+      }
+
+      // 3. 3D Contour Isolines (sRGB-correct, reliefScale-invariant, suppressed on skirts & all water/lake basins)
+      float dryMask = 1.0 - smoothstep(0.28, 0.62, vSubmerged);
+      bool aboveWater = ((uWaterLevel < -900.0) || (vTerrainLocalPos.z >= uWaterLevel - 0.015)) && dryMask > 0.02;
+      if (uShowContours > 0.5 && isTopTerrain && aboveWater) {
+        float elev = vTerrainLocalPos.z / max(0.25, uReliefScale);
+        float df = max(fwidth(elev), 0.0004);
+
+        float safeInter = max(0.005, uContourInterval);
+        float distInter = abs(fract(elev / safeInter + 0.5) - 0.5) * safeInter;
+        float lineInter = 1.0 - smoothstep(0.0, df * uThickness, distInter);
+
+        float safeIndex = max(0.01, uIndexInterval);
+        float distIndex = abs(fract(elev / safeIndex + 0.5) - 0.5) * safeIndex;
+        float lineIndex = 1.0 - smoothstep(0.0, df * uIndexThickness, distIndex);
+
+        float lineHighlight = 0.0;
+        if (uHighlightElevation > -900.0) {
+          float distHl = abs(elev - uHighlightElevation);
+          lineHighlight = 1.0 - smoothstep(0.0, df * (uIndexThickness * 1.8), distHl);
+        }
+
+        // Convert Three.js linear uniform colors to sRGB to match post-colorspace_fragment buffer
+        vec3 indexColSRGB = terrainLinearToSRGB(uIndexColor);
+        vec3 interColSRGB = terrainLinearToSRGB(uIntermediateColor);
+        vec3 hlColSRGB = terrainLinearToSRGB(uHighlightColor);
+
+        // Attenuate intermediate lines slightly on near-vertical cliffs so clustered lines stay readable
+        float cliffFade = smoothstep(0.015, 0.18, nrm.z);
+
+        if (lineHighlight > 0.01) {
+          vec3 hlGlow = min(vec3(1.0), hlColSRGB * 1.18);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, hlGlow, lineHighlight * 0.95 * dryMask);
+        } else if (lineIndex > 0.01) {
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, indexColSRGB, lineIndex * 0.90 * (0.45 + 0.55 * cliffFade) * dryMask);
+        } else if (lineInter > 0.01) {
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, interColSRGB, lineInter * 0.64 * cliffFade * dryMask);
+        }
+      }
+
+      #include <fog_fragment>
+      `
+    );
 }

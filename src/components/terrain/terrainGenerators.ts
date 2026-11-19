@@ -1,12 +1,15 @@
 import * as THREE from 'three';
 import { generateTerrainElevationField } from './contour/terrainDEMGenerator';
-import { resolveTerrainKey } from '../../constants/terrainRegistry';
+import { resolveTerrainKey, getBaseWaterElevation } from '../../constants/terrainRegistry';
 import {
   fbm,
   smoothstep,
   clamp,
   mixColor,
 } from './terrainMath';
+import { getCalderaShoreRadius } from './generators/volcanic';
+import { getWavePlatformCliffX, TIDE_POOL_SPECS } from './generators/coastal';
+import { getWaterfallLipY } from './generators/fluvial';
 
 export * from './terrainMath';
 export * from './terrainEvaluator';
@@ -16,6 +19,117 @@ export {
   resolveTerrainKey,
   getBaseWaterElevation,
 } from '../../constants/terrainRegistry';
+
+/**
+ * Returns the exact local water, lava, or brine surface elevation at (x, y) for any terrain archetype,
+ * matching BOTH global base-water bodies and perched/local basins (caldera lake, cirque tarn, waterfall
+ * upper/lower reaches, hanging valley stream, proglacial lake, oasis, playa brine, crater lava lakes, etc.).
+ * Used to drive the per-vertex `aSubmerged` attribute so 3D contours are suppressed underwater everywhere.
+ */
+export function getLocalWaterElevation(
+  normSub: string,
+  x: number,
+  y: number,
+  reliefScale = 1.0
+): number | null {
+  switch (normSub) {
+    case '칼데라': {
+      const r = Math.hypot(x, y);
+      const ang = Math.atan2(y, x);
+      return r <= getCalderaShoreRadius(ang) + 0.35 ? 1.62 * reliefScale : null;
+    }
+    case '화산':
+      return Math.hypot(x, y) <= 0.72 ? 3.46 * reliefScale : null;
+    case '순상화산':
+      return Math.hypot(x + 0.22, y + 0.18) <= 0.78 ? 2.04 * reliefScale : null;
+    case '기생화산':
+      return Math.hypot(x + 0.9, y - 0.7) < 1.25 ? 2.26 * reliefScale : null;
+    case '단층 산맥':
+      return x < -3.2 ? 0.42 * reliefScale : null;
+    case '주상절리': {
+      const coastCurve = Math.sin(y * 0.32) * 1.15 + Math.cos(y * 0.65) * 0.45;
+      return x < coastCurve + 0.5 ? 0.52 * reliefScale : null;
+    }
+    case '종상화산':
+      return y < -5.2 + Math.sin(x * 0.35) * 0.65 ? (getBaseWaterElevation('종상화산', reliefScale) ?? 0.42 * reliefScale) : null;
+    case '수성화산':
+      return Math.hypot(x - 0.8, y - 0.5) < 3.1 ? null : getBaseWaterElevation('수성화산', reliefScale);
+    case '해안 사구': {
+      if (x < -5.2) return 0.42 * reliefScale;
+      const slackDist = Math.hypot((x + 1.05) / 1.05, (y - 1.15) / 2.55);
+      return slackDist < 1.0 ? 0.58 * reliefScale : null;
+    }
+    case '파식대': {
+      const cliffX = getWavePlatformCliffX(y);
+      if (x > cliffX - 0.2) return null;
+      for (const p of TIDE_POOL_SPECS) {
+        const pd = Math.hypot((x - p.px) / p.rx, (y - p.py) / p.ry);
+        if (pd < 1.02) {
+          const benchBase = 0.46 + smoothstep(-3.85, cliffX - 0.45, x) * 0.34;
+          return (benchBase - 0.04) * reliefScale;
+        }
+      }
+      return 0.44 * reliefScale;
+    }
+    case '선상지':
+      return y < -6.8 ? 0.32 * reliefScale : null;
+    case '폭포': {
+      const lipY = getWaterfallLipY(x);
+      if (y >= lipY - 0.06) return 3.80 * reliefScale;
+      if (y <= lipY - 0.30) return 0.56 * reliefScale;
+      return null;
+    }
+    case '석회동굴': {
+      if (Math.abs(x) > 3.6 || y > 2.2) return null;
+      const caveStreamX = -1.15 + Math.sin(y * 0.5) * 0.45 + smoothstep(-3.8, -9.5, y) * 0.55;
+      if (Math.abs(x - caveStreamX) < 0.96 && y < 2.05) {
+        return 0.45 * reliefScale;
+      }
+      const arc = y + 0.14 * x * x;
+      if (x > -0.35 && x < 2.15) {
+        if (arc > -2.95 && arc < -1.9) return 0.62 * reliefScale;
+        if (arc > -1.45 && arc < -0.4) return 0.78 * reliefScale;
+        if (arc > 0.05 && arc < 1.1) return 0.94 * reliefScale;
+      }
+      return null;
+    }
+    case '혼':
+      return Math.hypot(x / 1.6, (y - 5.2) / 1.4) <= 1.05 ? 0.64 * reliefScale : null;
+    case 'U자곡': {
+      const valleyX = Math.sin(y * 0.25) * 1.15;
+      if (Math.abs(x - valleyX) < 2.9) return 0.44 * reliefScale;
+      const hvAxisY = 1.45 + Math.sin((x + 4.0) * 0.35) * 0.40;
+      if (x <= valleyX - 3.35 && Math.abs(y - hvAxisY) < 0.65) {
+        return (2.74 + Math.max(0, -x - 3.6) * 0.06) * reliefScale;
+      }
+      return null;
+    }
+    case '권곡':
+      return Math.hypot(x / 2.35, (y - 0.70) / 2.05) <= 1.05 ? 1.32 * reliefScale : null;
+    case '모레인': {
+      const termArcY = -2.85 + 0.21 * x * x;
+      if (Math.abs(x) < 3.05 && y > termArcY + 0.1 && y < 2.35) {
+        return 1.06 * reliefScale;
+      }
+      if (y <= termArcY + 0.1 && Math.abs(x) < 3.8) {
+        const outwashSlope = smoothstep(-10.0, -2.5, y) * 0.30;
+        return (0.48 + outwashSlope) * reliefScale;
+      }
+      return null;
+    }
+    case '오아시스': {
+      const lakeArcY = -0.55 + 0.22 * x * x;
+      return Math.hypot(x / 2.25, (y - lakeArcY) / 1.25) <= 1.15 ? 0.64 * reliefScale : null;
+    }
+    case '플라야': {
+      const rx = 7.4 + Math.sin(y * 0.4) * 0.45;
+      const ry = y > 0 ? 6.6 : 9.2;
+      return Math.hypot(x / rx, y / ry) <= 0.76 ? 0.303 * reliefScale : null;
+    }
+    default:
+      return getBaseWaterElevation(normSub, reliefScale);
+  }
+}
 
 // ==========================================
 // Complete Geological Block Diorama Generator
@@ -87,6 +201,7 @@ export function generateTerrainDioramaGeometry(
   const positions = new Float32Array(totalVerts * 3);
   const colors = new Float32Array(totalVerts * 3);
   const uvs = new Float32Array(totalVerts * 2);
+  const submerged = new Float32Array(totalVerts);
   const indices: number[] = [];
 
   let vertIdx = 0;
@@ -141,6 +256,9 @@ export function generateTerrainDioramaGeometry(
       uvs[vertIdx * 2] = (x + halfSize) / size;
       uvs[vertIdx * 2 + 1] = (y + halfSize) / size;
 
+      const localW = getLocalWaterElevation(normSub, x, y, effectiveRelief);
+      submerged[vertIdx] = localW !== null ? smoothstep(-0.015, 0.025, localW - h) : 0.0;
+
       vertIdx++;
     }
   }
@@ -194,11 +312,13 @@ export function generateTerrainDioramaGeometry(
       return mixColor('#3b2f23', '#4f3f2f', clamp(depthBelowSurface / 0.14, 0, 1));
     }
 
-    // Special structural cross-section for Fault-Block Mountain (단층 산맥: 62° dipping normal fault + displaced marker beds!)
+    // Special structural cross-section for Fault-Block Mountain (단층 산맥: ~64° westward-dipping normal fault!)
     if (normSub === '단층 산맥') {
       const surfaceFaultX = Math.sin(y * 0.16) * 0.55 - 0.85;
-      // Normal fault dips westward (-X) with depth so the eastern hanging/footwall uplift block overrides cleanly
-      const faultPlaneX = surfaceFaultX - (normZ - 1.2) * 0.48;
+      // Normal fault plane dips westward (-X) as depth increases (normZ decreases),
+      // so the down-dropped western hanging wall (x < faultPlaneX) sits above the dipping fault plane
+      // while the uplifted eastern footwall (x > faultPlaneX) rises beneath it!
+      const faultPlaneX = surfaceFaultX + (normZ - 1.2) * 0.48;
       const distFault = Math.abs(x - faultPlaneX);
 
       if (distFault < 0.24) {
@@ -206,7 +326,7 @@ export function generateTerrainDioramaGeometry(
         const gouge = fbm(x * 6.0, normZ * 6.0) * 0.6 + 0.2;
         return mixColor('#121215', '#3b2820', gouge);
       }
-      // Sharp vertical stratigraphic throw (상반 +0.95m 융기 vs 하반 -0.85m 침강)
+      // Sharp vertical stratigraphic throw (동측 하반/Footwall +0.95m 융기 vs 서측 상반/Hanging wall -0.85m 침강)
       const displacedZ = x > faultPlaneX ? normZ - 0.95 + (x - faultPlaneX) * 0.12 : normZ + 0.85;
       const markerBed = smoothstep(0.75, 0.95, Math.sin(displacedZ * 5.2));
       const baseBed = Math.sin(displacedZ * 2.6 + fbm(x * 0.3, y * 0.3) * 0.8) * 0.5 + 0.5;
@@ -441,6 +561,7 @@ export function generateTerrainDioramaGeometry(
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+  geo.setAttribute('aSubmerged', new THREE.BufferAttribute(submerged, 1));
   geo.setIndex(indices);
   geo.computeVertexNormals();
 

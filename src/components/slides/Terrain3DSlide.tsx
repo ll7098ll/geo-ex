@@ -65,9 +65,8 @@ export const Terrain3DSlide: React.FC<Terrain3DSlideProps> = ({
   const geology = placeInfo?.geology;
 
   const resolvedSubTerrain =
-    selectedTerrain && selectedTerrain !== '모든 지형'
-      ? selectedTerrain
-      : placeInfo?.terrain || '';
+    placeInfo?.terrain ||
+    (selectedTerrain && selectedTerrain !== '모든 지형' ? selectedTerrain : '');
 
   const placeContext = placeInfo
     ? `${placeInfo.placeName} ${placeInfo.terrain} ${placeInfo.tagline}`

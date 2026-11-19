@@ -113,25 +113,29 @@ export function evalKarstTerrain(
       // 원통이 아닌 자연스러운 수직 절리·용식 비대칭 단면
       const lobeMod =
         1.0 +
-        0.16 * Math.sin(ang * 3.0 + t.phase) +
-        0.10 * Math.cos(ang * 5.0 - t.phase * 0.7) +
-        (fbm(x * 0.9, y * 0.9, 2) - 0.5) * 0.14;
+        0.18 * Math.sin(ang * 3.0 + t.phase) +
+        0.11 * Math.cos(ang * 5.0 - t.phase * 0.7) +
+        (fbm(x * 0.9, y * 0.9, 2) - 0.5) * 0.15;
       const normD = Math.hypot(dx / (t.rx * lobeMod), dy / (t.ry * lobeMod));
 
-      if (normD < 1.15) {
-        const talusFoot = smoothstep(1.15, 0.88, normD) * 0.55;
+      if (normD < 1.24) {
+        const talusFoot = smoothstep(1.24, 0.86, normD) * 0.58;
         let thisH = corrosionPlain + talusFoot;
-        if (normD < 1.0) {
-          // 78~85° 초급경사 기둥 벽면과 둥근 돔형 정상부(Mogote / Fenglin profile)
-          const core = clamp(1.0 - Math.pow(normD, 3.8), 0.0, 1.0);
-          const dome = Math.pow(core, 0.38);
-          const fluting = Math.sin(ang * 14.0 + fbm(x * 2, y * 2) * 2.0) * 0.08 * smoothstep(0.4, 0.95, normD);
-          thisH = Math.max(thisH, 0.45 + dome * (t.h - 0.45) + fluting + ridgedFbm(x * 1.6, y * 1.6, 3) * 0.18 * core);
+        if (normD < 1.06) {
+          // 72~80° 급경사 석회암 봉우리와 비대칭 암릉 정상부 (smoothstep 기반 유한 기울기로 격자 계단·스파이크 제거!)
+          const core = smoothstep(1.06, 0.58, normD);
+          const shoulder = Math.pow(core, 0.85);
+          const cragPeak =
+            (ridgedFbm(x * 1.45 + t.phase, y * 1.45 - t.phase, 4) * 0.44 +
+              Math.sin(ang * 2.0 + t.phase) * 0.14 * (1.0 - core)) *
+            core;
+          const fluting = Math.sin(ang * 13.0 + fbm(x * 2, y * 2) * 2.0) * 0.06 * smoothstep(0.35, 0.90, normD) * core;
+          thisH = Math.max(thisH, 0.45 + shoulder * (t.h - 0.58) + cragPeak + fluting);
           if (thisH > towerH) {
             towerCrownT = core;
           }
         }
-        towerH = smax(towerH, thisH, 0.22);
+        towerH = smax(towerH, thisH, 0.26);
       }
     }
 
@@ -142,10 +146,10 @@ export function evalKarstTerrain(
       // 비취빛 카르스트 수면 바닥
       color.set(mixColor('#0f4240', '#1b6661', fbm(x * 4, y * 4)));
     } else if (towerH > 1.05) {
-      if (towerCrownT > 0.48 && rawH > 2.6) {
+      if (towerCrownT > 0.45 && rawH > 2.4) {
         // 석봉 정상부 및 암벽 턱에 매달린 짙은 아열대 석회암 상록수림
-        const rockPeek = smoothstep(0.62, 0.82, ridgedFbm(x * 2.5, y * 2.5, 3));
-        color.copy(mixColor('#1b451f', '#2d6331', fbm(x * 4, y * 4))).lerp(new THREE.Color('#8a8f91'), rockPeek * 0.5);
+        const rockPeek = smoothstep(0.58, 0.80, ridgedFbm(x * 2.5, y * 2.5, 3));
+        color.copy(mixColor('#1b451f', '#2d6331', fbm(x * 4, y * 4))).lerp(new THREE.Color('#8a8f91'), rockPeek * 0.55);
       } else {
         // 수직 석회암 거벽: 빗물 용식 줄무늬(흑회색 남조류 흔적)와 회백색 탄산염 암면 교차
         const streak = Math.sin(x * 7.5 + y * 7.5 + fbm(x * 3, y * 3) * 3.0) * 0.5 + 0.5;
@@ -164,7 +168,7 @@ export function evalKarstTerrain(
   // =========================================================================
   if (normSub === '석회동굴') {
     // 후면(y > 3.2) 및 좌우 측면(|x| > 4.5)은 높은 카르스트 석회암 산체로 감싸고,
-    // 중앙~전면(|x| < 4.2, y ∈ [-6.5, +3.0])은 절개된 지하 석회동굴 바닥과 휴석단구(Rimstone pools), 동굴 하천 형성!
+    // 중앙~전면(|x| < 4.2, y ∈ [-4.2, +3.0])은 절개된 지하 석회동굴 바닥과 휴석단구(Rimstone pools), 동굴 하천 형성!
     const mountainBase =
       4.05 +
       warpedFbm(x * 0.35, y * 0.35, 4) * 0.68 +
@@ -174,18 +178,23 @@ export function evalKarstTerrain(
     const dSurfaceSink = Math.hypot(x + 1.2, y - 5.6);
     const surfaceSink = dSurfaceSink < 2.1 ? Math.pow(Math.cos((dSurfaceSink / 2.1) * Math.PI * 0.5), 1.6) * 1.45 : 0;
 
-    // 동굴 공동 바닥 절개 영역 (전면 y = -10 계곡으로 열려 있어 기본 카메라에서 동굴 내부가 한눈에 보임!)
+    // 동굴 공동 바닥 절개 영역 (전면 y = -4.1 밖으로는 자연스러운 S자 카르스트 출구 계곡으로 단절 없이 연결!)
     const caveHalfW = 3.85 + Math.sin(y * 0.45) * 0.35;
     const crossMask = 1.0 - smoothstep(caveHalfW - 0.65, caveHalfW + 0.55, Math.abs(x));
     const backWallMask = 1.0 - smoothstep(2.35, 3.45, y);
-    // 전면(y < -4.2)은 동굴 입구 밖 카르스트 협곡으로 이어짐
-    const canyonHalfW = 2.15 + Math.sin(y * 0.4) * 0.35;
-    const frontGorgeMask =
-      y < -4.0
-        ? (1.0 - smoothstep(canyonHalfW - 0.4, canyonHalfW + 0.9, Math.abs(x))) * smoothstep(-3.6, -5.0, y)
-        : 0;
+    const frontPortalTaper = smoothstep(-5.6, -4.1, y);
+    const caveChamberMask = crossMask * backWallMask * frontPortalTaper;
 
-    const carveMask = clamp(Math.max(crossMask * backWallMask, frontGorgeMask), 0.0, 1.0);
+    // 동굴 입구 밖(y < -3.6) 자연스럽게 구부러지며 넓어지는 V자형 카르스트 계곡 (직사각형 도랑 및 문턱 단차 제거!)
+    const exitT = clamp((-3.6 - y) / 6.4, 0.0, 1.0);
+    const exitCenterX = -0.35 * exitT + Math.sin((y + 3.6) * 0.45) * 0.65 * exitT;
+    const exitDistX = Math.abs(x - exitCenterX);
+    const exitInnerW = 2.15 + exitT * 0.85;
+    const exitOuterW = 3.85 + exitT * 1.95;
+    const frontGorgeMask =
+      (1.0 - smoothstep(exitInnerW, exitOuterW, exitDistX)) * smoothstep(-2.6, -4.1, y);
+
+    const carveMask = clamp(Math.max(caveChamberMask, frontGorgeMask), 0.0, 1.0);
 
     // 동굴 내부 바닥 지형: 안쪽(y=+2.4, h=1.08)에서 입구(y=-4.2, h=0.46)로 계단식으로 내려오는 탄산염 휴석단구(Rimstone Terraces)!
     const terraceArc = y + 0.14 * x * x;
@@ -193,27 +202,40 @@ export function evalKarstTerrain(
     const step2 = smoothstep(-1.9, -1.5, terraceArc) * 0.16;
     const step3 = smoothstep(-0.4, 0.0, terraceArc) * 0.16;
     const step4 = smoothstep(1.1, 1.5, terraceArc) * 0.15;
-    // 동굴 서편을 따라 흐르는 지하수 수로(Subterranean stream)
-    const caveStreamX = -1.15 + Math.sin(y * 0.5) * 0.45;
-    const streamCut = (1.0 - smoothstep(0.35, 0.85, Math.abs(x - caveStreamX))) * 0.22;
+    // 동굴 서편을 따라 흘러 출구 계곡으로 빠져나가는 지하수 수로(Subterranean stream)
+    const caveStreamX = -1.15 + Math.sin(y * 0.5) * 0.45 + smoothstep(-3.8, -9.5, y) * 0.55;
+    const streamCut = (1.0 - smoothstep(0.34, 0.90, Math.abs(x - caveStreamX))) * 0.25;
 
-    const caveFloorH = 0.46 + step1 + step2 + step3 + step4 - streamCut + fbm(x * 2.8, y * 2.8) * 0.04;
-    const rawH = Math.max(0.20, (mountainBase - surfaceSink) * (1.0 - carveMask) + caveFloorH * carveMask);
+    const exitValleyLift =
+      smoothstep(-4.4, -9.5, y) *
+      smoothstep(1.25, 3.2, exitDistX) *
+      smoothstep(0.45, 0.95, Math.abs(x - caveStreamX)) *
+      0.65;
+    const caveFloorH =
+      0.46 + step1 + step2 + step3 + step4 - streamCut + exitValleyLift + fbm(x * 2.8, y * 2.8) * 0.04;
+    const rawH = Math.max(0.18, (mountainBase - surfaceSink) * (1.0 - carveMask) + caveFloorH * carveMask);
     h = rawH * reliefScale;
 
-    if (carveMask > 0.72) {
-      if (Math.abs(x - caveStreamX) < 0.65 && rawH < 0.55) {
+    if (carveMask > 0.68) {
+      if (Math.abs(x - caveStreamX) < 0.72 && rawH < 0.54) {
         // 지하 동굴 하천 및 유출 계류
         color.set(mixColor('#0d3b47', '#185e6e', fbm(x * 5, y * 5)));
-      } else if (y > -3.8 && y < 2.2 && Math.abs(x) < 2.8) {
+      } else if (y > -3.8 && y < 2.2 && Math.abs(x) < 2.95) {
         // 탄산칼슘 침전 휴석(Travertine / Flowstone) 황백색·황토색 동굴 바닥
         const sinterRipple = Math.sin(terraceArc * 12.0) * 0.5 + 0.5;
         color.set(mixColor('#594936', '#9e8462', sinterRipple * 0.65 + fbm(x * 5, y * 5) * 0.35));
+      } else if (y <= -4.1) {
+        // 동굴 출구 밖 이끼 낀 석회암 계곡 바닥 및 수변 초지
+        const moss = smoothstep(0.55, 1.35, exitDistX);
+        color.copy(mixColor('#4f4c45', '#736f65', fbm(x * 5, y * 5))).lerp(
+          mixColor('#2e5225', '#426b35', fbm(x * 3, y * 3)),
+          moss * 0.78
+        );
       } else {
         // 동굴 어두운 습윤 암반 바닥
         color.set(mixColor('#1f1c19', '#36302a', fbm(x * 5, y * 5)));
       }
-    } else if (carveMask > 0.12) {
+    } else if (carveMask > 0.10) {
       // 동굴 내벽 및 입구 협곡 석회암 층리 절벽
       const bed = Math.sin(rawH * 9.5) * 0.5 + 0.5;
       color.set(mixColor('#4a4843', '#7d7a72', bed));
@@ -233,52 +255,70 @@ export function evalKarstTerrain(
 
   // =========================================================================
   // 4. 카렌 (빗물 용식으로 조각된 석회암 포장 클린트·그라이크 & 침봉 석림: 조령산 카렌, 더 버런, 칭기·석림)
-  // 부드러운 안티에일리어싱 절리 그라이크(테라로사 틈새) + 빗살 용식구(Rinnenkarren) 침봉 군락
+  // 연속 Voronoi edgeDist + 도메인 워프 사교 절리망 + 부드러운 모따기 그라이크로 스파이크 0!
   // =========================================================================
   if (normSub === '카렌') {
-    // 후면으로 완만히 높아지는 계단형 석회암 대지 기저면
+    // 후면으로 완만히 높아지는 연속 석회암 층리 계단(Limestone Pavement Benches — Math.floor 불연속 제거!)
+    const benchSteps =
+      smoothstep(-6.2, -4.4, y) * 0.36 +
+      smoothstep(-0.4, 1.4, y) * 0.42 +
+      smoothstep(5.0, 6.8, y) * 0.38;
     const benchBase =
-      1.85 +
-      smoothstep(-9.0, 9.0, y) * 0.95 +
-      Math.floor((y + 10.0) / 5.5) * 0.12 +
-      warpedFbm(x * 0.28, y * 0.28, 3) * 0.38;
+      1.68 +
+      smoothstep(-9.5, 9.5, y) * 0.65 +
+      benchSteps +
+      warpedFbm(x * 0.26, y * 0.26, 3) * 0.36;
 
-    // 1) 직교·사교 지질 절리망을 따라 깊게 녹아 파인 그라이크(Grykes / 용식 틈새)
-    const warpX = (fbm(x * 0.35, y * 0.35, 3) - 0.5) * 0.85;
-    const warpY = (fbm(y * 0.35 + 5.2, x * 0.35, 3) - 0.5) * 0.85;
-    const jA = Math.abs(Math.sin((x + warpX) * 1.55 + y * 0.18));
-    const jB = Math.abs(Math.sin((y + warpY) * 1.48 - x * 0.22));
+    // 1) 강한 도메인 워프를 적용한 사교 지질 절리망 + 연속 Voronoi 용식 그라이크(Grykes)
+    const warpX = (warpedFbm(x * 0.22 + 1.3, y * 0.22 - 0.7, 3) - 0.5) * 1.65;
+    const warpY = (warpedFbm(y * 0.22 + 4.1, x * 0.22 + 2.2, 3) - 0.5) * 1.65;
+    const uJoint = (x + warpX) * 0.72 + (y + warpY) * 0.22;
+    const vJoint = -(x + warpX) * 0.24 + (y + warpY) * 0.68;
 
-    // smoothstep으로 0.083m 그리드 해상도보다 충분히 넓게 전이하여 메쉬 스파이크 원천 차단!
-    const grykeA = 1.0 - smoothstep(0.08, 0.34, jA);
-    const grykeB = 1.0 - smoothstep(0.08, 0.34, jB);
-    const grykeMask = Math.max(grykeA, grykeB); // 1 = 깊은 틈새 바닥, 0 = 석회암 클린트 블록 상부
+    const jA = Math.abs(Math.sin(uJoint * 1.05));
+    const jB = Math.abs(Math.sin(vJoint * 0.88 + 0.75));
+    const grykeA = 1.0 - smoothstep(0.08, 0.44, jA);
+    const grykeB = 1.0 - smoothstep(0.08, 0.44, jB);
 
-    // 2) 클린트 블록 상부의 빗물 용식 침봉(Spitzkarren / Stone Forest Pinnacles) & 용식구(Rinnenkarren)
-    const vor = voronoi2D(x * 0.85, y * 0.85, 0.75);
-    const pinnacleHeight = (0.55 + vor.cellId * 0.85) * (1.0 - grykeMask);
-    const rinnenFlutes = ridgedFbm(x * 2.4, y * 2.4, 3) * 0.42 * (1.0 - grykeMask);
+    // 연속 함수 vor.edgeDist (f2 - f1)만 사용 — 충분한 베벨 폭으로 0.083m 격자 위에서 스파이크 0!
+    const vor = voronoi2D((x + warpX * 0.38) * 0.42, (y + warpY * 0.38) * 0.42, 0.78);
+    const vorGryke = 1.0 - smoothstep(0.06, 0.34, vor.edgeDist);
+    const grykeMask = clamp(Math.max(Math.max(grykeA, grykeB * 0.84), vorGryke * 0.90), 0.0, 1.0);
+
+    // 2) 클린트 평탄 석회암 반석(Clints) + 후면·능선부 빗물 용식 침봉(Spitzkarren / Rinnenkarren)
+    const clintInterior = smoothstep(0.12, 0.46, vor.edgeDist) * (1.0 - grykeMask);
+    const blockRelief = 0.36 + fbm(x * 0.40 + 2.0, y * 0.40 - 1.5, 3) * 0.26;
+    const pinnacleCluster = smoothstep(0.32, 0.80, warpedFbm(x * 0.22 - 1.8, y * 0.22 + 1.2, 3));
+    const spitzkarren =
+      clintInterior *
+      pinnacleCluster *
+      smoothstep(-3.8, 5.2, y) *
+      (0.45 + ridgedFbm(x * 1.05, y * 1.05, 3) * 0.42);
+    const rinnenFlutes = ridgedFbm(x * 1.45, y * 1.45, 3) * 0.16 * clintInterior;
 
     const rawH = Math.max(
-      0.32,
-      benchBase - grykeMask * 0.72 + pinnacleHeight + rinnenFlutes
+      0.34,
+      benchBase - grykeMask * 0.50 + clintInterior * blockRelief + spitzkarren + rinnenFlutes
     );
     h = rawH * reliefScale;
 
-    if (grykeMask > 0.58) {
+    if (grykeMask > 0.55) {
       // 깊은 용식 틈새(Gryke) 바닥: 산화철 적갈색 테라로사 토양과 틈새 양치·초본 식생
-      const cleftGrass = smoothstep(0.45, 0.72, fbm(x * 4.5, y * 4.5, 3));
+      const cleftGrass = smoothstep(0.42, 0.72, fbm(x * 4.2, y * 4.2, 3));
       color.copy(mixColor('#782f1e', '#943e29', fbm(x * 5, y * 5))).lerp(
-        new THREE.Color('#395c27'),
-        cleftGrass * 0.65
+        new THREE.Color('#355925'),
+        cleftGrass * 0.68
       );
-    } else if (grykeMask > 0.18) {
+    } else if (grykeMask > 0.16) {
       // 수직 용식구(Rinnenkarren) 측면: 빗물이 흘러내린 청회색~암회색 석회암 벽면
-      color.set(mixColor('#686d70', '#8b9094', fbm(x * 6, y * 6)));
+      color.set(mixColor('#666d72', '#8c9296', fbm(x * 5.5, y * 5.5)));
     } else {
-      // 빗물에 씻겨 하얗고 날카롭게 빛나는 순수 탄산칼슘 석회암 클린트·침봉 정상부!
-      const tipBright = smoothstep(0.35, 0.95, pinnacleHeight + rinnenFlutes);
-      color.set(mixColor('#9fa39e', '#d9dcd7', tipBright * 0.8 + fbm(x * 5, y * 5) * 0.2));
+      // 빗물에 씻겨 하얗고 선명하게 풍화된 석회암 클린트 반석 및 침봉 정상부!
+      const tipBright = smoothstep(0.18, 0.95, spitzkarren + rinnenFlutes + blockRelief * 0.35);
+      const lichen = smoothstep(0.62, 0.82, fbm(x * 1.6, y * 1.6, 3)) * (1.0 - smoothstep(0.25, 0.65, spitzkarren));
+      color
+        .copy(mixColor('#a3a8a3', '#dde0db', tipBright * 0.82 + fbm(x * 4.5, y * 4.5) * 0.18))
+        .lerp(new THREE.Color('#77806c'), lichen * 0.28);
     }
     return { height: h, color };
   }

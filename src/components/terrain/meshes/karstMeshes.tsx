@@ -24,33 +24,41 @@ export const LimestoneCaveFeatures: React.FC<{ reliefScale?: number }> = ({
     const parts: THREE.BufferGeometry[] = [];
 
     const getKarstCeilZ = (x: number, y: number): number => {
-      const spanW = 3.95 + Math.sin(y * 0.45) * 0.3;
+      const spanW = 4.10 + Math.sin(y * 0.45) * 0.35;
       const nx = clamp(x / spanW, -1.0, 1.0);
-      const dome = Math.pow(Math.max(0, 1.0 - nx * nx), 0.55);
-      const backDrop = smoothstep(1.9, 3.1, y) * 0.85;
-      return (1.15 + dome * 2.15 - backDrop + fbm(x * 1.8, y * 1.8) * 0.18) * reliefScale;
+      const dome = Math.pow(Math.max(0, 1.0 - nx * nx), 0.56);
+      const backDrop = smoothstep(2.05, 3.35, y) * 1.05;
+      return (1.15 + dome * 2.15 - backDrop + fbm(x * 1.8, y * 1.8) * 0.16) * reliefScale;
     };
 
-    // 1. Vaulted Stratified Limestone Roof over y in [-3.95, +3.15], x in [-4.5, +4.5]
+    // 1. Higher-res Vaulted Stratified Limestone Roof tucked smoothly into the uncarved mountain DEM
     const roof = buildVaultedRoofShell(
-      -4.55,
-      4.55,
-      -3.95,
-      3.15,
-      56,
-      52,
+      -5.05,
+      5.05,
+      -4.0,
+      3.55,
+      76,
+      68,
       (x, y) => {
-        const spanW = 4.15 + Math.sin(y * 0.45) * 0.3;
+        const caveHalfW = 3.85 + Math.sin(y * 0.45) * 0.35;
+        const spanW = caveHalfW + 0.68;
         if (Math.abs(x) > spanW) return null;
         // Arched portal curve at the front entrance y ≈ -3.95
-        const portalCurveY = -3.95 + Math.pow(x / 4.2, 2.0) * 0.55;
+        const portalCurveY = -3.95 + Math.pow(clamp(x / 4.4, -1, 1), 2.0) * 0.55;
         if (y < portalCurveY) return null;
 
         const ceilZ = getKarstCeilZ(x, y);
         const dSink = Math.hypot(x + 1.2, y - 5.6);
         const sinkDip = dSink < 2.1 ? Math.pow(Math.cos((dSink / 2.1) * Math.PI * 0.5), 1.6) * 1.45 : 0;
+        const sideTuck = smoothstep(spanW - 0.55, spanW, Math.abs(x)) * 0.045;
+        const backTuck = smoothstep(2.95, 3.55, y) * 0.045;
         const topZ =
-          (4.08 + warpedFbm(x * 0.35, y * 0.35, 4) * 0.68 + smoothstep(-2.0, 7.5, y) * 0.55 - sinkDip) *
+          (4.05 +
+            warpedFbm(x * 0.35, y * 0.35, 4) * 0.68 +
+            smoothstep(-2.0, 7.5, y) * 0.55 -
+            sinkDip -
+            sideTuck -
+            backTuck) *
           reliefScale;
 
         const karrenOutcrop = smoothstep(0.58, 0.76, fbm(x * 1.6, y * 1.6, 3));
@@ -85,20 +93,20 @@ export const LimestoneCaveFeatures: React.FC<{ reliefScale?: number }> = ({
       parts.push(paintGeometrySolid(stalactite, i % 2 === 0 ? '#d9c7a3' : '#bfa77e'));
     }
 
-    // 3. Rising Stalagmites (석순: strictly +Z upward from the cavern floor!)
+    // 3. Rising Stalagmites (석순: strictly +Z upward on dry travertine banks, clear of the subterranean stream!)
     const stalagmiteCoords: [number, number, number, number][] = [
-      [-2.35, -2.8, 0.14, 0.72],
+      [-2.48, -2.8, 0.14, 0.72],
       [2.15, -2.5, 0.16, 0.85],
       [0.95, -1.9, 0.12, 0.62],
-      [-2.45, -1.1, 0.15, 0.78],
+      [-2.52, -1.1, 0.15, 0.78],
       [2.45, -0.6, 0.17, 0.92],
-      [-0.45, -0.2, 0.13, 0.68],
+      [-0.12, -0.2, 0.13, 0.68],
       [1.35, 0.3, 0.15, 0.75],
-      [-2.2, 0.8, 0.16, 0.84],
+      [-2.35, 0.8, 0.16, 0.84],
       [2.25, 1.4, 0.14, 0.70],
-      [-0.85, 1.9, 0.15, 0.80],
+      [0.65, 1.55, 0.15, 0.80],
       [0.95, -3.2, 0.11, 0.54],
-      [-1.85, -3.4, 0.13, 0.60],
+      [-2.48, -3.25, 0.13, 0.60],
     ];
     for (const [gx, gy, rBase, hRaw] of stalagmiteCoords) {
       const fz = evaluateTerrainPoint('석회동굴', gx, gy, reliefScale).height;
@@ -116,9 +124,9 @@ export const LimestoneCaveFeatures: React.FC<{ reliefScale?: number }> = ({
     // 4. Grand Joined Fluted Travertine Columns (석주: continuous floor-to-ceiling pillars!)
     const pillarSpots: [number, number, number][] = [
       [1.75, -1.65, 0.28],
-      [-2.05, -0.35, 0.30],
+      [-2.25, -0.35, 0.30],
       [1.85, 0.95, 0.26],
-      [-1.55, 1.65, 0.25],
+      [-2.05, 1.45, 0.25],
       [0.35, 1.95, 0.32],
     ];
     for (const [px, py, pr] of pillarSpots) {
@@ -141,20 +149,20 @@ export const LimestoneCaveFeatures: React.FC<{ reliefScale?: number }> = ({
   }, [reliefScale]);
   useDisposeGeometry(karstCavernGeo);
 
-  // Stepped Rimstone Pool (휴석소) & Subterranean Stream Water
+  // Stepped Rimstone Pool (휴석소) & Subterranean Stream Water (smoothly bounded by carved channel banks)
   const caveWaterFn = useMemo(
     () => (x: number, y: number) => {
-      if (Math.abs(x) > 3.2 || y > 2.2) return null;
-      const caveStreamX = -1.15 + Math.sin(y * 0.5) * 0.45;
-      if (Math.abs(x - caveStreamX) < 0.78 && y < 2.0) {
-        return 0.48 * reliefScale;
+      if (Math.abs(x) > 3.6 || y > 2.2) return null;
+      const caveStreamX = -1.15 + Math.sin(y * 0.5) * 0.45 + smoothstep(-3.8, -9.5, y) * 0.55;
+      if (Math.abs(x - caveStreamX) < 0.96 && y < 2.05) {
+        return 0.45 * reliefScale;
       }
-      // 3 stepped travertine gour pools inside the cavern
+      // 3 stepped travertine gour pools inside the cavern (kept cleanly east of stream)
       const arc = y + 0.14 * x * x;
-      if (Math.abs(x) < 1.95) {
-        if (arc > -2.9 && arc < -1.95) return 0.63 * reliefScale;
-        if (arc > -1.4 && arc < -0.45) return 0.79 * reliefScale;
-        if (arc > 0.1 && arc < 1.05) return 0.95 * reliefScale;
+      if (x > -0.35 && x < 2.15) {
+        if (arc > -2.95 && arc < -1.9) return 0.62 * reliefScale;
+        if (arc > -1.45 && arc < -0.4) return 0.78 * reliefScale;
+        if (arc > 0.05 && arc < 1.1) return 0.94 * reliefScale;
       }
       return null;
     },

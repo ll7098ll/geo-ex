@@ -59,7 +59,8 @@ export function evalCoastalTerrain(
     const upperMarshLift = smoothstep(marshLineY - 0.8, marshLineY + 2.4, y) * 0.48;
 
     // 1차 본류 S자 사행 갯골 (순천만 S자 갯골: 외해 쪽으로 갈수록 하폭이 넓어지는 나팔형 하구)
-    const mainX = Math.sin(y * 0.34) * 2.45 + Math.cos(y * 0.18) * 0.85;
+    const getMainCreekX = (yy: number) => Math.sin(yy * 0.34) * 2.45 + Math.cos(yy * 0.18) * 0.85;
+    const mainX = getMainCreekX(y);
     const dMainDx = 0.34 * 2.45 * Math.cos(y * 0.34) - 0.18 * 0.85 * Math.sin(y * 0.18);
     const mainPerpDist = Math.abs(x - mainX) / Math.sqrt(1.0 + dMainDx * dMainDx);
     const mainHalfW = 0.36 + smoothstep(7.5, -10.0, y) * 0.92;
@@ -67,30 +68,40 @@ export function evalCoastalTerrain(
       (1.0 - smoothstep(0.0, mainHalfW, mainPerpDist)) *
       (0.32 + smoothstep(7.0, -9.0, y) * 0.22);
 
-    // 2차 수지상 지류 갯골 4갈래 (본류로 자연스럽게 합류하는 곡선 세류)
+    // 2차 & 3차 수지상 지류 갯골 (본류 합류점의 실제 좌표 getMainCreekX(by)에 정확히 접합!)
     const branches = [
-      { ax: -6.8, ay: 3.8, bx: mainX - 0.1, by: 0.8, w: 0.46, d: 0.24 },
-      { ax: 6.6, ay: 4.4, bx: mainX + 0.1, by: 1.6, w: 0.44, d: 0.23 },
-      { ax: -7.2, ay: -2.2, bx: mainX - 0.15, by: -4.8, w: 0.52, d: 0.26 },
-      { ax: 6.9, ay: -1.4, bx: mainX + 0.15, by: -4.2, w: 0.48, d: 0.25 },
+      // 2차 주 지류 4갈래 (본류와 정확히 연결)
+      { ax: -7.0, ay: 3.6, bx: getMainCreekX(0.8), by: 0.8, w: 0.48, d: 0.25 },
+      { ax: 6.8, ay: 4.3, bx: getMainCreekX(1.6), by: 1.6, w: 0.46, d: 0.24 },
+      { ax: -7.4, ay: -2.0, bx: getMainCreekX(-4.8), by: -4.8, w: 0.54, d: 0.27 },
+      { ax: 7.0, ay: -1.3, bx: getMainCreekX(-4.2), by: -4.2, w: 0.50, d: 0.26 },
+      // 3차 수지상 분지 세류 4갈래 (2차 지류에서 갈라져 나무가지처럼 전개)
+      { ax: -5.4, ay: 5.5, bx: -3.6, by: 2.35, w: 0.28, d: 0.17 },
+      { ax: 5.6, ay: 6.1, bx: 4.2, by: 3.0, w: 0.27, d: 0.16 },
+      { ax: -6.2, ay: 0.4, bx: -4.4, by: -3.25, w: 0.30, d: 0.18 },
+      { ax: 6.1, ay: 0.9, bx: 4.0, by: -2.6, w: 0.29, d: 0.17 },
     ];
 
     let subGullyDepth = 0;
     let minBranchRatio = 10.0;
+    const warpX = x + Math.sin(y * 0.85) * 0.36;
+    const warpY = y + Math.cos(x * 0.78) * 0.30;
     for (const br of branches) {
-      // Sinuous perturbation perpendicular to segment
+      // Taper meander warp near junction (t -> 1) so tributary connects seamlessly into main channel!
+      const rawSeg = sdSegment(x, y, br.ax, br.ay, br.bx, br.by);
+      const warpWeight = Math.sin(rawSeg.t * Math.PI);
       const seg = sdSegment(
-        x + Math.sin(y * 0.9) * 0.42,
-        y + Math.cos(x * 0.8) * 0.35,
+        x + (warpX - x) * warpWeight,
+        y + (warpY - y) * warpWeight,
         br.ax,
         br.ay,
         br.bx,
         br.by
       );
-      const localW = br.w * (0.45 + 0.55 * seg.t);
+      const localW = br.w * (0.38 + 0.62 * seg.t);
       const ratio = seg.dist / localW;
       if (ratio < minBranchRatio) minBranchRatio = ratio;
-      const carve = (1.0 - smoothstep(0.0, localW, seg.dist)) * br.d * (0.4 + 0.6 * seg.t);
+      const carve = (1.0 - smoothstep(0.0, localW, seg.dist)) * br.d * (0.38 + 0.62 * seg.t);
       subGullyDepth = Math.max(subGullyDepth, carve);
     }
 
@@ -189,10 +200,10 @@ export function evalCoastalTerrain(
     const distHeadland = x - headlandEdgeX;
 
     let headlandH = 0;
-    if (distHeadland > -0.65) {
-      const t = smoothstep(-0.65, 0.25, distHeadland);
-      const topPlateau = 3.85 + smoothstep(0.25, 5.0, distHeadland) * 0.42 + fbm(x * 0.7, y * 0.7) * 0.18;
-      headlandH = 0.32 + Math.pow(t, 0.78) * (topPlateau - 0.32);
+    if (distHeadland > -0.78) {
+      const t = smoothstep(-0.78, 0.28, distHeadland);
+      const topPlateau = 3.85 + smoothstep(0.28, 5.0, distHeadland) * 0.42 + fbm(x * 0.7, y * 0.7) * 0.18;
+      headlandH = 0.32 + Math.pow(t, 0.82) * (topPlateau - 0.32);
     }
 
     // 해식아치 바깥쪽 교각 착지 암초 기단 (x ≈ -0.15, y ≈ 0.28 -> 3D 아치 교각과 정확히 결합)
@@ -211,14 +222,14 @@ export function evalCoastalTerrain(
       const shapeMod = 1.0 + 0.12 * Math.sin(ang * 3.0 + s.rot * 2.0) + 0.08 * Math.cos(ang * 4.0);
       const normD = Math.hypot(lx / (s.rx * shapeMod), ly / (s.ry * shapeMod));
 
-      if (normD < 1.35) {
+      if (normD < 1.42) {
         // 주변 수중 파식 암초 받침(Abrasion reef plinth)
-        const plinth = 0.30 + smoothstep(1.35, 0.92, normD) * 0.32;
+        const plinth = 0.30 + smoothstep(1.42, 0.94, normD) * 0.32;
         let colH = plinth;
-        if (normD < 1.0) {
-          // 수직 절벽형 기둥 프로파일 (등고선 ON 시 선명한 폐곡선 생성!)
-          const wallT = clamp(1.0 - Math.pow(normD, 3.6), 0.0, 1.0);
-          const flatCrown = Math.pow(wallT, 0.36);
+        if (normD < 1.12) {
+          // smoothstep 기반 유한 기울기 층리 절벽 기둥 프로파일 (DEM 수직 스파이크·줄무늬 완전 해소!)
+          const wallT = smoothstep(1.12, 0.66, normD);
+          const flatCrown = Math.pow(wallT, 0.85);
           colH = Math.max(plinth, 0.38 + flatCrown * (s.h - 0.38) + fbm(x * 3.0, y * 3.0) * 0.08);
         }
         if (colH > stackH) {
@@ -367,11 +378,12 @@ export function evalCoastalTerrain(
         spitAlong = (i + seg.t) / (spitNodes.length - 1);
       }
     }
-    // 2차 구 갈고리 능선 (Secondary older recurved ridge)
+    // 2차 구 갈고리 능선 (Secondary older recurved ridge) + 미세 해빈 사구열(Beach ridges)
     const hook2 = sdSegment(x, y, 1.35, 1.75, 1.05, 2.95);
-    const spitHalfW = 0.88 - spitAlong * 0.26;
-    const mainSpitH = Math.exp(-Math.pow(minSpitDist / spitHalfW, 2.0)) * (1.02 - spitAlong * 0.16);
-    const subHookH = Math.exp(-Math.pow(hook2.dist / 0.52, 2.0)) * 0.76;
+    const spitHalfW = 1.02 - spitAlong * 0.28;
+    const beachRidgeRipple = Math.sin(minSpitDist * 10.0) * 0.03 * Math.exp(-Math.pow(minSpitDist / spitHalfW, 2.0));
+    const mainSpitH = Math.exp(-Math.pow(minSpitDist / spitHalfW, 2.0)) * (1.12 - spitAlong * 0.16) + beachRidgeRipple;
+    const subHookH = Math.exp(-Math.pow(hook2.dist / 0.62, 2.0)) * 0.84;
 
     // 3) 동남쪽 앞바다 바위섬(육계도: (4.4, -3.1))과 본토 남서 곶(-5.2, -4.2)을 잇는 활 모양 육계사주(Tombolo)
     const islandCx = 4.4;
@@ -382,23 +394,24 @@ export function evalCoastalTerrain(
         ? Math.pow(clamp(1.0 - dIsland / 1.15, 0, 1), 0.65) * 3.25 + fbm(x * 1.8, y * 1.8) * 0.18 * (1.0 - dIsland)
         : 0;
 
-    // 육계사주 (양방향 파랑 굴절로 가운데가 살짝 잘록하고 매끈하게 휘어진 모래톱 둑길)
-    const tomboloY = -4.15 + ((x + 5.4) / 9.8) * 1.05 + Math.sin(((x + 5.4) / 9.8) * Math.PI) * 0.85;
-    const inTomboloSpan = smoothstep(-6.0, -4.6, x) * (1.0 - smoothstep(3.2, 4.6, x));
-    const tomboloHalfW = 0.72 + Math.pow(Math.cos(((x + 0.5) / 5.2) * Math.PI * 0.5), 2.0) * -0.18;
+    // 육계사주 (양방향 파랑 굴절로 본토 남서 해빈(-6.8, -4.15)과 앞바다 바위섬(4.4, -3.1)을 빈틈없이 연결!)
+    const tomboloT = clamp((x + 6.8) / 11.2, 0.0, 1.0);
+    const tomboloY = -4.15 + tomboloT * 1.05 + Math.sin(tomboloT * Math.PI) * 0.85;
+    const inTomboloSpan = smoothstep(-8.0, -6.2, x) * (1.0 - smoothstep(3.2, 4.6, x));
+    const tomboloHalfW = 0.88 - Math.pow(Math.sin(tomboloT * Math.PI), 2.0) * 0.18;
     const tomboloH =
-      inTomboloSpan * Math.exp(-Math.pow((y - tomboloY) / Math.max(0.52, tomboloHalfW), 2.0)) * 0.90;
+      inTomboloSpan * Math.exp(-Math.pow((y - tomboloY) / Math.max(0.64, tomboloHalfW), 2.0)) * 1.02;
 
     // 수중 연안 모래톱 여울(Submerged sand shoal)
     const shoalH =
       Math.max(
-        Math.exp(-Math.pow(minSpitDist / 1.85, 2.0)),
-        inTomboloSpan * Math.exp(-Math.pow((y - tomboloY) / 1.65, 2.0))
-      ) * 0.42;
+        Math.exp(-Math.pow(minSpitDist / 1.95, 2.0)),
+        inTomboloSpan * Math.exp(-Math.pow((y - tomboloY) / 1.75, 2.0))
+      ) * 0.44;
 
     const seaFloor = 0.20 + fbm(x * 1.3, y * 1.3) * 0.06;
     const sandFeatureH = Math.max(mainSpitH, Math.max(subHookH, tomboloH));
-    const rawH = Math.max(seaFloor, Math.max(shoalH, smax(Math.max(mainlandH, tiedIslandH), sandFeatureH, 0.18)));
+    const rawH = Math.max(seaFloor, Math.max(shoalH, smax(Math.max(mainlandH, tiedIslandH), sandFeatureH, 0.2)));
     h = rawH * reliefScale;
 
     if (mainlandH > 0.85 || tiedIslandH > 0.85) {
@@ -411,7 +424,7 @@ export function evalCoastalTerrain(
       }
     } else if (rawH > 0.54) {
       // 해수면 위로 드러난 순백~금빛 사주·사취·육계사주 모래톱 및 사구초지 능선
-      const vegSpine = smoothstep(0.82, 0.98, rawH);
+      const vegSpine = smoothstep(0.84, 1.04, rawH);
       color.copy(mixColor('#e3c68d', '#f7e2b2', fbm(x * 4, y * 4))).lerp(new THREE.Color('#6b8244'), vegSpine * 0.45);
     } else if (rawH > 0.36) {
       // 에메랄드빛 천해 모래 여울(Sand shoal)
@@ -425,53 +438,63 @@ export function evalCoastalTerrain(
 
   // =========================================================================
   // 6. 석호 (사주가 만 입구를 가로막아 형성된 동해안 기수호: 화진포, 경포호, 송지호)
-  // 서쪽(x < -3.2) 배후 산지 & 유입 하천 소삼각주 -> 중앙 석호(-3.2 ~ +2.1) -> 사주(x ≈ 2.8) & 갯트임 -> 동해(x > 3.5)
+  // 서쪽(x < -3.2) 배후 산지 & 유입 하천 소삼각주 -> 중앙 타원형 석호 -> 사주(x ≈ 2.75) & 갯트임 -> 동해
   // =========================================================================
   if (normSub === '석호') {
     // 1) 서쪽 배후 화강암 구릉 산지 및 석호로 유입되는 소하천 계곡(y ≈ 0.8)
     const creekY = 0.8 + Math.sin(x * 0.45) * 0.55;
     const distCreek = Math.abs(y - creekY);
-    const creekCut = (1.0 - smoothstep(0.35, 1.35, distCreek)) * 1.45;
-    const westHillBase = smoothstep(-2.8, -8.8, x) * (3.65 + warpedFbm(x * 0.45, y * 0.45, 3) * 0.85);
-    const westHills = Math.max(0, westHillBase - creekCut * smoothstep(-2.5, -5.5, x));
+    const creekCut = (1.0 - smoothstep(0.32, 1.4, distCreek)) * 1.45;
+    const westHillBase = smoothstep(-2.6, -8.8, x) * (3.15 + warpedFbm(x * 0.42, y * 0.42, 3) * 0.72);
+    const westHills = Math.max(0, westHillBase - creekCut * smoothstep(-2.4, -5.4, x));
 
-    // 북쪽·남쪽 만을 감싸는 해안 구릉 곶 (석호를 아늑한 타원형 분지로 포위)
+    // 북쪽·남쪽 만을 감싸는 자연스러운 곡선 해안 구릉 곶 (smax로 결합해 모서리 고도 과다 상승 방지!)
+    const headlandReach = 1.6 * Math.exp(-Math.pow((x + 1.2) / 5.5, 2.0));
     const northSouthHeadlands =
-      smoothstep(4.8, 8.8, Math.abs(y)) *
-      smoothstep(3.6, -2.5, x) *
-      (2.15 + fbm(x * 0.6, y * 0.6) * 0.55);
+      smoothstep(4.6 + Math.sin(x * 0.4) * 0.45, 8.8, Math.abs(y)) *
+      smoothstep(3.4, -2.8, x) *
+      (1.85 + headlandReach * 0.35 + fbm(x * 0.55, y * 0.55) * 0.42);
 
-    // 유입 하천이 석호 서안(-3.2, 0.8)에 쌓아 올린 소규모 하구 삼각주(Bayhead Delta)
-    const dDelta = Math.hypot((x + 3.0) / 1.35, (y - 0.8) / 1.55);
-    const bayheadDelta = dDelta < 1.0 && distCreek > 0.28 ? (1.0 - dDelta) * 0.48 : 0;
+    const combinedHills = smax(westHills, northSouthHeadlands, 0.55);
+
+    // 유입 하천이 석호 서안(-3.0, 0.8)에 쌓아 올린 소규모 하구 삼각주(Bayhead Delta: 부드러운 하도 분리)
+    const dDelta = Math.hypot((x + 2.95) / 1.45, (y - 0.8) / 1.65);
+    const creekChannelMask = smoothstep(0.16, 0.55, distCreek);
+    const bayheadDelta = dDelta < 1.05 ? Math.pow(1.0 - dDelta / 1.05, 1.2) * 0.48 * creekChannelMask : 0;
 
     // 2) 동해 파랑과 연안류가 쌓아 올린 긴 모래 사주(Barrier Spit: x ≈ 2.75) + 갯트임(Tidal Inlet: y ≈ -1.65)
-    const spitCenterX = 2.75 + Math.sin(y * 0.24) * 0.28;
+    const spitCenterX = 2.75 + Math.sin(y * 0.24) * 0.32;
     const dxSpit = x - spitCenterX;
     const inletCenterY = -1.65;
-    const inletOpen = smoothstep(0.32, 0.95, Math.abs(y - inletCenterY)); // y ≈ -1.65에서 사주가 터져 바닷물 교환!
+    const inletOpen = smoothstep(0.32, 1.05, Math.abs(y - inletCenterY)); // y ≈ -1.65에서 사주가 터져 바닷물 교환!
     const barrierSpit =
-      Math.exp(-Math.pow(dxSpit / 0.88, 2.0)) *
-      (0.88 + fbm(x * 1.5, y * 1.5) * 0.14) *
+      Math.exp(-Math.pow(dxSpit / 0.92, 2.0)) *
+      (0.92 + fbm(x * 1.5, y * 1.5) * 0.14) *
       inletOpen;
 
-    // 3) 석호 기저 분지(-3.2 < x < 2.1) 및 동해 외해(x > 3.5)
-    const inLagoonBasin = smoothstep(-3.4, -2.4, x) * (1.0 - smoothstep(1.8, 2.5, x)) * (1.0 - smoothstep(4.8, 6.2, Math.abs(y)));
-    const seaFloor = 0.18 + fbm(x * 1.4, y * 1.4) * 0.06;
+    // 3) 유기적 타원형·다엽 석호 분지 (직사각형 박스 분지 및 x=2.75 절벽 계단 완전 제거!)
+    const basinWarpX = (fbm(x * 0.45 + 2.1, y * 0.45, 3) - 0.5) * 0.85;
+    const basinWarpY = (fbm(x * 0.45, y * 0.45 + 3.7, 3) - 0.5) * 1.05;
+    const lagoonDist = Math.hypot((x + 0.35 + basinWarpX) / 2.95, (y - 0.15 + basinWarpY) / 4.85);
+    const inLagoonBasin = 1.0 - smoothstep(0.52, 1.08, lagoonDist);
 
-    const baseSurface = x > 2.75 ? seaFloor : 0.42 - inLagoonBasin * 0.14;
+    const seaFloor = 0.18 + fbm(x * 1.4, y * 1.4) * 0.06;
+    const lagoonBed = 0.44 - inLagoonBasin * 0.18;
+    const seaTransition = smoothstep(spitCenterX - 0.72, spitCenterX + 0.68, x);
+    const baseSurface = lagoonBed * (1.0 - seaTransition) + seaFloor * seaTransition;
+
     const rawH = Math.max(
       0.18,
-      baseSurface + westHills + northSouthHeadlands + bayheadDelta + barrierSpit
+      baseSurface + combinedHills + bayheadDelta + barrierSpit
     );
     h = rawH * reliefScale;
 
-    if (x > spitCenterX + 0.65 && rawH < 0.56) {
+    if (x > spitCenterX + 0.68 && rawH < 0.56) {
       // 동해 푸른 외해 바닥
       color.set(mixColor('#092234', '#123b54', fbm(x * 3, y * 3)));
-    } else if (Math.abs(dxSpit) < 0.95 && rawH > 0.56 && northSouthHeadlands < 0.4) {
+    } else if (Math.abs(dxSpit) < 0.98 && rawH > 0.56 && northSouthHeadlands < 0.4) {
       // 금빛 모래 사주 해변 및 중앙 방풍 해송림 띠
-      const pineBelt = Math.abs(dxSpit) < 0.34 && inletOpen > 0.85 && rawH > 0.88;
+      const pineBelt = Math.abs(dxSpit) < 0.36 && inletOpen > 0.85 && rawH > 0.88;
       color.set(
         pineBelt
           ? mixColor('#2c5224', '#3d6931', fbm(x * 4, y * 4))
@@ -480,7 +503,7 @@ export function evalCoastalTerrain(
     } else if (rawH < 0.56) {
       // 잔잔한 청록빛 석호 기수역 바닥 및 갯트임 수로
       color.set(mixColor('#143d38', '#1f5750', fbm(x * 4, y * 4)));
-    } else if (rawH < 0.76 && x < 2.2) {
+    } else if (rawH < 0.78 && x < 2.2) {
       // 석호 수변 갈대습지 및 하구 소삼각주 퇴적대
       color.set(mixColor('#4c6935', '#688246', fbm(x * 5, y * 5)));
     } else {
@@ -491,21 +514,21 @@ export function evalCoastalTerrain(
   }
 
   // =========================================================================
-  // 7. 파식대 (후퇴하는 책장 층리 해식애 + 절리망 암반 평탄면 + 조수 웅덩이: 변산 채석강, 태종대)
-  // 동쪽(x > 3.55) 책장 층리 해식절벽 -> 중앙(-3.8 ~ +3.55) 직교 절리 & 경사 지층 리브 파식대 + 조수웅덩이 -> 서쪽 외해
+  // 7. 파식대 (후퇴하는 책장 층리 해식애 + 자연 절리 암반 평탄면 + 조수 웅덩이: 변산 채석강, 태종대)
+  // 동쪽(x > 3.55) 책장 층리 해식절벽 -> 중앙(-3.8 ~ +3.55) 도메인-워핑 절리 & 경사 지층 파식대 + 조수웅덩이 -> 서쪽 외해
   // =========================================================================
   if (normSub === '파식대') {
     const cliffEdge = getWavePlatformCliffX(y);
     const distCliff = x - cliffEdge;
 
     let rawH = 0;
-    if (distCliff > -0.45) {
-      // 부드럽게 안티에일리어싱된 수직 해식애 단애 및 상부 해안 단구 (톱니 깨짐 완벽 제거!)
-      const cliffT = smoothstep(-0.45, 0.22, distCliff);
-      const topH = 4.15 + smoothstep(0.22, 5.0, distCliff) * 0.45 + fbm(x * 0.6, y * 0.6) * 0.22;
-      rawH = 0.78 + Math.pow(cliffT, 0.82) * (topH - 0.78);
+    if (distCliff > -0.62) {
+      // 부드럽게 안티에일리어싱된 책장 층리 해식애 단애 및 상부 해안 단구
+      const cliffT = smoothstep(-0.62, 0.36, distCliff);
+      const topH = 4.05 + smoothstep(0.36, 5.0, distCliff) * 0.45 + fbm(x * 0.6, y * 0.6) * 0.22;
+      rawH = 0.76 + Math.pow(cliffT, 0.85) * (topH - 0.76);
 
-      if (distCliff > 0.32) {
+      if (distCliff > 0.42) {
         color.set(mixColor('#315226', '#466b35', fbm(x * 2.5, y * 2.5)));
       } else {
         const bookStrata = Math.sin(rawH * 15.0 + y * 0.2) * 0.5 + 0.5;
@@ -514,24 +537,26 @@ export function evalCoastalTerrain(
     } else {
       // 광활한 파식대 암반 평탄면 (x = -3.85 저조선 단애까지 1.5°로 완만히 경사)
       const seaStepX = -3.85 + Math.sin(y * 0.42) * 0.55;
-      const onBench = smoothstep(seaStepX - 0.55, seaStepX + 0.35, x);
-      const benchSlope = 0.46 + smoothstep(seaStepX, cliffEdge - 0.45, x) * 0.34;
+      const onBench = smoothstep(seaStepX - 0.65, seaStepX + 0.42, x);
+      const benchSlope = 0.46 + smoothstep(seaStepX, cliffEdge - 0.62, x) * 0.30;
 
-      // 지각 변형 직교 절리망 (부드러운 smoothstep 용식·침식 홈)
-      const j1 = smoothstep(0.18, 0.03, Math.abs(Math.sin((x * 1.55 + y * 0.25) + fbm(x * 0.4, y * 0.4) * 0.4)));
-      const j2 = smoothstep(0.16, 0.03, Math.abs(Math.sin((y * 1.45 - x * 0.22) + fbm(y * 0.4, x * 0.4) * 0.4)));
-      const jointGroove = Math.max(j1, j2) * 0.14 * onBench;
+      // 자연스러운 도메인-워핑 공액 절리망 (타일 격자 느낌 제거, 실제 채석강/태종대 암반 균열 재현!)
+      const jw1 = warpedFbm(x * 0.32 + 1.4, y * 0.32 - 0.8, 3) * 1.45;
+      const jw2 = warpedFbm(x * 0.28 - 2.3, y * 0.28 + 1.9, 3) * 1.35;
+      const j1 = smoothstep(0.24, 0.04, Math.abs(Math.sin(x * 0.92 + y * 0.42 + jw1)));
+      const j2 = smoothstep(0.22, 0.04, Math.abs(Math.sin(y * 0.86 - x * 0.56 + jw2)));
+      const jointGroove = Math.max(j1 * 0.9, j2 * 0.75) * 0.095 * onBench;
 
-      // 경사진 퇴적암 지층의 차별침식 미세 톱니 리브 (Tilted bedding micro-cuestas)
-      const beddingRib = Math.sin(x * 4.2 + y * 0.5) * 0.035 * onBench;
+      // 경사진 퇴적암 지층의 차별침식 미세 리브 (Tilted bedding micro-cuestas)
+      const beddingRib = Math.sin(x * 3.4 + y * 0.75 + jw1 * 0.6) * 0.028 * onBench;
 
       // 암반 위에 오목하게 파인 조수 웅덩이(Tide Pools: 썰물 때도 바닷물이 고여 있는 와지)
       let poolCarve = 0;
       let inTidePool = false;
       for (const p of TIDE_POOL_SPECS) {
         const pd = Math.hypot((x - p.px) / p.rx, (y - p.py) / p.ry);
-        if (pd < 1.15) {
-          const depth = (1.0 - smoothstep(0.45, 1.12, pd)) * 0.24;
+        if (pd < 1.18) {
+          const depth = (1.0 - smoothstep(0.42, 1.15, pd)) * 0.24;
           if (depth > poolCarve) poolCarve = depth;
           if (pd < 0.88) inTidePool = true;
         }
@@ -545,13 +570,15 @@ export function evalCoastalTerrain(
       } else if (inTidePool) {
         // 조수 웅덩이 바닥: 맑은 해수와 녹조·말미잘 암반
         color.set(mixColor('#143d45', '#215961', fbm(x * 6, y * 6)));
-      } else if (jointGroove > 0.06) {
+      } else if (jointGroove > 0.045) {
         // 절리 틈새: 파래·김 등 해조류와 방해석 맥 흔적
-        color.set(mixColor('#1f3322', '#2f4a2e', fbm(x * 6, y * 6)));
+        const mossBlend = smoothstep(0.045, 0.085, jointGroove);
+        const rockCol = mixColor('#4f4c46', '#757066', fbm(x * 4, y * 4));
+        color.copy(rockCol).lerp(mixColor('#223825', '#345233', fbm(x * 6, y * 6)), mossBlend);
       } else {
         // 평탄하게 깎여 드러난 회갈색~암회색 수성퇴적암 파식면
-        const rockGrain = Math.sin(x * 4.2 + y * 0.5) * 0.5 + 0.5;
-        color.set(mixColor('#4f4c46', '#757066', rockGrain * 0.65 + fbm(x * 4, y * 4) * 0.35));
+        const rockGrain = Math.sin(x * 3.4 + y * 0.75 + jw1 * 0.6) * 0.5 + 0.5;
+        color.set(mixColor('#524e48', '#787368', rockGrain * 0.58 + fbm(x * 4, y * 4) * 0.42));
       }
     }
 

@@ -73,6 +73,7 @@ const INCISED_MEANDER_CONTEXT = [
 ];
 
 const VOLCANIC_CONTEXT_RULES: readonly { key: string; hints: readonly string[] }[] = [
+  { key: '기생화산', hints: ['기생화산', '오름', '파리쿠틴', '분석구', 'cinder cone'] },
   { key: '종상화산', hints: ['종상화산', '산방산', '용암돔'] },
   { key: '용암대지', hints: ['용암대지', '한탄강'] },
   { key: '수성화산', hints: ['수성화산', '응회구', '성산일출봉'] },
@@ -131,7 +132,7 @@ const BASE_WATER_ELEVATIONS: Readonly<Record<string, number>> = {
   '용암대지': 0.52,
   '곡류천': 0.56,
   '감입곡류천': 0.58,
-  '범람원': 0.60,
+  '범람원': 0.58,
   '삼각주': 0.50,
   '하안단구': 0.56,
   '탑 카르스트': 0.52,

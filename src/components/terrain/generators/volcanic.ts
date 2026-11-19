@@ -32,7 +32,7 @@ export function evalVolcanicTerrain(
   if (normSub === '순상화산') {
     // 광활한 방패(Shield) 볼록 돔 프로파일 (전역 20x20 전체에 완만하게 퍼짐)
     const normR = clamp(d / 12.6, 0, 1);
-    let baseH = 0.55 + 2.95 * Math.pow(1.0 - Math.pow(normR, 1.65), 0.85);
+    const baseH = 0.55 + 2.95 * Math.pow(1.0 - Math.pow(normR, 1.65), 0.85);
 
     // 정상부 2단 함몰 칼데라 벤치(Kilauea Caldera) 및 할레마우마우(Halemaʻumaʻu) 화구 피트
     const outerCalderaR = 2.65 + Math.sin(angle * 3.0 + 0.4) * 0.18;
@@ -40,7 +40,8 @@ export function evalVolcanicTerrain(
 
     const dPit = Math.hypot(x + 0.22, y + 0.18);
     const innerPitR = 1.18 + Math.cos(angle * 4.0) * 0.08;
-    const innerDrop = (1.0 - smoothstep(innerPitR - 0.32, innerPitR, dPit)) * 0.96;
+    // Deepen Halema'uma'u pit cleanly below the active lava lake surface (2.02) so zero z-fighting occurs
+    const innerDrop = (1.0 - smoothstep(innerPitR - 0.34, innerPitR, dPit)) * 1.22;
 
     // 남동 열곡대(East/SW Rift Zone) 파호이호이 용암 수로 및 자연 용암 제방(Lava Levee)
     const flowAxisAngle = -1.05 + Math.sin(d * 0.42) * 0.18;
@@ -50,8 +51,11 @@ export function evalVolcanicTerrain(
     const lavaLevee = Math.exp(-Math.pow((channelDist - 0.52) / 0.28, 2.0)) * 0.14 * inFlowZone;
     const lavaChannel = -Math.exp(-Math.pow(channelDist / 0.34, 2.0)) * 0.12 * inFlowZone;
 
-    // 파호이호이 새끼줄 용암의 완만한 로브(Lobe) 주름 기복
-    const ropyUndulation = warpedFbm(x * 0.45, y * 0.45, 4) * 0.16 + Math.sin(d * 5.2 + fbm(x, y) * 3.0) * 0.03;
+    // 파호이호이 새끼줄 용암의 완만한 로브(Lobe) 주름 기복 (피트 내부는 평탄하게 감쇠)
+    const pitDamp = smoothstep(0.55, 1.05, dPit);
+    const ropyUndulation =
+      (warpedFbm(x * 0.45, y * 0.45, 4) * 0.16 + Math.sin(d * 5.2 + fbm(x, y) * 3.0) * 0.03) *
+      (0.2 + 0.8 * pitDamp);
 
     h = Math.max(0.28, (baseH - outerDrop - innerDrop + lavaLevee + lavaChannel + ropyUndulation) * reliefScale);
 
@@ -64,18 +68,18 @@ export function evalVolcanicTerrain(
     } else if (d < outerCalderaR) {
       // 정상 칼데라 단구: 굳은 은회색~흑갈색 파호이호이 용암판과 황화물 분기 흔적
       const sulfur = fbm(x * 4.5, y * 4.5) > 0.68;
-      color.set(sulfur ? '#7d7234' : mixColor('#232225', '#343136', fbm(x * 5, y * 5)));
+      color.set(sulfur ? '#7d7234' : mixColor('#26252a', '#3a373d', fbm(x * 5, y * 5)));
     } else if (isActiveChannel) {
       // 열곡대 용암 유로: 붉은 잔열이 도는 암흑색 현무암
-      const glow = smoothstep(8.5, 1.5, d) * 0.45;
-      color.set(mixColor('#1a1617', '#6e220c', glow));
+      const glow = smoothstep(8.5, 1.5, d) * 0.55;
+      color.set(mixColor('#1f1a1b', '#87290e', glow));
     } else if (isFreshBasaltLobe || d < 4.6) {
       // 신생 현무암 용암 평원
-      color.set(mixColor('#242326', '#363338', warpedFbm(x * 1.4, y * 1.4, 3)));
+      color.set(mixColor('#28272c', '#3c3940', warpedFbm(x * 1.4, y * 1.4, 3)));
     } else {
       // 하부 완사면 키푸카(Kipuka) 식생림과 풍화 현무암 토양 교차대
       const kipuka = smoothstep(0.42, 0.62, fbm(x * 0.55 + 3.1, y * 0.55 - 1.7, 4));
-      const rockCol = mixColor('#2e2b2d', '#3e3a38', fbm(x * 2.5, y * 2.5));
+      const rockCol = mixColor('#333033', '#45413f', fbm(x * 2.5, y * 2.5));
       const vegCol = mixColor('#2e4c24', '#416631', fbm(x * 2.0, y * 2.0));
       color.copy(rockCol).lerp(vegCol, kipuka * smoothstep(4.2, 7.5, d));
     }
@@ -98,21 +102,28 @@ export function evalVolcanicTerrain(
     if (rDome < domeRadius) {
       const t = rDome / domeRadius;
       // Super-ellipsoid bell profile: steep walls + rounded crown
-      domeH = 4.95 * Math.pow(Math.max(0, 1.0 - Math.pow(t, 2.85)), 0.46);
-      // 수직 주상절리 리브(Vertical cooling joint ribs) & 압출 유동 로브
-      const verticalRibs = Math.sin(domeAngle * 30.0 + fbm(x * 2, y * 2) * 1.5) * 0.14 * smoothstep(0.35, 0.88, t);
-      const crownLobes = ridgedFbm(x * 0.9, y * 0.9, 3) * 0.26 * (1.0 - t * t);
+      domeH = 4.95 * Math.pow(Math.max(0, 1.0 - Math.pow(t, 2.75)), 0.48);
+      // 자연스러운 불규칙 수직 주상절리 리브(Cooling joint ribs) & 압출 유동 로브
+      const ribNoise = warpedFbm(x * 0.75, y * 0.75, 2) * 3.2;
+      const verticalRibs =
+        (Math.sin(domeAngle * 19.0 + ribNoise) * 0.09 + Math.sin(domeAngle * 11.0 - ribNoise * 0.6) * 0.06) *
+        smoothstep(0.32, 0.88, t);
+      const crownLobes = ridgedFbm(x * 0.9, y * 0.9, 3) * 0.28 * (1.0 - t * t);
       domeH += verticalRibs + crownLobes;
     }
 
     // 기저부 동결·풍화 낙석이 쌓인 오목한 애추(Talus apron) 사면
     const talusH = 1.85 * Math.exp(-Math.max(0, rDome - domeRadius + 0.5) * 0.95);
 
-    // 남쪽 전면 해안의 수성응회환 파식 단구(용머리해안 지층 대비) 및 주변 해안 평지
+    // 남쪽 전면 해안의 수성응회환 파식 단구(용머리해안 지층 대비) - 부드러운 smoothstep 경계 적용
     const coastLineY = -6.2 + Math.sin(x * 0.35) * 0.65;
-    const tuffRing = y < -2.2 && y > coastLineY - 0.6
-      ? 0.95 * Math.exp(-Math.pow((x - 1.2) / 4.2, 2.0)) * smoothstep(coastLineY - 0.4, coastLineY + 1.4, y)
-      : 0;
+    const tuffNorthTaper = 1.0 - smoothstep(-3.4, -1.6, y);
+    const tuffSouthTaper = smoothstep(coastLineY - 0.4, coastLineY + 1.4, y);
+    const tuffRing =
+      0.95 *
+      Math.exp(-Math.pow((x - 1.2) / 4.2, 2.0)) *
+      tuffNorthTaper *
+      tuffSouthTaper;
     const landPlain = smoothstep(coastLineY - 0.5, coastLineY + 1.2, y) * (0.72 + fbm(x * 0.4, y * 0.4) * 0.16);
     const seaFloor = 0.22 + fbm(x * 1.4, y * 1.4) * 0.08;
 
@@ -123,20 +134,23 @@ export function evalVolcanicTerrain(
       color.set(mixColor('#0d2636', '#163b4f', fbm(x * 3, y * 3)));
     } else if (rDome < domeRadius * 0.96 && rawH > 1.75) {
       const slopeZone = rDome / domeRadius;
-      if (slopeZone > 0.62 && rawH < 4.1) {
+      if (slopeZone > 0.60 && rawH < 4.15) {
         // 밝은 회백색~황회색 조면암 수직 절리 암벽 및 풍화혈(타포니) 그늘
-        const jointShade = Math.sin(domeAngle * 30.0) * 0.5 + 0.5;
-        color.set(mixColor('#5c5852', '#8f887d', jointShade * 0.7 + fbm(x * 5, y * 5) * 0.3));
+        const jointShade =
+          Math.sin(domeAngle * 19.0 + warpedFbm(x * 0.75, y * 0.75, 2) * 3.2) * 0.5 + 0.5;
+        color.set(mixColor('#615c56', '#948d82', jointShade * 0.65 + fbm(x * 5, y * 5) * 0.35));
       } else {
         // 돔 상부 상록활엽수림(구실잣밤나무·동백)과 조면암 암봉 노두 교차
         const rockOutcrop = smoothstep(0.55, 0.78, ridgedFbm(x * 1.6, y * 1.6, 3));
         const canopy = mixColor('#234520', '#355e2d', fbm(x * 3, y * 3));
-        color.copy(canopy).lerp(new THREE.Color('#8a8378'), rockOutcrop * 0.65);
+        color.copy(canopy).lerp(new THREE.Color('#8f887d'), rockOutcrop * 0.68);
       }
-    } else if (tuffRing > 0.35 && y < -3.8) {
+    } else if (tuffRing > 0.28 && y < -3.4) {
       // 용머리해안 사층리 응회암 노두 (황갈색 화산재 층리)
       const tuffBed = Math.sin(rawH * 14.0 + x * 1.2) * 0.5 + 0.5;
-      color.set(mixColor('#6e5338', '#9c7850', tuffBed));
+      const tuffBlend = smoothstep(0.28, 0.52, tuffRing);
+      const grassBase = mixColor('#355928', '#4d7336', fbm(x * 2.2, y * 2.2));
+      color.copy(grassBase).lerp(mixColor('#6e5338', '#9c7850', tuffBed), tuffBlend);
     } else {
       // 기저부 애추 수림 및 제주 해안 초지/유채밭 녹지
       color.set(mixColor('#355928', '#4d7336', fbm(x * 2.2, y * 2.2)));
@@ -153,45 +167,75 @@ export function evalVolcanicTerrain(
     const canyonX = Math.sin(y * 0.34) * 2.35 + Math.cos(y * 0.18) * 0.75;
     const distCanyon = Math.abs(x - canyonX);
 
-    // 지류 소협곡 (재인폭포/대교천 합류 지류)
-    const tribY = 1.8 + (x - canyonX) * 0.45;
-    const distTrib = x > canyonX ? Math.abs(y - tribY) : 99.0;
+    // 지류 소협곡 (재인폭포/대교천 합류 지류: 부드러운 두부 침식 테이퍼로 수직 절단면 제거!)
+    const dxEast = x - canyonX;
+    const tribY = 1.8 + dxEast * 0.42 + Math.sin(dxEast * 0.75) * 0.28;
+    const distTrib = Math.abs(y - tribY);
 
     // 광활하고 평탄한 현무암 용암대지 상부면 (철원평야)
     let plateauH = 3.45 + fbm(x * 0.35, y * 0.35, 3) * 0.14;
 
-    // 대지 외곽 북서/북동 모서리에 용암에 묻히지 않고 솟아있는 기반암(화강암) 구릉 산지
-    const oldHill1 = Math.max(0, 1.85 * Math.exp(-(Math.pow((x + 7.5) / 3.2, 2) + Math.pow((y - 6.8) / 3.2, 2))));
-    const oldHill2 = Math.max(0, 1.55 * Math.exp(-(Math.pow((x - 7.8) / 2.8, 2) + Math.pow((y - 7.2) / 3.0, 2))));
+    // 대지 외곽 북서/북동 모서리에 용암에 묻히지 않고 솟아있는 기반암(화강암) 능선형 잔류 산지
+    const hillWarp1 = warpedFbm(x * 0.35 + 1.2, y * 0.35, 3);
+    const oldHill1 =
+      Math.max(
+        0,
+        1.75 *
+          Math.exp(-(Math.pow((x + 7.6 + (y - 6.8) * 0.35) / 3.6, 2) + Math.pow((y - 7.0) / 2.7, 2))) *
+          (0.68 + 0.55 * ridgedFbm(x * 0.55, y * 0.55, 3) + hillWarp1 * 0.2)
+      );
+    const oldHill2 =
+      Math.max(
+        0,
+        1.48 *
+          Math.exp(-(Math.pow((x - 7.8 - (y - 7.2) * 0.3) / 3.2, 2) + Math.pow((y - 7.3) / 2.5, 2))) *
+          (0.68 + 0.52 * ridgedFbm(x * 0.6 + 2.1, y * 0.6, 3))
+      );
     plateauH += oldHill1 + oldHill2;
 
-    // 협곡 단면 (수직에 가까운 현무암 주상절리 단애 + 하상 자갈톱 + 고석정 화강암 고립암)
-    const canyonWallT = smoothstep(0.95, 1.55, distCanyon);
-    const tribWallT = x > canyonX && x < canyonX + 5.2 ? smoothstep(0.32, 0.78, distTrib) : 1.0;
-    const combinedWallT = Math.min(canyonWallT, tribWallT);
+    // 협곡 단면 (부드러운 지류 테이퍼 + smin 합류 블렌딩으로 절단 박스 벽 완전 제거)
+    const canyonWallT = smoothstep(0.95, 1.65, distCanyon);
+    const tribStartMask = smoothstep(-0.35, 0.55, dxEast);
+    const tribEndTaper = 1.0 - smoothstep(2.9, 5.6, dxEast);
+    const tribMask = tribStartMask * tribEndTaper;
+    const tribRawT = smoothstep(0.36, 0.92, distTrib);
+    const tribWallT = 1.0 - (1.0 - tribRawT) * tribMask;
+
+    // Smooth minimum confluence between main canyon and tributary gorge
+    const hDiff = clamp(0.5 + (0.5 * (tribWallT - canyonWallT)) / 0.16, 0.0, 1.0);
+    const combinedWallT = clamp(
+      tribWallT * (1.0 - hDiff) + canyonWallT * hDiff - 0.16 * hDiff * (1.0 - hDiff),
+      0.0,
+      1.0
+    );
 
     // 고석정(Goseokjeong) 스타일 협곡 내 화강암 잔류 고립 바위봉
     const goseokDist = Math.hypot(x - (canyonX + 0.38), y + 0.4);
-    const goseokRock = goseokDist < 0.58 ? Math.pow(1.0 - goseokDist / 0.58, 0.55) * 1.65 : 0;
+    const goseokRock = goseokDist < 0.62 ? Math.pow(1.0 - goseokDist / 0.62, 0.65) * 1.55 : 0;
 
     const riverBedH = 0.26 + fbm(x * 2.2, y * 2.2) * 0.06;
-    const rawH = riverBedH + (plateauH - riverBedH) * Math.pow(combinedWallT, 0.65) + goseokRock * (1.0 - canyonWallT * 0.7);
+    const rawH =
+      riverBedH +
+      (plateauH - riverBedH) * Math.pow(combinedWallT, 0.72) +
+      goseokRock * (1.0 - canyonWallT * 0.7);
     h = rawH * reliefScale;
 
-    if (goseokDist < 0.52 && goseokRock > 0.35) {
+    if (goseokDist < 0.54 && goseokRock > 0.32) {
       // 고석정 중생대 백악기 밝은 화강암 바위
       color.set(mixColor('#8f8578', '#b5aa9a', fbm(x * 6, y * 6)));
     } else if (combinedWallT < 0.12) {
       // 옥빛 협곡 하상 암반 및 현무암 둥근 전석
       color.set(mixColor('#113c47', '#1c5663', fbm(x * 5, y * 5)));
-    } else if (combinedWallT < 0.92) {
+    } else if (combinedWallT < 0.90) {
       // 협곡 수직 단애: 다층 용암류 경계(클링커층)와 수직 주상절리 암흑색 현무암 벽
       const flowUnit = Math.sin(rawH * 5.2) * 0.5 + 0.5;
       const colStriation = Math.sin((x + y) * 18.0) * 0.5 + 0.5;
-      color.set(mixColor('#1c1c20', '#383330', flowUnit * 0.65 + colStriation * 0.35));
-    } else if (oldHill1 + oldHill2 > 0.35) {
-      // 배후 기반암 산림
-      color.set(mixColor('#2d4d25', '#3e6332', fbm(x * 2.5, y * 2.5)));
+      color.set(mixColor('#222228', '#423c38', flowUnit * 0.65 + colStriation * 0.35));
+    } else if (oldHill1 + oldHill2 > 0.28) {
+      // 배후 기반암 산림 (부드럽게 평야 초지와 전이)
+      const hillBlend = smoothstep(0.28, 0.72, oldHill1 + oldHill2);
+      const plainCol = mixColor('#46662e', '#65803c', fbm(x * 0.9, y * 0.9, 3));
+      color.copy(plainCol).lerp(mixColor('#2b4a24', '#3d6131', fbm(x * 2.5, y * 2.5)), hillBlend);
     } else {
       // 평탄한 철원 현무암 용암대지 평야 (비옥한 점토질 평원 및 경작 초지)
       const patch = fbm(x * 0.9, y * 0.9, 3);
@@ -210,14 +254,17 @@ export function evalVolcanicTerrain(
     const rc = Math.hypot(x - cx, y - cy);
     const ang = Math.atan2(y - cy, x - cx);
 
-    // 왕관 모양 성곽 화구륜 반경 (약 3.35) 및 99봉 암릉 요철
-    const rimR = 3.35 + Math.sin(ang * 5.0) * 0.12;
-    const crownPeaks = Math.pow(Math.abs(Math.sin(ang * 14.0 + fbm(x * 1.8, y * 1.8) * 1.4)), 1.6) * 0.36;
-    const rimElev = 3.45 + crownPeaks + Math.cos(ang - 0.6) * 0.22;
+    // 왕관 모양 성곽 화구륜 반경 (약 3.35) 및 자연스러운 불규칙 99봉 암릉 요철
+    const rimR = 3.35 + Math.sin(ang * 5.0) * 0.12 + Math.cos(ang * 3.0 + 0.7) * 0.08;
+    const peakWave =
+      Math.pow(Math.abs(Math.sin(ang * 11.0 + fbm(x * 1.4, y * 1.4) * 1.8)), 1.5) * 0.22 +
+      Math.pow(Math.abs(Math.cos(ang * 17.0 - fbm(x * 1.9, y * 1.9) * 1.5)), 1.8) * 0.14 +
+      ridgedFbm(x * 1.4, y * 1.4, 3) * 0.12;
+    const rimElev = 3.38 + peakWave + Math.cos(ang - 0.6) * 0.22;
 
     // 동·남측(x > cx + 0.5 또는 y < cy - 0.8)은 거센 파랑에 깎여 수직 해식애로 절단됨!
     const waveCutExposure = smoothstep(-0.3, 0.7, Math.cos(ang + 0.55)); // 동남쪽 방향 가중치
-    const outerLimitR = rimR + (1.0 - waveCutExposure * 0.68) * 2.9;
+    const outerLimitR = rimR + (1.0 - waveCutExposure * 0.62) * 2.95;
 
     let coneH = 0.22;
     if (rc <= rimR) {
@@ -226,41 +273,45 @@ export function evalVolcanicTerrain(
       const bowlFloor = 1.92 + fbm(x * 1.4, y * 1.4) * 0.1;
       coneH = bowlFloor + (rimElev - bowlFloor) * Math.pow(tIn, 2.8);
     } else if (rc <= outerLimitR) {
-      const tOut = (rc - rimR) / Math.max(0.35, outerLimitR - rimR);
-      // 해식 방향은 수직 단애로 급락, 내륙 방향은 32° 화쇄난류 사면
-      const cliffPower = 1.0 - waveCutExposure * 0.55;
-      coneH = 0.32 + (rimElev - 0.32) * Math.pow(1.0 - tOut, cliffPower * 1.7 + 0.45);
+      const tOut = (rc - rimR) / Math.max(0.45, outerLimitR - rimR);
+      // 해식 방향은 급경사 단애로 하강, 내륙 방향은 32° 화쇄난류 사면
+      const cliffPower = 1.0 - waveCutExposure * 0.48;
+      coneH = 0.32 + (rimElev - 0.32) * Math.pow(1.0 - tOut, cliffPower * 1.7 + 0.5);
     }
 
-    // 북서쪽으로 뻗어 제주 본섬과 연결되는 신양 섭지코지 육계사주(Tombolo)
+    // 북서쪽으로 뻗어 제주 본섬과 연결되는 신양 섭지코지 육계사주(Tombolo) - 부드러운 smoothstep 전이
     const spitAxisY = 0.6 - (x + 2.2) * 0.38;
     const distSpit = Math.abs(y - spitAxisY);
-    const tomboloH = x < cx - 1.5
-      ? Math.exp(-Math.pow(distSpit / 1.35, 2.0)) * (0.78 + smoothstep(-5.5, -9.5, x) * 1.35)
-      : 0;
+    const tomboloMask = smoothstep(cx - 0.8, cx - 2.6, x);
+    const tomboloH =
+      tomboloMask *
+      Math.exp(-Math.pow(distSpit / 1.42, 2.0)) *
+      (0.82 + smoothstep(-5.5, -9.5, x) * 1.35);
 
     const seaFloor = 0.22 + fbm(x * 1.5, y * 1.5) * 0.07;
-    const rawH = Math.max(seaFloor, Math.max(coneH, tomboloH));
+    const rawH = Math.max(seaFloor, smax(coneH, tomboloH, 0.18));
     h = rawH * reliefScale;
 
     if (rc < rimR - 0.22) {
       // 성산일출봉 분화구 내부 억새·초원 사발 평원
       color.set(mixColor('#497032', '#698f43', fbm(x * 2.5, y * 2.5)));
-    } else if (rc <= outerLimitR && rawH > 0.62) {
+    } else if (rc <= outerLimitR && rawH > 0.62 && coneH >= tomboloH - 0.05) {
       if (waveCutExposure > 0.38 && rc > rimR - 0.12) {
         // 해식 절벽에 적나라하게 드러난 황갈색·회갈색 수성 화산응회암(Tuff) 엽층리
         const ashBedding = Math.sin(rawH * 15.0 + ang * 2.0) * 0.5 + 0.5;
-        color.set(mixColor('#594836', '#967c5c', ashBedding));
-      } else if (rc < rimR + 0.25 && rawH > 3.2) {
+        color.set(mixColor('#5e4d3a', '#9c8262', ashBedding));
+      } else if (rc < rimR + 0.25 && rawH > 3.15) {
         // 99봉 화구륜 성곽 바위 암봉
-        color.set(mixColor('#575148', '#7d7467', fbm(x * 5, y * 5)));
+        color.set(mixColor('#5c564d', '#82796c', fbm(x * 5, y * 5)));
       } else {
         // 외측 응회구 풀밭 사면
         color.set(mixColor('#385e29', '#4f7a39', fbm(x * 2.5, y * 2.5)));
       }
     } else if (tomboloH > 0.52) {
       // 육계사주 모래해변 및 본섬 해안 녹지
-      color.set(x < -7.2 ? mixColor('#355928', '#486e35', fbm(x * 2, y * 2)) : mixColor('#d9c18c', '#edead0', fbm(x * 4, y * 4)));
+      const mainlandGreen = smoothstep(-6.2, -7.8, x);
+      const sandCol = mixColor('#d9c18c', '#edead0', fbm(x * 4, y * 4));
+      color.copy(sandCol).lerp(mixColor('#355928', '#486e35', fbm(x * 2, y * 2)), mainlandGreen);
     } else {
       // 제주 성산 앞바다 에메랄드 해저 암반
       color.set(mixColor('#0b2838', '#154459', fbm(x * 3, y * 3)));
@@ -281,12 +332,12 @@ export function evalVolcanicTerrain(
     const mainConeR = 6.2;
     const mainRimR = 1.75;
     const mainRimH = 4.25 + Math.sin(angMain * 2.0 + 0.5) * 0.18;
-    const mainFloorH = 2.12;
+    const mainFloorH = 1.98;
 
     let mainH = 0;
     if (dMain < mainRimR) {
       const t = dMain / mainRimR;
-      mainH = mainFloorH + (mainRimH - mainFloorH) * Math.pow(t, 2.1);
+      mainH = mainFloorH + (mainRimH - mainFloorH) * Math.pow(t, 2.2);
     } else if (dMain < mainConeR) {
       const t = (dMain - mainRimR) / (mainConeR - mainRimR);
       // 스코리아 안식각(30~32도) 직선~약오목 사면 + 방사상 침식 골(Rills)
@@ -300,10 +351,11 @@ export function evalVolcanicTerrain(
     const dSub = Math.hypot(x - bx, y - by);
     const angSub = Math.atan2(y - by, x - bx);
     const subRimR = 1.05;
-    const subConeR = 3.5;
-    // 남서쪽(-2.1 rad)으로 화구벽이 터진 말굽형 개구부(Breach)
+    const subConeR = 3.55;
+    // 남서쪽(-2.15 rad)으로 화구벽이 터진 말굽형 개구부(Breach)
     const breachDiff = Math.abs(Math.atan2(Math.sin(angSub + 2.15), Math.cos(angSub + 2.15)));
-    const breachMask = 1.0 - (1.0 - smoothstep(0.35, 0.85, breachDiff)) * smoothstep(0.25, 1.1, dSub) * 0.72;
+    const breachOpen = (1.0 - smoothstep(0.28, 0.92, breachDiff)) * smoothstep(0.18, 1.05, dSub);
+    const breachMask = 1.0 - breachOpen * 0.72;
 
     let subH = 0;
     if (dSub < subRimR) {
@@ -311,37 +363,50 @@ export function evalVolcanicTerrain(
       subH = (0.85 + 1.55 * Math.pow(t, 1.8)) * breachMask + 0.55 * (1.0 - breachMask);
     } else if (dSub < subConeR) {
       const t = (dSub - subRimR) / (subConeR - subRimR);
-      subH = 0.55 + 1.85 * Math.pow(1.0 - t, 1.2) * breachMask;
+      subH = 0.55 + 1.85 * Math.pow(1.0 - t, 1.25) * breachMask;
     }
 
-    // 말굽형 개구부에서 흘러나간 용암류 혀(Breach lava flow lobe)
+    // 말굽형 개구부에서 흘러나간 용암류 혀(Breach lava flow lobe - 부드러운 smoothstep 테이퍼)
     const flowDist = Math.abs((x - bx) * Math.sin(-2.15) - (y - by) * Math.cos(-2.15));
     const flowAlong = (x - bx) * Math.cos(-2.15) + (y - by) * Math.sin(-2.15);
-    const breachFlow = flowAlong > 0.6 && flowAlong < 4.8
-      ? Math.exp(-Math.pow(flowDist / 0.95, 2.0)) * 0.28 * (1.0 - flowAlong / 5.2)
-      : 0;
+    const flowLongMask = smoothstep(0.25, 1.1, flowAlong) * (1.0 - smoothstep(3.4, 5.1, flowAlong));
+    const breachFlow =
+      flowLongMask * Math.exp(-Math.pow(flowDist / 0.92, 2.0)) * 0.28;
 
     // 제주 중산간 용암 산록 기저 평원
     const jejuPlain = 0.55 + warpedFbm(x * 0.25, y * 0.25, 3) * 0.24 - y * 0.015;
-    const rawH = smax(jejuPlain + breachFlow, Math.max(mainH, subH), 0.28);
+    const rawH = smax(jejuPlain + breachFlow, smax(mainH, subH, 0.22), 0.28);
     h = rawH * reliefScale;
 
-    if (dMain < 1.15) {
+    // 부드러운 식생/스코리아/용암류 색상 전이 (말굽형 화구 급격한 초승달 아티팩트 제거)
+    const forestPatch = smoothstep(0.48, 0.65, fbm(x * 0.8, y * 0.8, 4));
+    const baseGrass = mixColor('#3d692c', '#52823b', fbm(x * 2, y * 2)).lerp(
+      new THREE.Color('#21421b'),
+      forestPatch * 0.68
+    );
+
+    if (dMain < 1.12) {
       // 주 오름 산정 화구습지 및 금오름 화구호 바닥
       color.set(mixColor('#1a3d30', '#2b5945', fbm(x * 6, y * 6)));
     } else if (dMain < mainRimR) {
       // 굼부리 내벽 적갈색 화산송이(스코리아) 노출면과 풀밭
-      color.set(mixColor('#5e2d1e', '#473624', fbm(x * 6, y * 6)));
-    } else if (dSub < 1.35 && breachDiff < 0.85 || breachFlow > 0.12) {
-      // 말굽형 오름 터진 화구 및 암흑색 현무암 유출 용암류
-      color.set(mixColor('#28211f', '#4a281d', fbm(x * 5, y * 5)));
-    } else if (rawH > 3.2) {
-      // 오름 능선 은빛 억새 군락지
-      color.set(mixColor('#848c48', '#a8ab63', fbm(x * 3.5, y * 3.5)));
+      const scoriaMix = smoothstep(1.12, 1.42, dMain) * (1.0 - smoothstep(1.58, mainRimR, dMain));
+      color.copy(baseGrass).lerp(mixColor('#633020', '#4d3a27', fbm(x * 6, y * 6)), 0.72 * scoriaMix + 0.22);
     } else {
-      // 제주 중산간 목장 초지 및 곶자왈 숲 패치
-      const forestPatch = smoothstep(0.48, 0.65, fbm(x * 0.8, y * 0.8, 4));
-      color.copy(mixColor('#3d692c', '#52823b', fbm(x * 2, y * 2))).lerp(new THREE.Color('#21421b'), forestPatch * 0.7);
+      color.copy(baseGrass);
+      // 오름 능선 은빛 억새 군락지
+      const silverGrass = smoothstep(3.05, 3.65, rawH);
+      if (silverGrass > 0.01) {
+        color.lerp(mixColor('#848c48', '#a8ab63', fbm(x * 3.5, y * 3.5)), silverGrass * 0.88);
+      }
+      // 말굽형 오름 터진 화구 및 현무암 유출 용암류 부드러운 블렌딩
+      const subBreachWeight =
+        smoothstep(1.55, 0.55, dSub) * (1.0 - smoothstep(0.35, 1.05, breachDiff)) * 0.85;
+      const flowColWeight = smoothstep(0.06, 0.20, breachFlow);
+      const lavaWeight = clamp(Math.max(subBreachWeight, flowColWeight), 0.0, 1.0);
+      if (lavaWeight > 0.01) {
+        color.lerp(mixColor('#2d2522', '#522c20', fbm(x * 5, y * 5)), lavaWeight);
+      }
     }
     return { height: h, color };
   }
@@ -353,14 +418,14 @@ export function evalVolcanicTerrain(
   if (normSub === '화산') {
     const rimRadius = 1.42 + Math.sin(angle * 4.0) * 0.08;
     const peakHeight = 4.95;
-    const floorHeight = 3.22;
+    const floorHeight = 3.16;
 
     let baseH = 0;
     const inCrater = d < rimRadius;
 
     if (inCrater) {
       const t = d / rimRadius;
-      baseH = floorHeight + (peakHeight - floorHeight) * Math.pow(t, 1.85);
+      baseH = floorHeight + (peakHeight - floorHeight) * Math.pow(t, 2.05);
     } else {
       const distFromRim = d - rimRadius;
       baseH = 0.35 + (peakHeight - 0.35) * Math.exp(-distFromRim * 0.31);
@@ -370,7 +435,7 @@ export function evalVolcanicTerrain(
     const rimJagged =
       Math.sin(angle * 7.0 + fbm(x * 1.6, y * 1.6) * 2.2) *
       0.22 *
-      smoothstep(0.75, 1.38, d) *
+      smoothstep(0.85, 1.38, d) *
       (1.0 - smoothstep(1.42, 2.4, d));
 
     // 방사상 개석곡 (Barrancos): 산체를 깎아내린 깊은 V자 방사상 침식골
@@ -380,39 +445,46 @@ export function evalVolcanicTerrain(
       smoothstep(1.75, 6.8, d) *
       (1.0 - smoothstep(8.0, 10.5, d));
 
-    // 측화산 (Parasitic Cinder Cone): 동남쪽 산록(4.1, -2.2)
-    const dSide = Math.hypot(x - 4.1, y + 2.2);
-    const sideCone = dSide < 2.0 ? 1.38 * Math.pow(1.0 - dSide / 2.0, 1.25) : 0;
-    const sideCrater = dSide < 0.46 ? (1.0 - Math.pow(dSide / 0.46, 2.0)) * 0.48 : 0;
+    // 측화산 (Parasitic Cinder Cone): 동남쪽 산록(4.2, -2.3) - 또렷한 원추 기복 및 정상 소분화구
+    const dSide = Math.hypot(x - 4.2, y + 2.3);
+    const sideCone = dSide < 2.25 ? 1.72 * Math.pow(1.0 - dSide / 2.25, 1.2) : 0;
+    const sideCrater = dSide < 0.52 ? (1.0 - Math.pow(dSide / 0.52, 2.0)) * 0.58 : 0;
     const pc = Math.max(0, sideCone - sideCrater);
 
-    // 전면 남서쪽 사면으로 굽이쳐 흘러내린 아아(A'a) 용암류 엽상체와 용암 제방
+    // 전면 남서쪽 사면으로 굽이쳐 흘러내린 아아(A'a) 용암류 엽상체와 중앙 적열 용암 수로
     const flowAngle = -2.15 + Math.sin(d * 0.55) * 0.16;
     const flowDiff = Math.abs(Math.atan2(Math.sin(angle - flowAngle), Math.cos(angle - flowAngle)));
     const flowWidth = 0.28 + 0.025 * d;
-    const flowMask = (1.0 - smoothstep(flowWidth * 0.65, flowWidth, flowDiff)) * smoothstep(1.45, 2.1, d) * (1.0 - smoothstep(7.6, 8.8, d));
-    const lavaLobe = flowMask * (0.32 + ridgedFbm(x * 2.2, y * 2.2, 3) * 0.14);
+    const flowMask = (1.0 - smoothstep(flowWidth * 0.58, flowWidth, flowDiff)) * smoothstep(1.42, 2.05, d) * (1.0 - smoothstep(7.6, 8.8, d));
+    const lavaLobe = flowMask * (0.34 + ridgedFbm(x * 2.2, y * 2.2, 3) * 0.14);
 
-    const rawH = Math.max(0.25, baseH + rimJagged + barrancos + pc + lavaLobe + fbm(x * 1.2, y * 1.2) * 0.14);
+    const craterFloorDamp = smoothstep(0.55, 1.15, d);
+    const rawH = Math.max(
+      0.25,
+      baseH + rimJagged + barrancos + pc + lavaLobe + fbm(x * 1.2, y * 1.2) * (0.04 + 0.10 * craterFloorDamp)
+    );
     h = rawH * reliefScale;
 
     if (d < 0.88) {
       color.set(mixColor('#1f120d', '#3b190d', fbm(x * 6, y * 6)));
     } else if (inCrater) {
       const isSulfur = fbm(x * 4.5, y * 4.5) > 0.64;
-      color.set(isSulfur ? '#94802f' : mixColor('#522519', '#38160e', fbm(x * 5, y * 5)));
-    } else if (flowMask > 0.3) {
-      color.set(mixColor('#1b1817', '#2b2420', fbm(x * 7, y * 7)));
-    } else if (dSide < 1.55 && pc > 0.25) {
-      color.set(mixColor('#592d20', '#3d1e15', fbm(x * 5, y * 5)));
+      color.set(isSulfur ? '#a38d33' : mixColor('#59291c', '#3d1910', fbm(x * 5, y * 5)));
+    } else if (flowMask > 0.25) {
+      // 어두운 현무암 용암각 + 중앙 적열 균열 열선
+      const coreChannel = (1.0 - smoothstep(0.0, flowWidth * 0.28, flowDiff)) * smoothstep(7.2, 1.8, d);
+      const basaltCrust = mixColor('#1f1b1a', '#302925', fbm(x * 7, y * 7));
+      color.copy(basaltCrust).lerp(new THREE.Color('#c9380c'), coreChannel * 0.78);
+    } else if (dSide < 1.85 && pc > 0.22) {
+      color.set(dSide < 0.45 ? mixColor('#261712', '#3d2219', fbm(x * 6, y * 6)) : mixColor('#663526', '#47241a', fbm(x * 5, y * 5)));
     } else if (rawH > 4.25) {
       // 고산 만년설 패치와 화산암설(Scree) 교차대
-      const snowPatch = smoothstep(4.35, 4.75, rawH + fbm(x * 3, y * 3) * 0.25);
-      color.copy(mixColor('#3a322c', '#26201c', fbm(x * 4, y * 4))).lerp(new THREE.Color('#e8eef2'), snowPatch * 0.75);
+      const snowPatch = smoothstep(4.32, 4.72, rawH + fbm(x * 3, y * 3) * 0.25);
+      color.copy(mixColor('#453d36', '#2e2723', fbm(x * 4, y * 4))).lerp(new THREE.Color('#ebf1f5'), snowPatch * 0.8);
     } else if (rawH > 2.2) {
-      color.set(mixColor('#49572e', '#3a4224', fbm(x * 3, y * 3)));
+      color.set(mixColor('#4f5e33', '#3e4728', fbm(x * 3, y * 3)));
     } else {
-      color.set(mixColor('#28471e', '#3a612c', fbm(x * 2, y * 2)));
+      color.set(mixColor('#2a4b20', '#3d662e', fbm(x * 2, y * 2)));
     }
     return { height: h, color };
   }
@@ -493,16 +565,16 @@ export function evalVolcanicTerrain(
       if (dCone < coneCraterRadius) {
         color.set(mixColor('#221c1a', '#342b27', fbm(x * 4, y * 4)));
       } else {
-        color.set(mixColor('#573428', '#3e2923', fbm(x * 3, y * 3)));
+        color.set(mixColor('#5e392c', '#452e27', fbm(x * 3, y * 3)));
       }
     } else if (r <= shoreRadius) {
       color.set(mixColor('#0b2336', '#133a52', fbm(x * 3, y * 3)));
     } else if (r <= rimCurve + 0.15) {
       const strataNoise = fbm(x * 2.5, y * 2.5);
       const rockStrata = Math.sin(rawH * 6.8 + strataNoise * 2.0) * 0.5 + 0.5;
-      color.set(mixColor('#453d36', '#6b5f53', rockStrata));
+      color.set(mixColor('#4c433b', '#75685b', rockStrata));
     } else if (rawH > 3.45) {
-      color.set(mixColor('#7d7569', '#9c9386', fbm(x * 3, y * 3)));
+      color.set(mixColor('#827a6e', '#a39a8d', fbm(x * 3, y * 3)));
     } else if (rawH > 2.15) {
       color.set(mixColor('#5a6e36', '#728645', fbm(x * 2.5, y * 2.5)));
     } else {
@@ -516,25 +588,25 @@ export function evalVolcanicTerrain(
   // 배후 현무암 용암대지(Entablature)와 파식 해저면 기저 DEM (정밀 육각 기둥 군락은 3D 전용 메쉬로 결합)
   // =========================================================================
   if (normSub === '주상절리') {
-    // 서쪽(x < 0)은 바다, 중앙(x ≈ -2.5 ~ +3.0)은 주상절리 계단 단애대, 동쪽(x > +3.0)은 상부 현무암 해안 대지
+    // 서쪽(x < 0)은 바다, 중앙(x ≈ -2.6 ~ +2.9)은 주상절리 계단 단애대, 동쪽(x > +2.9)은 상부 현무암 해안 대지
     const coastCurve = Math.sin(y * 0.32) * 1.15 + Math.cos(y * 0.65) * 0.45;
     const distInland = x - coastCurve;
 
     let rawH = 0;
-    if (distInland > 2.8) {
+    if (distInland > 2.85) {
       // 상부 비정질 현무암 캡록(Entablature) 및 해송 초지 대지
-      const inlandRise = smoothstep(2.8, 5.2, distInland) * 0.55;
-      rawH = 3.75 + inlandRise + fbm(x * 0.7, y * 0.7) * 0.18;
+      const inlandRise = smoothstep(2.85, 5.2, distInland) * 0.55;
+      rawH = 3.72 + inlandRise + fbm(x * 0.7, y * 0.7) * 0.18;
       color.set(
-        distInland > 3.6
+        distInland > 3.55
           ? mixColor('#2e4f23', '#416631', fbm(x * 2.2, y * 2.2))
           : mixColor('#2e3036', '#3d4047', fbm(x * 4, y * 4))
       );
     } else if (distInland > -2.6) {
-      // 주상절리 다단 테라스 코어 기저면 (전용 260기 육각 기둥 볼륨 메쉬가 이 단애면을 빈틈없이 덮어 조형함)
-      const t = smoothstep(-2.6, 2.8, distInland);
-      rawH = 0.26 + Math.pow(t, 1.35) * 3.45;
-      color.set(mixColor('#181a1e', '#262930', fbm(x * 4, y * 4)));
+      // 주상절리 기저 사면을 안쪽으로 오목하게 낮춰 270여 기 육각 현무암 기둥이 단 한 기도 묻히지 않고 완전히 돌출!
+      const t = smoothstep(-2.6, 2.85, distInland);
+      rawH = 0.22 + Math.pow(t, 2.35) * 3.46;
+      color.set(mixColor('#15171c', '#22252b', fbm(x * 4, y * 4)));
     } else {
       // 수중 현무암 파식 기저 암반
       rawH = 0.22 + fbm(x * 1.4, y * 1.4) * 0.1;
@@ -572,22 +644,22 @@ export function evalVolcanicTerrain(
 
     if (caveCarve > 0.65) {
       // 용암동굴 내부 바닥: 굳은 밧줄 용암 유로 및 어두운 현무암 암반
-      color.set(mixColor('#14100f', '#241c19', fbm(x * 5, y * 5)));
+      color.set(mixColor('#171211', '#28201d', fbm(x * 5, y * 5)));
     } else if (caveCarve > 0.12) {
       // 함몰구(궤) 다층 현무암 절벽 단면 및 양치식물(곶자왈 고사리) 이끼
       const moss = smoothstep(0.55, 0.75, fbm(x * 4, y * 4)) * (y < -2.2 ? 0.65 : 0.15);
-      color.copy(mixColor('#2b221d', '#3e322b', fbm(x * 4, y * 4))).lerp(new THREE.Color('#2d5222'), moss);
+      color.copy(mixColor('#2f2620', '#44372f', fbm(x * 4, y * 4))).lerp(new THREE.Color('#2d5222'), moss);
     } else {
       // 상부 곶자왈 용암 평원: 파호이호이 암반 노두와 상록 곶자왈 수림 패치
       const gotjawal = smoothstep(0.42, 0.64, fbm(x * 0.75 + 2.0, y * 0.75, 4));
-      color.copy(mixColor('#2a2624', '#3d3733', fbm(x * 3, y * 3))).lerp(new THREE.Color('#274a1f'), gotjawal * 0.78);
+      color.copy(mixColor('#2e2a28', '#423c38', fbm(x * 3, y * 3))).lerp(new THREE.Color('#294e21'), gotjawal * 0.78);
     }
     return { height: h, color };
   }
 
   // =========================================================================
   // 10. 단층 산맥 (경동지괴 & 정단층애: 태백산맥, 시에라네바다, 그랜드티턴)
-  // 급경사 단층애(Fault Scarp) + V자 개석곡과 삼각말단면(Triangular Facets) + 선상 애추 + 완경사 경동 배후면
+  // 급경사 정단층애(Normal Fault Scarp) + V자 개석곡과 삼각말단면(Triangular Facets) + 선상 애추 + 동측 완경사 경동 배후면
   // =========================================================================
   if (normSub === '단층 산맥') {
     const faultX = Math.sin(y * 0.16) * 0.55 - 0.85;
@@ -598,53 +670,53 @@ export function evalVolcanicTerrain(
     const localValleyPhase = ((y + 7.8) % canyonSpacing + canyonSpacing) % canyonSpacing - canyonSpacing * 0.5;
     const valleyDistY = Math.abs(localValleyPhase);
 
-    let rawH = 0;
+    // 연속 해석 프로파일 (dx = 0 불연속 홈 완전 제거!):
+    // 서측 단층 기저(dx = -1.55)에서 55~60° 단층애로 급상승하여 주능선(dx ≈ +0.35)을 이루고
+    // 동쪽(dx > 0.35)으로 완만하게 기울어지는 융기 하반(Uplifted Footwall) 경동지괴
+    const scarpRise = smoothstep(-1.55, 0.35, dx);
+    const dipDecay = 1.0 - smoothstep(0.35, 11.4, dx) * 0.70;
+    const blockBase = 0.58 + scarpRise * dipDecay * 4.32;
 
-    if (dx >= 0) {
-      // 융기 상반: 주능선(dx ≈ 0.85)에서 최고봉을 이루고 동쪽으로 완만하게 기울어지는 경동지괴(Dip Slope)
-      const crestProfile = smoothstep(0.0, 0.85, dx) * (1.0 - clamp((dx - 0.85) / 11.2, 0, 1) * 0.72);
-      const ridgeCrest = 1.2 + crestProfile * 4.05 + ridgedFbm(x * 0.45, y * 0.45, 4) * 0.42;
+    // 주능선 및 배후 경동사면의 화강편마암 암릉 기복
+    const alpineRelief = ridgedFbm(x * 0.45, y * 0.45, 4) * 0.48 * smoothstep(-1.05, 0.55, dx);
 
-      // 능선에서 동쪽 배후 사면 및 서쪽 단층애로 패여 들어가는 V자 침식 계곡
-      const valleyDepth = (1.0 - smoothstep(0.0, 1.45, valleyDistY)) * 1.25 * smoothstep(0.0, 1.8, dx + 0.4);
-      rawH = ridgeCrest - valleyDepth;
-    } else {
-      // 단층애(dx < 0): 55~60° 급경사 단층면이 계곡 침식으로 잘려 선명한 삼각말단면(Triangular Facets) 형성!
-      const scarpWidth = 1.45;
-      const scarpT = clamp(1.0 + dx / scarpWidth, 0.0, 1.0); // dx=0 -> 1, dx=-1.45 -> 0
+    // 단층애와 배후 사면을 동시에 가르는 V자 개석곡 -> 개석곡 사이에 선명한 삼각말단면(Triangular Facets) 조각!
+    const valleyCross = 1.0 - smoothstep(0.05, 1.55, valleyDistY);
+    const valleyReach = smoothstep(-1.42, -0.08, dx) * (1.0 - smoothstep(4.2, 10.8, dx) * 0.38);
+    const valleyCarve = valleyCross * valleyReach * 1.58;
 
-      // 계곡 입구(valleyDistY 작음)에서는 능선이 깊게 파여 낮고, 계곡 사이(valleyDistY 큼)에서는 삼각형 면이 솟음
-      const facetNotch = (1.0 - smoothstep(0.15, 1.55, valleyDistY)) * 1.65 * scarpT;
-      const scarpH = 0.58 + Math.pow(scarpT, 1.15) * 4.45 - facetNotch + fbm(x * 2.2, y * 2.2) * 0.12 * scarpT;
+    const mountainH = blockBase + alpineRelief - valleyCarve;
 
-      // 개석곡 입구마다 단층 지구대 바닥으로 부채꼴로 쏟아져 나온 복합 선상 애추(Alluvial/Talus Cones)
-      const fanApexX = faultX - 0.95;
-      const rFan = Math.hypot(x - fanApexX, localValleyPhase);
-      const talusCone = x < faultX - 0.35 ? Math.max(0, 1.42 * Math.pow(Math.max(0, 1.0 - rFan / 2.35), 1.35)) : 0;
+    // 개석곡 입구마다 단층 지구대 바닥으로 부채꼴로 쏟아져 나온 복합 선상 애추(Alluvial/Talus Cones)
+    const fanApexX = faultX - 1.05;
+    const rFan = Math.hypot(x - fanApexX, localValleyPhase);
+    const talusMask = 1.0 - smoothstep(-0.65, 0.05, dx);
+    const talusCone =
+      talusMask * Math.max(0, 1.25 * Math.pow(Math.max(0, 1.0 - rFan / 2.45), 1.45));
 
-      // 침강 지구대 분지(Graben floor) 및 단층선 하천(Axial river at x ≈ faultX - 4.8)
-      const riverX = faultX - 4.6 + Math.sin(y * 0.38) * 0.65;
-      const distRiver = Math.abs(x - riverX);
-      const riverCut = (1.0 - smoothstep(0.35, 0.95, distRiver)) * 0.34;
-      const grabenFloor = 0.58 + smoothstep(-2.0, -8.5, dx) * 0.25 - riverCut + fbm(x * 0.9, y * 0.9) * 0.08;
+    // 침강 상반 지구대 분지(Hanging-wall Graben floor) 및 단층선 하천(Axial river at x ≈ faultX - 4.6)
+    const riverX = faultX - 4.6 + Math.sin(y * 0.38) * 0.65;
+    const distRiver = Math.abs(x - riverX);
+    const riverCut = (1.0 - smoothstep(0.35, 0.95, distRiver)) * 0.34;
+    const grabenFloor = 0.58 + smoothstep(-2.0, -8.5, dx) * 0.25 - riverCut + fbm(x * 0.9, y * 0.9) * 0.08;
 
-      rawH = smax(grabenFloor, Math.max(scarpH, 0.55 + talusCone), 0.25);
-    }
-
+    const rawH = smax(grabenFloor, Math.max(mountainH, 0.55 + talusCone), 0.24);
     h = Math.max(0.22, rawH * reliefScale);
 
-    const riverX = faultX - 4.6 + Math.sin(y * 0.38) * 0.65;
-    if (Math.abs(x - riverX) < 0.72 && dx < -2.0) {
+    if (distRiver < 0.72 && dx < -2.0) {
       color.set(mixColor('#144757', '#1f6478', fbm(x * 5, y * 5)));
-    } else if (dx < 0.2 && dx > -1.55 && rawH > 0.95) {
-      // 삼각말단면 단층애 암벽 노두 및 애추 자갈층
-      color.set(mixColor('#5c534a', '#7d7165', fbm(x * 5, y * 5)));
-    } else if (dx <= -1.55) {
-      // 지구대 충적 선상지 및 평원 초지
-      color.set(mixColor('#5b6941', '#758252', fbm(x * 2.5, y * 2.5)));
-    } else if (rawH > 4.25) {
+    } else if (dx < 0.35 && dx > -1.65 && rawH > 0.92) {
+      // 삼각말단면 정단층애 암벽 노두 및 애추 자갈층
+      const facetShade = smoothstep(-1.55, 0.25, dx);
+      color.set(mixColor('#61574e', '#85786b', facetShade * 0.55 + fbm(x * 5, y * 5) * 0.45));
+    } else if (dx <= -1.65) {
+      // 침강 지구대 충적 선상지 및 평원 초지
+      const fanTint = smoothstep(0.08, 0.55, talusCone);
+      color.copy(mixColor('#5b6941', '#758252', fbm(x * 2.5, y * 2.5))).lerp(new THREE.Color('#8c7b65'), fanTint * 0.65);
+    } else if (rawH > 4.2) {
       // 고산 화강편마암 암릉 및 잔설
-      color.set(mixColor('#807a73', '#aba49c', fbm(x * 4, y * 4)));
+      const snowCap = smoothstep(4.35, 4.85, rawH);
+      color.copy(mixColor('#807a73', '#aba49c', fbm(x * 4, y * 4))).lerp(new THREE.Color('#e6edf2'), snowCap * 0.65);
     } else {
       // 경동지괴 배후 온대 산림 사면
       color.set(mixColor('#2f5224', '#466e34', fbm(x * 2, y * 2)));

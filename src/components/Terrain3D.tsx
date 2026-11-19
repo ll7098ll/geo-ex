@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
-import { OrbitControls, Sky, Environment } from '@react-three/drei';
+import { OrbitControls, Sky, Environment, Lightformer } from '@react-three/drei';
 import * as THREE from 'three';
 import {
   generateTerrainDioramaGeometry,
@@ -18,54 +18,59 @@ import {
   TerrainShaderUniforms,
 } from './terrain/contour/terrainContourShader';
 
+const DEFAULT_CAMERA_POS: [number, number, number] = [0, 11.8, 19.6];
+const DEFAULT_CAMERA_TARGET: [number, number, number] = [0, 0.4, 0];
+
 // ==========================================
 // Terrain Default Material Settings per Category & SubTerrain
 // ==========================================
 function getDefaultMaterialSettings(category: string, subTerrain: string, placeContext?: string) {
   const normSub = resolveTerrainKey(subTerrain, placeContext);
-  let roughness = 0.75;
+  let roughness = 0.76;
   let metalness = 0.05;
   let bumpScale = 0.035;
 
   if (category === 'volcanic') {
     if (normSub === '주상절리') {
-      roughness = 0.55;
-      metalness = 0.18;
+      roughness = 0.62;
+      metalness = 0.08;
       bumpScale = 0.045;
     } else if (normSub === '용암동굴') {
       roughness = 0.85;
-      metalness = 0.12;
+      metalness = 0.08;
       bumpScale = 0.04;
     } else {
-      roughness = 0.78;
-      metalness = 0.08;
+      roughness = 0.80;
+      metalness = 0.05;
       bumpScale = 0.035;
     }
   } else if (category === 'glacial') {
-    roughness = 0.28;
-    metalness = 0.35;
+    // Natural matte snow/firn & alpine bedrock (eliminates chrome/wet-plastic sheen)
+    roughness = 0.72;
+    metalness = 0.04;
     bumpScale = 0.03;
   } else if (category === 'arid') {
     if (normSub === '플라야') {
-      roughness = 0.08;
-      metalness = 0.55;
-      bumpScale = 0.015;
+      // Crystalline matte salt crust (actual brine mirror reflection lives on PlayaBrineFeatures water mesh)
+      roughness = 0.62;
+      metalness = 0.04;
+      bumpScale = 0.02;
     } else {
-      roughness = 0.95;
+      roughness = 0.94;
       metalness = 0.03;
       bumpScale = 0.025;
     }
   } else if (category === 'karst') {
-    roughness = 0.72;
-    metalness = 0.06;
+    roughness = 0.74;
+    metalness = 0.05;
     bumpScale = 0.042;
   } else if (category === 'coastal') {
-    roughness = 0.65;
-    metalness = 0.15;
+    roughness = 0.72;
+    metalness = 0.06;
     bumpScale = 0.03;
   } else {
-    roughness = 0.72;
-    metalness = 0.08;
+    roughness = 0.74;
+    metalness = 0.05;
     bumpScale = 0.03;
   }
 
@@ -147,6 +152,7 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       showValleyRidgeGuide: false,
       showSlopeHeat: false,
       waterLevel,
+      reliefScale,
     })
   );
 
@@ -161,8 +167,9 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
       showValleyRidgeGuide: false,
       showSlopeHeat: false,
       waterLevel,
+      reliefScale,
     });
-  }, [show3DContours, contourInterval, indexInterval, waterLevel]);
+  }, [show3DContours, contourInterval, indexInterval, waterLevel, reliefScale]);
 
   // Hook into Three.js standard material shader pipeline
   const handleBeforeCompile = useCallback((shader: THREE.WebGLProgramParametersWithUniforms) => {
@@ -181,7 +188,7 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
           roughness={roughness}
           metalness={metalness}
           onBeforeCompile={handleBeforeCompile}
-          customProgramCacheKey={() => `terrain_mat_v7_${materialPreset}`}
+          customProgramCacheKey={() => `terrain_mat_v8_${materialPreset}`}
         />
       </mesh>
 
@@ -201,22 +208,8 @@ const DioramaMesh: React.FC<DioramaMeshProps> = ({
 };
 
 // ==========================================
-// Terrain Atmospheric Lighting & Environment Rig
+// Terrain Atmospheric Lighting & Offline Procedural IBL Environment Rig
 // ==========================================
-class EnvironmentErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  render() {
-    if (this.state.hasError) return null;
-    return this.props.children;
-  }
-}
-
 interface TerrainEnvironmentConfig {
   sunPos: [number, number, number];
   turbidity: number;
@@ -230,69 +223,64 @@ interface TerrainEnvironmentConfig {
   rimIntensity: number;
   fogColor: string;
   fogDensity: number;
-  preset: 'sunset' | 'dawn' | 'park' | 'city';
 }
 
 const ENVIRONMENT_BY_CATEGORY: Record<string, TerrainEnvironmentConfig> = {
   volcanic: {
-    sunPos: [80, 20, 60],
-    turbidity: 8.0,
-    rayleigh: 2.6,
-    keyColor: '#ffaa66',
-    keyIntensity: 2.2,
-    hemiSky: '#5e3229',
-    hemiGround: '#241714',
-    hemiIntensity: 0.85,
-    rimColor: '#e05638',
-    rimIntensity: 0.75,
-    fogColor: '#1c1310',
-    fogDensity: 0.015,
-    preset: 'sunset',
+    sunPos: [85, 32, 65],
+    turbidity: 3.5,
+    rayleigh: 1.4,
+    keyColor: '#fff2e0',
+    keyIntensity: 2.35,
+    hemiSky: '#b2c2d4',
+    hemiGround: '#3d3430',
+    hemiIntensity: 1.05,
+    rimColor: '#a2c6e8',
+    rimIntensity: 0.65,
+    fogColor: '#151920',
+    fogDensity: 0.014,
   },
   glacial: {
     sunPos: [100, 45, 90],
     turbidity: 0.2,
     rayleigh: 0.35,
     keyColor: '#f2f8ff',
-    keyIntensity: 2.5,
+    keyIntensity: 2.4,
     hemiSky: '#b8dcff',
     hemiGround: '#5a7894',
     hemiIntensity: 0.95,
     rimColor: '#90caff',
-    rimIntensity: 0.9,
+    rimIntensity: 0.85,
     fogColor: '#0f1826',
     fogDensity: 0.014,
-    preset: 'dawn',
   },
   arid: {
     sunPos: [80, 50, 40],
-    turbidity: 9.0,
-    rayleigh: 2.8,
-    keyColor: '#fff2d6',
-    keyIntensity: 2.6,
-    hemiSky: '#ffdfa8',
-    hemiGround: '#996939',
-    hemiIntensity: 0.85,
-    rimColor: '#ffd180',
-    rimIntensity: 0.7,
-    fogColor: '#211812',
-    fogDensity: 0.017,
-    preset: 'park',
+    turbidity: 7.5,
+    rayleigh: 2.2,
+    keyColor: '#fff4dc',
+    keyIntensity: 2.5,
+    hemiSky: '#ffe3b3',
+    hemiGround: '#8c6138',
+    hemiIntensity: 0.9,
+    rimColor: '#ffd48c',
+    rimIntensity: 0.65,
+    fogColor: '#1f1812',
+    fogDensity: 0.015,
   },
   karst: {
     sunPos: [90, 28, 80],
     turbidity: 2.5,
     rayleigh: 1.2,
     keyColor: '#fffcee',
-    keyIntensity: 2.1,
+    keyIntensity: 2.15,
     hemiSky: '#b6e6d8',
     hemiGround: '#264d3b',
-    hemiIntensity: 0.85,
+    hemiIntensity: 0.9,
     rimColor: '#5eead4',
     rimIntensity: 0.65,
     fogColor: '#121e1a',
-    fogDensity: 0.015,
-    preset: 'city',
+    fogDensity: 0.014,
   },
   coastal: {
     sunPos: [100, 38, 80],
@@ -302,33 +290,36 @@ const ENVIRONMENT_BY_CATEGORY: Record<string, TerrainEnvironmentConfig> = {
     keyIntensity: 2.3,
     hemiSky: '#aae2ff',
     hemiGround: '#194361',
-    hemiIntensity: 0.9,
+    hemiIntensity: 0.95,
     rimColor: '#38bdf8',
-    rimIntensity: 0.75,
+    rimIntensity: 0.72,
     fogColor: '#0e1d29',
-    fogDensity: 0.015,
-    preset: 'city',
+    fogDensity: 0.014,
   },
   fluvial: {
     sunPos: [100, 35, 75],
     turbidity: 1.5,
     rayleigh: 0.9,
     keyColor: '#fffde6',
-    keyIntensity: 2.2,
+    keyIntensity: 2.25,
     hemiSky: '#cceeff',
     hemiGround: '#2e5223',
-    hemiIntensity: 0.85,
+    hemiIntensity: 0.9,
     rimColor: '#86efac',
     rimIntensity: 0.65,
     fogColor: '#112022',
-    fogDensity: 0.015,
-    preset: 'city',
+    fogDensity: 0.014,
   },
 };
 
-const TerrainEnvironmentRig: React.FC<{ category: string }> = ({ category }) => {
+const TerrainEnvironmentRig: React.FC<{ category: string; normSub: string }> = ({
+  category,
+  normSub,
+}) => {
   const { scene } = useThree();
-  const config = ENVIRONMENT_BY_CATEGORY[category] || ENVIRONMENT_BY_CATEGORY.fluvial;
+  // Fault-block mountain (단층 산맥: Sierra Nevada / Teton style) uses crisp alpine-fluvial daylight rather than volcanic lighting
+  const effectiveEnvKey = normSub === '단층 산맥' ? 'fluvial' : category;
+  const config = ENVIRONMENT_BY_CATEGORY[effectiveEnvKey] || ENVIRONMENT_BY_CATEGORY.fluvial;
 
   useEffect(() => {
     scene.fog = new THREE.FogExp2(config.fogColor, config.fogDensity);
@@ -340,11 +331,41 @@ const TerrainEnvironmentRig: React.FC<{ category: string }> = ({ category }) => 
   return (
     <>
       <Sky sunPosition={config.sunPos} turbidity={config.turbidity} rayleigh={config.rayleigh} />
-      <EnvironmentErrorBoundary>
-        <React.Suspense fallback={null}>
-          <Environment preset={config.preset} />
-        </React.Suspense>
-      </EnvironmentErrorBoundary>
+      {/* 100% Offline Procedural IBL Environment (zero external HDRI CDN requests!) */}
+      <Environment resolution={256} frames={1}>
+        <Lightformer
+          form="rect"
+          intensity={1.55}
+          color={config.hemiSky}
+          position={[0, 14, 0]}
+          rotation={[Math.PI / 2, 0, 0]}
+          scale={[28, 28, 1]}
+        />
+        <Lightformer
+          form="circle"
+          intensity={2.4}
+          color={config.keyColor}
+          position={[14, 11, 10]}
+          rotation={[0, -Math.PI / 4, 0]}
+          scale={8}
+        />
+        <Lightformer
+          form="rect"
+          intensity={1.25}
+          color={config.rimColor}
+          position={[-14, 7, -10]}
+          rotation={[0, Math.PI / 4, 0]}
+          scale={[18, 10, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={0.85}
+          color={config.hemiGround}
+          position={[0, -10, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          scale={[28, 28, 1]}
+        />
+      </Environment>
       <hemisphereLight
         color={config.hemiSky}
         groundColor={config.hemiGround}
@@ -410,6 +431,11 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   const autoRotate = autoRotateProp !== undefined ? autoRotateProp : internalAutoRotate;
   const controlsRef = useRef<any>(null);
 
+  const normSub = useMemo(
+    () => resolveTerrainKey(subTerrain, placeContext),
+    [subTerrain, placeContext]
+  );
+
   const setAutoRotateState = useCallback(
     (val: boolean | ((prev: boolean) => boolean)) => {
       const nextVal = typeof val === 'function' ? val(autoRotate) : val;
@@ -422,8 +448,8 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   const handleResetCamera = useCallback(() => {
     if (!controlsRef.current) return;
     setAutoRotateState(false);
-    controlsRef.current.object.position.set(0, 10, 16);
-    controlsRef.current.target.set(0, 0.5, 0);
+    controlsRef.current.object.position.set(...DEFAULT_CAMERA_POS);
+    controlsRef.current.target.set(...DEFAULT_CAMERA_TARGET);
     controlsRef.current.update();
   }, [setAutoRotateState]);
 
@@ -442,21 +468,20 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
   );
 
   const contourSettings = useMemo(() => {
-    const normSub = resolveTerrainKey(subTerrain, placeContext);
     return getTerrainContourMeta(normSub).contourSettings;
-  }, [subTerrain, placeContext]);
+  }, [normSub]);
 
   return (
     <div className="w-full h-full bg-radial from-slate-900 via-slate-950 to-black relative overflow-hidden select-none">
       {/* 3D Canvas */}
       <Canvas
-        shadows
+        shadows="percentage"
         dpr={[1, 2]}
         frameloop={isActive ? 'always' : 'demand'}
-        camera={{ position: [0, 10, 16], fov: 45 }}
+        camera={{ position: DEFAULT_CAMERA_POS, fov: 42 }}
         gl={{ antialias: true, alpha: false }}
       >
-        <TerrainEnvironmentRig category={category} />
+        <TerrainEnvironmentRig category={category} normSub={normSub} />
 
         <React.Suspense fallback={null}>
           <DioramaMesh
@@ -478,6 +503,7 @@ const Terrain3D = React.forwardRef<Terrain3DRef, Terrain3DProps>(({
 
         <OrbitControls
           ref={controlsRef}
+          target={DEFAULT_CAMERA_TARGET}
           enablePan
           enableZoom
           enableRotate

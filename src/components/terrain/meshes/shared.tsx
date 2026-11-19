@@ -119,22 +119,23 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
   foamColor = '#bfe8f2',
   opacity = 0.84,
   waveScale = 0.55,
-  segments = 128,
+  segments = 160,
   roughness = 0.08,
 }) => {
+  const effectiveSegments = Math.max(segments, 144);
   const waterData = useMemo(() => {
     const size = 20;
     const half = size / 2;
-    const step = size / segments;
-    const stride = segments + 1;
+    const step = size / effectiveSegments;
+    const stride = effectiveSegments + 1;
 
     const terrainH = new Float32Array(stride * stride);
     const waterZ = new Float32Array(stride * stride);
     const validMask = new Uint8Array(stride * stride);
 
-    for (let j = 0; j <= segments; j++) {
+    for (let j = 0; j <= effectiveSegments; j++) {
       const y = -half + j * step;
-      for (let i = 0; i <= segments; i++) {
+      for (let i = 0; i <= effectiveSegments; i++) {
         const x = -half + i * step;
         const idx = j * stride + i;
         const w = waterLevelFn(x, y);
@@ -183,7 +184,7 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
       posList.push(x, y, w);
       colList.push(tmp.r, tmp.g, tmp.b);
 
-      const isBorder = i === 0 || i === segments || j === 0 || j === segments;
+      const isBorder = i === 0 || i === effectiveSegments || j === 0 || j === effectiveSegments;
       const waveFactor = isBorder ? 0.0 : smoothstep(0.02, 0.16, depth);
       waveWeightList.push(waveFactor);
 
@@ -191,9 +192,9 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
       return vIndex;
     };
 
-    // 1. Top water surface quads (only where water is genuinely above the terrain bed!)
-    for (let j = 0; j < segments; j++) {
-      for (let i = 0; i < segments; i++) {
+    // 1. Top water surface quads (adaptive diagonal split eliminates staircase shoreline edges!)
+    for (let j = 0; j < effectiveSegments; j++) {
+      for (let i = 0; i < effectiveSegments; i++) {
         const g00 = j * stride + i;
         const g10 = g00 + 1;
         const g01 = g00 + stride;
@@ -201,10 +202,15 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
 
         if (!validMask[g00] || !validMask[g10] || !validMask[g01] || !validMask[g11]) continue;
 
-        const wet00 = waterZ[g00] > terrainH[g00] + 0.004;
-        const wet10 = waterZ[g10] > terrainH[g10] + 0.004;
-        const wet01 = waterZ[g01] > terrainH[g01] + 0.004;
-        const wet11 = waterZ[g11] > terrainH[g11] + 0.004;
+        const d00 = waterZ[g00] - terrainH[g00];
+        const d10 = waterZ[g10] - terrainH[g10];
+        const d01 = waterZ[g01] - terrainH[g01];
+        const d11 = waterZ[g11] - terrainH[g11];
+
+        const wet00 = d00 > 0.004;
+        const wet10 = d10 > 0.004;
+        const wet01 = d01 > 0.004;
+        const wet11 = d11 > 0.004;
 
         if (!(wet00 || wet10 || wet01 || wet11)) continue;
 
@@ -213,9 +219,18 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
         const v01 = getOrAddTopVert(i, j + 1);
         const v11 = getOrAddTopVert(i + 1, j + 1);
 
+        // Choose diagonal aligned with shoreline depth iso-contour (minimizes staircase steps)
+        const diag00_11 = Math.abs(d00 - d11);
+        const diag10_01 = Math.abs(d10 - d01);
+
         // +Z upward normal winding
-        idxList.push(v00, v10, v01);
-        idxList.push(v10, v11, v01);
+        if (diag00_11 < diag10_01) {
+          idxList.push(v00, v10, v11);
+          idxList.push(v00, v11, v01);
+        } else {
+          idxList.push(v00, v10, v01);
+          idxList.push(v10, v11, v01);
+        }
       }
     }
 
@@ -223,7 +238,7 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
 
     // 2. Volumetric translucent water side-walls along the 4 diorama borders (±10)
     const addWaterSkirtEdge = (getGridIndex: (k: number) => { i: number; j: number }) => {
-      for (let k = 0; k < segments; k++) {
+      for (let k = 0; k < effectiveSegments; k++) {
         const a = getGridIndex(k);
         const b = getGridIndex(k + 1);
         const ga = a.j * stride + a.i;
@@ -269,14 +284,14 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
       }
     };
 
-    // South (y = -10, i: 0 -> segments)
+    // South (y = -10, i: 0 -> effectiveSegments)
     addWaterSkirtEdge((k) => ({ i: k, j: 0 }));
-    // East (x = +10, j: 0 -> segments)
-    addWaterSkirtEdge((k) => ({ i: segments, j: k }));
-    // North (y = +10, i: segments -> 0)
-    addWaterSkirtEdge((k) => ({ i: segments - k, j: segments }));
-    // West (x = -10, j: segments -> 0)
-    addWaterSkirtEdge((k) => ({ i: 0, j: segments - k }));
+    // East (x = +10, j: 0 -> effectiveSegments)
+    addWaterSkirtEdge((k) => ({ i: effectiveSegments, j: k }));
+    // North (y = +10, i: effectiveSegments -> 0)
+    addWaterSkirtEdge((k) => ({ i: effectiveSegments - k, j: effectiveSegments }));
+    // West (x = -10, j: effectiveSegments -> 0)
+    addWaterSkirtEdge((k) => ({ i: 0, j: effectiveSegments - k }));
 
     const geo = new THREE.BufferGeometry();
     const positions = new Float32Array(posList);
@@ -296,7 +311,7 @@ export const ConformantWaterMesh: React.FC<ConformantWaterProps> = ({
       waveWeights: new Float32Array(waveWeightList),
       topVertCount,
     };
-  }, [normSub, reliefScale, waterLevelFn, deepColor, shallowColor, foamColor, segments]);
+  }, [normSub, reliefScale, waterLevelFn, deepColor, shallowColor, foamColor, effectiveSegments]);
 
   useFrame(({ clock }) => {
     if (!waterData || waveScale <= 0.01 || waterData.topVertCount === 0) return;

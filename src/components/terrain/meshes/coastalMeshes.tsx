@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import {
   evaluateTerrainPoint,
   fbm,
-  clamp,
   smoothstep,
   mixColor,
 } from '../terrainGenerators';
@@ -72,13 +71,75 @@ export const SeaArchAndStack: React.FC<{ reliefScale?: number }> = ({ reliefScal
     );
     parts.push(archMesh);
 
-    // Overhanging caprock ledges on the top of the two main sea stacks so they show classic wave-undercut profiles!
+    // Natural organic lobed stratified caprock shelves matching each sea stack's contour (zero circular bottle-caps!)
     for (const s of SEA_STACK_SPECS.slice(0, 3)) {
-      const cap = new THREE.CylinderGeometry(s.rx * 0.88, s.rx * 0.72, 0.42 * reliefScale, 14);
-      cap.rotateX(Math.PI / 2);
-      cap.rotateZ(s.rot);
-      cap.translate(s.sx, s.sy, (s.h - 0.32) * reliefScale);
-      parts.push(paintGeometrySolid(cap, '#7d6954'));
+      const radialSegs = 28;
+      const tiers = 5;
+      const capPos: number[] = [];
+      const capCol: number[] = [];
+      const capIdx: number[] = [];
+      const cosR = Math.cos(s.rot);
+      const sinR = Math.sin(s.rot);
+      const zBot = (s.h - 0.68) * reliefScale;
+      const zTop = (s.h - 0.14) * reliefScale;
+
+      for (let t = 0; t <= tiers; t++) {
+        const vf = t / tiers;
+        const z = zBot + (zTop - zBot) * vf;
+        // Slight wave-cut overhang: narrower bottom waist (0.86) flaring to stratified resistant caprock (0.97) then tucking to crown (0.88)
+        const profileScale = vf < 0.65 ? 0.84 + (vf / 0.65) * 0.13 : 0.97 - ((vf - 0.65) / 0.35) * 0.08;
+        const strata = Math.sin((z / Math.max(0.5, reliefScale)) * 12.5 + s.sx * 0.3) * 0.5 + 0.5;
+        const ringCol = mixColor('#544639', '#8f7760', strata);
+
+        for (let k = 0; k < radialSegs; k++) {
+          const ang = (k / radialSegs) * Math.PI * 2;
+          const shapeMod = 1.0 + 0.12 * Math.sin(ang * 3.0 + s.rot * 2.0) + 0.08 * Math.cos(ang * 4.0);
+          const lx = Math.cos(ang) * s.rx * shapeMod * profileScale;
+          const ly = Math.sin(ang) * s.ry * shapeMod * profileScale;
+          const wx = s.sx + lx * cosR - ly * sinR;
+          const wy = s.sy + lx * sinR + ly * cosR;
+          capPos.push(wx, wy, z);
+          capCol.push(ringCol.r, ringCol.g, ringCol.b);
+        }
+      }
+
+      for (let t = 0; t < tiers; t++) {
+        for (let k = 0; k < radialSegs; k++) {
+          const kn = (k + 1) % radialSegs;
+          const a = t * radialSegs + k;
+          const b = t * radialSegs + kn;
+          const c = (t + 1) * radialSegs + k;
+          const d = (t + 1) * radialSegs + kn;
+          capIdx.push(a, b, d, a, d, c);
+        }
+      }
+
+      // Seal bottom underside of overhanging ledge & top crown center
+      const botCenter = capPos.length / 3;
+      const darkUnder = new THREE.Color('#2d251e');
+      capPos.push(s.sx, s.sy, zBot);
+      capCol.push(darkUnder.r, darkUnder.g, darkUnder.b);
+      for (let k = 0; k < radialSegs; k++) {
+        const kn = (k + 1) % radialSegs;
+        capIdx.push(botCenter, kn, k);
+      }
+
+      const topCenter = capPos.length / 3;
+      const topCol = new THREE.Color('#6b7346');
+      const topRingBase = tiers * radialSegs;
+      capPos.push(s.sx, s.sy, zTop + 0.04 * reliefScale);
+      capCol.push(topCol.r, topCol.g, topCol.b);
+      for (let k = 0; k < radialSegs; k++) {
+        const kn = (k + 1) % radialSegs;
+        capIdx.push(topCenter, topRingBase + k, topRingBase + kn);
+      }
+
+      const capGeo = new THREE.BufferGeometry();
+      capGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(capPos), 3));
+      capGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(capCol), 3));
+      capGeo.setIndex(capIdx);
+      capGeo.computeVertexNormals();
+      parts.push(capGeo);
     }
 
     return mergeColorGeometries(parts);
@@ -118,40 +179,98 @@ export const SeaArchAndStack: React.FC<{ reliefScale?: number }> = ({ reliefScal
 };
 
 export const SeaCliffFeatures: React.FC<{ reliefScale: number }> = ({ reliefScale }) => {
-  // 3D Overhanging Wave-Cut Notch & Sea-Cave Portals along the base of the cliff!
+  // 3D Overhanging Wave-Cut Notch Visor built in cliff-following curvilinear (relX, y) coordinates!
+  // Eliminates diagonal rectilinear sawtooth clipping completely while carving a shadowed basal sea-notch.
   const notchOverhangGeo = useMemo(() => {
     const parts: THREE.BufferGeometry[] = [];
 
-    // Overhanging rock visor along the wave-cut cliff base (creates a true shadowed wave-cut notch below z = 1.25!)
-    const visor = buildVaultedRoofShell(
-      -0.2,
-      4.2,
-      -8.5,
-      8.5,
-      28,
-      64,
-      (x, y) => {
-        const cx = getSeaCliffEdgeX(y);
-        const relX = x - cx;
-        // Jutting 0.48m seaward from the cliff face between z = 1.05 and z = 2.25!
-        if (relX < -0.72 || relX > 0.12) return null;
-        const jutT = clamp((relX + 0.72) / 0.84, 0, 1);
-        const ceilZ = (0.98 + (1.0 - jutT) * 0.28 + Math.sin(y * 0.9) * 0.08) * reliefScale;
-        const topZ = (1.65 + jutT * 0.95) * reliefScale;
-        const strata = Math.sin(topZ * 12.0) * 0.5 + 0.5;
-        return {
-          ceilZ,
-          topZ,
-          topColor: mixColor('#4a3e34', '#7d6b59', strata),
-          innerColor: new THREE.Color('#1c1815'),
-        };
-      },
-      (_x, y, z) => {
-        const s = Math.sin((z / Math.max(0.5, reliefScale)) * 14.0 + y * 0.25) * 0.5 + 0.5;
-        return mixColor('#3f352d', '#7d6c5b', s);
+    const ny = 96;
+    const nx = 10;
+    const yMin = -9.4;
+    const yMax = 9.4;
+    const stride = nx + 1;
+
+    const topPos: number[] = [];
+    const topCol: number[] = [];
+    const botPos: number[] = [];
+    const botCol: number[] = [];
+
+    const innerShadow = new THREE.Color('#1c1714');
+
+    for (let j = 0; j <= ny; j++) {
+      const y = yMin + (j / ny) * (yMax - yMin);
+      const cx = getSeaCliffEdgeX(y);
+      const endTaper = smoothstep(0.0, 0.08, j / ny) * smoothstep(1.0, 0.92, j / ny);
+      const browWave = Math.sin(y * 0.95) * 0.09 + Math.cos(y * 1.85) * 0.05;
+
+      for (let i = 0; i <= nx; i++) {
+        const u = i / nx; // 0 = seaward brow tip, 1 = tucked cleanly inside the DEM cliff wall
+        const maxJut = (0.76 + browWave) * (0.35 + 0.65 * endTaper);
+        const relX = -maxJut * (1.0 - u) + 0.08 * u;
+        const x = cx + relX;
+
+        const demZ = evaluateTerrainPoint('해식애', x, y, 1.0).height;
+        // Shadowed basal wave-cut notch ceiling: curves upward from inside cliff base to brow lip
+        const ceilBase = 1.02 + Math.pow(1.0 - u, 1.35) * 0.34 + browWave * 0.35;
+        // Upper rock visor slope: tapers cleanly to brow edge at u=0 and blends flush inside cliff face at u=1
+        const topBase = Math.min(
+          Math.max(demZ - 0.02, ceilBase + 0.06),
+          ceilBase + 0.06 + Math.pow(u, 0.85) * 1.25
+        );
+
+        const topZ = topBase * reliefScale;
+        const ceilZ = ceilBase * reliefScale;
+
+        const strata = Math.sin(topBase * 14.0 + y * 0.25) * 0.5 + 0.5;
+        const major = Math.sin(topBase * 3.8) * 0.5 + 0.5;
+        const tc = mixColor('#42372f', '#7f6e5c', strata * 0.7 + major * 0.3);
+
+        topPos.push(x, y, topZ);
+        topCol.push(tc.r, tc.g, tc.b);
+
+        botPos.push(x, y, ceilZ);
+        botCol.push(innerShadow.r, innerShadow.g, innerShadow.b);
       }
-    );
-    parts.push(visor);
+    }
+
+    const totalGrid = (nx + 1) * (ny + 1);
+    const vPos = new Float32Array(totalGrid * 2 * 3);
+    const vCol = new Float32Array(totalGrid * 2 * 3);
+    vPos.set(topPos, 0);
+    vPos.set(botPos, totalGrid * 3);
+    vCol.set(topCol, 0);
+    vCol.set(botCol, totalGrid * 3);
+
+    const vIdx: number[] = [];
+    for (let j = 0; j < ny; j++) {
+      for (let i = 0; i < nx; i++) {
+        const a = j * stride + i;
+        const b = a + 1;
+        const c = a + stride;
+        const d = c + 1;
+        // Top visor surface (+Z normal)
+        vIdx.push(a, b, d, a, d, c);
+        // Underside notch ceiling (-Z normal)
+        const ba = totalGrid + a;
+        const bb = totalGrid + b;
+        const bc = totalGrid + c;
+        const bd = totalGrid + d;
+        vIdx.push(ba, bc, bd, ba, bd, bb);
+      }
+      // Seaward front lip closure (i = 0)
+      const t0 = j * stride;
+      const t1 = (j + 1) * stride;
+      const b0 = totalGrid + t0;
+      const b1 = totalGrid + t1;
+      vIdx.push(t0, t1, b1, t0, b1, b0);
+    }
+
+    const visorGeo = new THREE.BufferGeometry();
+    visorGeo.setAttribute('position', new THREE.BufferAttribute(vPos, 3));
+    visorGeo.setAttribute('color', new THREE.BufferAttribute(vCol, 3));
+    visorGeo.setIndex(vIdx);
+    visorGeo.computeVertexNormals();
+    parts.push(visorGeo);
 
     // Fallen angular rockfall talus blocks on the wave-cut bench
     for (const [by, offX, sc] of [
