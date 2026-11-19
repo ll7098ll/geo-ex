@@ -11,7 +11,7 @@
 2. [개발 환경 설정 (Development Setup)](#2-개발-환경-설정-development-setup)
 3. [신규 지질 명소(Place) 추가 가이드](#3-신규-지질-명소place-추가-가이드)
 4. [신규 3D 절차적 지형 지오메트리 기여 가이드](#4-신규-3d-절차적-지형-지오메트리-기여-가이드)
-5. [UI 및 디자인 컨벤션 (Swiss-Brutalist)](#5-ui-및-디자인-컨벤션-swiss-brutalist)
+5. [UI 및 디자인 컨벤션 (NatGeo Editorial Dark)](#5-ui-및-디자인-컨벤션-natgeo-editorial-dark)
 6. [커밋 메시지 컨벤션 (Commit Convention)](#6-커밋-메시지-컨벤션-commit-convention)
 7. [풀 리퀘스트(PR) 제출 절차](#7-풀-리퀘스트pr-제출-절차)
 
@@ -26,7 +26,7 @@
 ## 2. 개발 환경 설정 (Development Setup)
 
 ### 2.1 요구 사항
-- **Node.js**: v20.18.0 이상 (LTS 권장, v22+ 최적 지원)
+- **Node.js**: v20.18.0 이상 (LTS 권장, v22+ / v24+ 최적 지원)
 - **npm**: v10 이상 (또는 pnpm / yarn)
 - **WebGL 2.0 지원 브라우저**: Chrome, Edge, Safari, Firefox 최신 버전
 
@@ -51,24 +51,26 @@ npm run build
 
 ## 3. 신규 지질 명소(Place) 추가 가이드
 
-지형 탐험가는 현재 **165개 지질 명소(전 세계 86개소, 대한민국 79개소)**를 탑재하고 있습니다.
+지형 탐험가는 현재 **165개 지질 명소(전 세계 86개소, 대한민국 79개소)**와 **34개 UI 지형 태그 / 39종 3D 아키타입**을 탑재하고 있으며, 모든 명소는 100% UI 도달 및 개별 실경 사진 매핑을 유지합니다.
 
 ### 3.1 파일 위치
 명소가 속하는 대분류에 따라 `src/constants/places/` 내 해당 파일을 수정합니다:
-- 화산: [`src/constants/places/volcanic.ts`](src/constants/places/volcanic.ts)
+- 화산 및 산지: [`src/constants/places/volcanic.ts`](src/constants/places/volcanic.ts)
 - 해안: [`src/constants/places/coastal.ts`](src/constants/places/coastal.ts)
 - 하천: [`src/constants/places/fluvial.ts`](src/constants/places/fluvial.ts)
 - 카르스트: [`src/constants/places/karst.ts`](src/constants/places/karst.ts)
 - 빙하: [`src/constants/places/glacial.ts`](src/constants/places/glacial.ts)
 - 건조: [`src/constants/places/arid.ts`](src/constants/places/arid.ts)
 
+추가로, 슬라이드 04 지형 매거진에 표시될 실제 장소별 대표 사진을 [`src/constants/placeImages.ts`](src/constants/placeImages.ts)에 동일 `id` 키로 등록해 주세요.
+
 ### 3.2 `PlaceInfo` 객체 작성 규격 예시
-> **주의**: `id`는 전체 6개 파일 통틀어 **반드시 고유(Unique)**해야 합니다. 표본 수집 아카이브(`SpecimenDrawer`) 및 직접 조회(`getPlaceById`)가 `id`를 기준으로 동작합니다.
+> **주의**: `id`는 전체 6개 파일 통틀어 **반드시 고유(Unique)**해야 합니다. 표본 수집 아카이브([`SpecimenDrawer`](src/components/kinetic/SpecimenDrawer.tsx)), 직접 조회(`getPlaceById`), 매거진 사진 매핑(`PLACE_IMAGES`)이 모두 `id`를 기준으로 동작합니다.
 
 ```typescript
 {
   id: 'volcano-kr-18', // 전체 데이터셋 내 고유 식별자 (중복 금지)
-  terrain: '주상절리',   // 26개 세부 지형 태그 중 하나
+  terrain: '주상절리',   // 34개 UI 지형 태그 또는 terrainRegistry 인식 지형명
   region: 'korea',     // 'korea' | 'world'
   placeName: '포항 달전리 주상절리',
   countryOrArea: '대한민국 경상북도 포항시',
@@ -99,7 +101,7 @@ npm run build
       process: '동해 확장과 관련된 지각 변동으로 규산염 마그마가 균열을 따라 상승...',
       visualKeyFeature: '고온의 마그마 챔버 및 단층 틈새 충진'
     }
-    // 총 3~4단계 권장 (4단 아코디언 블레이드 및 난이도별 해설과 자동 연동)
+    // 총 3~4단계 권장 (슬라이드 04 PART I 4단계 연대기 및 난이도별 해설과 자동 연동)
   ],
   fieldGuide: {
     coordinates: { lat: 36.0094, lng: 129.3142 },
@@ -119,25 +121,35 @@ npm run build
 
 ## 4. 신규 3D 절차적 지형 지오메트리 기여 가이드
 
-지형 탐험가는 외부 3D 에셋 파일(GLTF/OBJ) 대신 순수 수치 수학과 GLSL 셰이더를 결합한 **절차적 디오라마** 엔진을 사용합니다.
+지형 탐험가는 외부 3D 에셋 파일(GLTF/OBJ)이나 외부 HDRI CDN 대신 순수 수치 수학, 모듈화된 3D 특수 메쉬, 오프라인 `<Lightformer>` IBL, GLSL 셰이더를 결합한 **절차적 디오라마 엔진**을 사용합니다.
 
 1. **고도 함수 작성 (`src/components/terrain/generators/`)**:
-   - `volcanic.ts`, `coastal.ts` 등의 제너레이터 모듈에 2D 좌표 `(x, y)`를 받아 `elevation`과 `color`를 반환하는 평가 함수를 구현합니다.
-   - [`terrainMath.ts`](src/components/terrain/terrainMath.ts)의 `fbm`, `warpedFbm`, `smoothstep`, `clamp` 유틸리티를 재사용합니다.
-2. **지형 키 라우팅 등록**:
-   - [`src/components/terrain/terrainGenerators.ts`](src/components/terrain/terrainGenerators.ts)의 `resolveTerrainKey()` 함수에 새 키워드나 아키타입 분기를 등록합니다.
-3. **특수 지질 메쉬 결합 및 GPU 메모리 해제 (선택 사항)**:
-   - 복잡한 3D 피처가 필요한 경우 [`src/components/terrain/TerrainSpecialMeshes.tsx`](src/components/terrain/TerrainSpecialMeshes.tsx)에 서브 메쉬 컴포넌트를 정의하고, 반드시 `useDisposeGeometry` 훅으로 `BufferGeometry.dispose()`를 보장해야 합니다.
-4. **등고선 메타데이터 등록**:
-   - [`src/components/terrain/contour/terrainContourMetadata.ts`](src/components/terrain/contour/terrainContourMetadata.ts)에 기본 등고선 주곡선/계곡선 간격을 지정합니다.
+   - `volcanic.ts`, `coastal.ts`, `fluvial.ts`, `karst.ts`, `glacial.ts`, `arid.ts` 중 해당 모듈에 2D 좌표 `(x, y)` (`[-10, 10] × [-10, 10]`)를 받아 `{ height, color }`를 반환하는 평가 함수를 구현합니다.
+   - [`terrainMath.ts`](src/components/terrain/terrainMath.ts)의 `fbm`, `warpedFbm`, `smoothstep`, `clamp`, `mixColor` 유틸리티를 재사용합니다.
+   - **무결성 원칙 (Zero DEM Spikes)**: 사면·절벽 경계에서 불연속 점프(`if/else` 하드 컷)나 외곽 경계(`|x|, |y| -> 10`)의 비정상 고도 폭발이 발생하지 않도록 `smoothstep` 기반의 유한 경사 전환을 유지하고, 고저차 `reliefScale = 1.6`에서도 안정적인 비율을 유지해야 합니다.
+2. **단일 진실 원천(SSOT) 지형 키 라우팅 등록**:
+   - [`src/constants/terrainRegistry.ts`](src/constants/terrainRegistry.ts)의 `resolveTerrainKey()`, `BASE_WATER_ELEVATIONS`, `CONTOUR_KEY_ALIASES`, `getCategoryForTerrainName()`에 새 아키타입을 등록합니다.
+   - 필요한 경우 [`src/constants/terrains.ts`](src/constants/terrains.ts)에 UI 태그를 노출해 모든 신규 명소가 UI에서 100% 도달 가능하도록 보장합니다.
+3. **모듈화 3D 특수 메쉬 결합 및 GPU 메모리 해제 (선택 사항)**:
+   - 수면, 용암, 폭포, 주상절리, 동굴, 식생 등 보조 3D 피처가 필요한 경우 [`src/components/terrain/meshes/`](src/components/terrain/meshes/) 아래 카테고리별 파일(`volcanicMeshes.tsx` 등)에 컴포넌트를 작성하고 [`TerrainSpecialMeshes.tsx`](src/components/terrain/TerrainSpecialMeshes.tsx)의 `SPECIAL_MESH_BY_TERRAIN` 레지스트리에 등록합니다.
+   - 커스텀 `BufferGeometry`는 반드시 [`src/components/terrain/meshes/shared.tsx`](src/components/terrain/meshes/shared.tsx)의 `useDisposeGeometry` 훅으로 GPU 메모리 해제(`dispose()`)를 보장해야 합니다.
+   - 식생·나무 등 지상 오브젝트는 반드시 지형 고도(`evaluateTerrainPoint`)를 참조하여 수면 위 건지(Dry land)에만 배치합니다.
+4. **수면 마스킹 및 등고선 메타데이터 등록**:
+   - 현수 호수(칼데라호·빙하호), 이중 수위(폭포 상·하류), 염호(플라야) 등 국소 수면이 있는 경우 [`src/components/terrain/terrainGenerators.ts`](src/components/terrain/terrainGenerators.ts)의 `getLocalWaterElevation()`에 좌표를 등록하여 정점 속성 `aSubmerged`가 수면 아래 등고선을 정확히 차단하도록 합니다.
+   - [`src/components/terrain/contour/terrainContourMetadata.ts`](src/components/terrain/contour/terrainContourMetadata.ts)에 주곡선(`intermediateInterval`)과 계곡선(`indexInterval`) 간격을 지정합니다.
 
 ---
 
-## 5. UI 및 디자인 컨벤션 (Swiss-Brutalist)
+## 5. UI 및 디자인 컨벤션 (NatGeo Editorial Dark)
 
-- **직각 규율**: [`src/index.css`](src/index.css)의 전역 `border-radius: 0px !important` 원칙을 준수하며, 새로운 컴포넌트에도 둥근 모서리를 전제로 한 스타일링을 지양합니다.
-- **토큰 활용**: 배경 `#08080A`, 패널 `#131418`, 강조 `#FFCC00` / `#1F34FF`, 유틸리티 클래스 `.hairline-border`, `.corner-ticks`, `.diagonal-hatch-cobalt`를 일관되게 사용합니다.
-- **성능 규칙**: 비활성 슬라이드의 루프 애니메이션 및 WebGL `frameloop`을 차단(`isActive` 제어)하고, `prefers-reduced-motion`을 존중합니다.
+- **직각 규율 (0px Border-Radius)**: [`src/index.css`](src/index.css)의 전역 `border-radius: 0px !important` 원칙을 준수하며, 새로운 컴포넌트에도 둥근 모서리를 전제로 한 스타일링을 지양합니다.
+- **내셔널 지오그래픽 에디토리얼 팔레트**:
+  - 다크 에디토리얼 배경 `#08080A` (`--color-obsidian`), 서피스 `#131418` (`--color-slate-surface`), 시그니처 옐로우 `#FFCC00` (`--color-natgeo-yellow`), 앰버 `#E5B800`, 웜 아이보리 `#EDE9E0`
+  - 슬라이드 04 페이퍼 매거진 모드: `#F6F3EC` (`--color-editorial-paper`) / `#181715` (`--color-editorial-ink`)
+  - 유틸리티 클래스: `.hairline-border`, `.corner-ticks`, `.diagonal-hatch-gold`, `.magazine-frame`, `.magazine-drop-cap`
+- **부드러운 전환 및 성능 규칙**:
+  - 과도한 화면 깜빡임(Flash curtain)을 배제하고 `useSlideNavigation` 기반의 부드러운 이징 스크롤 전환을 유지합니다.
+  - 비활성 슬라이드의 WebGL `frameloop` 및 `<HeroApertureCanvas>` 루프를 `isActive` prop으로 차단하고 `prefers-reduced-motion`을 존중합니다.
 
 ---
 
@@ -152,10 +164,10 @@ npm run build
 ```
 
 - `feat`: 새로운 기능 추가 (예: `feat(3d): add fault mountain scarp geometry`)
-- `fix`: 버그 수정 (예: `fix(archive): load exact specimen id and region`)
+- `fix`: 버그 수정 (예: `fix(terrain): eliminate corner DEM spike on cirque archetype`)
 - `perf`: 성능/메모리 최적화 (예: `perf(terrain): use LRU cache and dispose meshes`)
-- `refactor`: 동작 변화 없는 코드 구조 정리
-- `docs`: 문서 수정 및 보강 (예: `docs: update docs for v1.3.0`)
+- `refactor`: 동작 변화 없는 코드 구조 정리 (예: `refactor: centralize terrainRegistry and split special meshes`)
+- `docs`: 문서 수정 및 보강 (예: `docs: overhaul markdown docs with v1.4.0 screenshots`)
 - `chore`: 빌드 설정, 패키지 관리 등
 
 ---
