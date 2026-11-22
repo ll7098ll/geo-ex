@@ -35,6 +35,7 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   const [isPaperMode, setIsPaperMode] = useState<boolean>(false);
   const [scrollProgress, setScrollProgress] = useState<number>(0);
   const [imgError, setImgError] = useState<boolean>(false);
+  const [imgLoaded, setImgLoaded] = useState<boolean>(false);
   const [canScrollInternal, setCanScrollInternal] = useState<boolean>(false);
 
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -42,9 +43,13 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
   const timelineRef = useRef<HTMLDivElement>(null);
   const essayRef = useRef<HTMLDivElement>(null);
   const dossierRef = useRef<HTMLElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const { placeInfo } = result;
   const placeImageEntry = placeInfo ? PLACE_IMAGES[placeInfo.id] : undefined;
+  const category = TERRAIN_CATEGORIES.find((c) => c.id === result.categoryId);
+  const isFallbackImage = imgError || !placeImageEntry?.url;
+  const displayImageUrl = (!imgError && placeImageEntry?.url) || category?.image || '';
 
   const resetToTop = () => {
     const el = sectionRef.current;
@@ -60,6 +65,11 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
     setExpandedStage(0);
     resetToTop();
   }, [placeInfo?.id]);
+
+  useEffect(() => {
+    const el = imgRef.current;
+    setImgLoaded(Boolean(el && el.complete && el.naturalWidth > 0));
+  }, [displayImageUrl]);
 
   useEffect(() => {
     if (!isActive) {
@@ -96,8 +106,6 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
     );
   }
 
-  const category = TERRAIN_CATEGORIES.find((c) => c.id === result.categoryId);
-  const displayImageUrl = (!imgError && placeImageEntry?.url) || category?.image || '';
   const theme = isPaperMode ? PAPER_GUIDE_THEME : DARK_GUIDE_THEME;
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -203,25 +211,57 @@ export const GeologicalGuideSlide: React.FC<GeologicalGuideSlideProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start pt-2">
             {displayImageUrl && (
               <figure className="lg:col-span-5 space-y-3">
-                <div className="magazine-frame overflow-hidden bg-black aspect-[4/3] relative group">
+                <div className="magazine-frame overflow-hidden bg-zinc-950 aspect-[4/3] relative group">
+                  {!imgLoaded && (
+                    <div
+                      aria-hidden="true"
+                      className={`absolute inset-0 animate-pulse ${
+                        isPaperMode ? 'bg-[#E5DFD2]' : 'bg-[#181920]'
+                      }`}
+                    />
+                  )}
                   <img
+                    ref={imgRef}
+                    key={displayImageUrl}
                     src={displayImageUrl}
                     alt={`${placeInfo.placeName} - ${placeImageEntry?.title || category?.name || ''}`}
+                    loading="eager"
+                    decoding="async"
+                    onLoad={() => setImgLoaded(true)}
                     onError={() => {
-                      if (!imgError) setImgError(true);
+                      if (!imgError) {
+                        setImgError(true);
+                        setImgLoaded(false);
+                      } else {
+                        setImgLoaded(true);
+                      }
                     }}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    className={`w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-105 ${
+                      imgLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
                 </div>
-                <figcaption className={`text-xs font-serif leading-relaxed flex items-start gap-2 ${theme.subtle}`}>
-                  <span className="font-sans font-bold text-[#FFCC00] bg-black px-1.5 py-0.5 text-[10px] shrink-0 mt-0.5">
-                    FIG. 01
-                  </span>
-                  <span>
-                    {placeInfo.placeName}({placeInfo.countryOrArea})의 실제 경관. &ldquo;{placeInfo.tagline}&rdquo;
-                  </span>
+                <figcaption className={`text-xs font-serif leading-relaxed space-y-1.5 ${theme.subtle}`}>
+                  <div className="flex items-start gap-2">
+                    <span className="font-sans font-bold text-[#FFCC00] bg-black px-1.5 py-0.5 text-[10px] shrink-0 mt-0.5">
+                      {isFallbackImage ? 'REF. 01' : 'FIG. 01'}
+                    </span>
+                    <span>
+                      {isFallbackImage
+                        ? `${category?.name || '지형'} 대표 참고 이미지 · ${placeInfo.placeName}(${placeInfo.countryOrArea})`
+                        : `${placeImageEntry?.caption || `${placeInfo.placeName}(${placeInfo.countryOrArea})의 실제 경관.`} "${placeInfo.tagline}"`}
+                    </span>
+                  </div>
+                  {!isFallbackImage && (placeImageEntry?.credit || placeImageEntry?.license) && (
+                    <div className="pl-12 text-[10px] font-sans tracking-wide opacity-75 truncate">
+                      Photo:{' '}
+                      {[placeImageEntry.credit, placeImageEntry.license, placeImageEntry.source]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </div>
+                  )}
                 </figcaption>
               </figure>
             )}
